@@ -1,4 +1,4 @@
-package com.messege.alarmbot.app
+package com.messege.alarmbot.core.presentation.compose.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -7,12 +7,9 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import com.messege.alarmbot.core.presentation.compose.theme.DarkColorScheme
-import com.messege.alarmbot.core.presentation.compose.theme.LightColorScheme
-import com.messege.alarmbot.core.presentation.compose.theme.Typography
 
 @Composable
-fun MelonBotTheme(
+fun AlarmBotTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
