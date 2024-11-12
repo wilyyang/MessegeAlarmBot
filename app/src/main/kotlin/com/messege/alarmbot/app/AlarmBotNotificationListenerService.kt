@@ -6,45 +6,44 @@ import android.app.NotificationManager
 import android.app.Person
 import android.app.Service
 import android.os.Bundle
+import android.os.Parcelable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.text.SpannableString
 import androidx.core.app.NotificationCompat
-import com.messege.alarmbot.core.common.replyActionIndex
-import com.messege.alarmbot.core.common.targetPackageName
-import com.messege.alarmbot.domain.model.ChatRoomKey
+import com.messege.alarmbot.core.common.KAKAO_PACKAGE_NAME
+import com.messege.alarmbot.core.common.REPLY_ACTION_INDEX
+import com.messege.alarmbot.core.common.ChatRoomKey
+import com.messege.alarmbot.core.common.DEFAULT_ROOM_NAME
 import com.messege.alarmbot.processor.CmdProcessor
-import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class AlarmBotNotificationListenerService : NotificationListenerService() {
+const val NOTIFICATION_ID : String = "com.messege.alarmbot.NotificationGroup"
+const val NOTIFICATION_TITLE : String = "AlarmBot"
+const val SERVICE_ID : Int = 18541
 
+class AlarmBotNotificationListenerService : NotificationListenerService() {
     private val cmdProcessor = CmdProcessor(this)
     private val serviceScope = CoroutineScope(Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
-        Logger.d( "Service onCreate")
-        val channel = NotificationChannel(
-            "alarm_bot",
-            "Alarm Bot Notifications",
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Channel for Alarm Bot service notifications"
-        }
-
+        val notificationChannel = NotificationChannel(NOTIFICATION_ID, NOTIFICATION_TITLE, NotificationManager.IMPORTANCE_HIGH)
         val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.createNotificationChannel(channel)
-
-        val notification = NotificationCompat.Builder(this, "alarm_bot")
-            .setContentTitle("Message Alarm Bot")
-            .setContentText("Running in the foreground")
+        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_ID)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(false)
+            .setOngoing(true)
+            .setContentTitle(NOTIFICATION_TITLE)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
-            .build()
+            .setContentText("This is a notification from AlarmBot.")
 
-        startForeground(1, notification)
+        val notification = notificationBuilder.build()
+
+        notificationManager.createNotificationChannel(notificationChannel)
+        startForeground(SERVICE_ID, notification)
     }
 
     override fun onDestroy() {
@@ -55,44 +54,48 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     override fun onNotificationPosted(sbn : StatusBarNotification?) {
         super.onNotificationPosted(sbn)
 
-        val key = sbn?.notification?.getKey()
-        val action = sbn?.notification?.actions?.get(replyActionIndex)
-
-        val user = sbn?.notification?.getPerson()
-        val text = when(val textObject = sbn?.notification?.extras?.get(Notification.EXTRA_TEXT)){
-            is SpannableString -> textObject.toString()
-            is String -> textObject
-            else -> null
-        }
-
-        if (sbn?.packageName == targetPackageName && key != null && action != null && user != null && !text.isNullOrBlank()) {
-            serviceScope.launch {
-                cmdProcessor.deliverNotification(chatRoomKey = key, action = action, user = user, text = text)
+        sbn?.run {
+            val text = when(val textObject = notification?.extras?.get(Notification.EXTRA_TEXT)){
+                is SpannableString -> textObject.toString()
+                is String -> textObject
+                else -> null
             }
-        }
-    }
 
-    private fun Notification.getKey() : ChatRoomKey? {
-        val isGroupConversation = extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
-        val roomName = extras.getString(Notification.EXTRA_SUB_TEXT, "")
-        val userName = extras.getString(Notification.EXTRA_TITLE, "")
-
-        return if (isGroupConversation && roomName.isNotBlank()) {
-            ChatRoomKey(isGroupConversation = true, roomName = roomName)
-        } else if(!isGroupConversation && userName.isNotBlank()){
-            ChatRoomKey(isGroupConversation = false, roomName = userName)
-        } else{
-            null
+            if (packageName == KAKAO_PACKAGE_NAME && !text.isNullOrBlank()){
+                val user = notification?.getPerson()
+                val key = notification?.getKey(sbnKey = sbn.key, user = user)
+                val action = notification?.actions?.get(REPLY_ACTION_INDEX)
+                if (user != null && key != null && action != null) {
+                    serviceScope.launch {
+                        cmdProcessor.deliverNotification(chatRoomKey = key, user = user, action = action, text = text)
+                    }
+                }
+            }
         }
     }
 
     private fun Notification.getPerson() : Person? {
-        val messages = extras.getParcelableArray("android.messages")
+        val messages = extras.getParcelableArray("android.messages", Parcelable::class.java)
         if(!messages.isNullOrEmpty()){
             messages[0]?.let { parcelable ->
-                return (parcelable as? Bundle)?.getParcelable<Person>("sender_person")
+                return (parcelable as? Bundle)?.getParcelable("sender_person", Person::class.java)
             }
         }
         return null
+    }
+
+    private fun Notification.getKey(sbnKey: String, user : Person?) : ChatRoomKey? {
+        val isGroupConversation = extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
+        val roomName = extras.getString(Notification.EXTRA_SUB_TEXT, "")
+
+        return if (isGroupConversation && roomName.isNotBlank()) {
+            // 방제 변경 문제 -> roomKey 활용
+            // ChatRoomKey(isGroupConversation = true, roomName = roomName, roomKey = sbnKey)
+            ChatRoomKey(isGroupConversation = true, roomName = DEFAULT_ROOM_NAME, roomKey = sbnKey)
+        } else if(!isGroupConversation && user != null && user.name != null && user.key != null){
+            ChatRoomKey(isGroupConversation = false, roomName = "${user.name}", roomKey = "${user.key}")
+        } else{
+            null
+        }
     }
 }

@@ -3,9 +3,9 @@ package com.messege.alarmbot.contents
 import android.app.Person
 import com.messege.alarmbot.core.common.helpKeyword
 import com.messege.alarmbot.core.common.hostKeyword
-import com.messege.alarmbot.domain.model.ChatRoomKey
+import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.GroupTextResponse
+import com.messege.alarmbot.domain.model.MainChatTextResponse
 import com.messege.alarmbot.domain.model.None
 import kotlinx.coroutines.channels.Channel
 
@@ -15,7 +15,7 @@ class CommonContent(override val commandChannel : Channel<Command>) : BaseConten
 
     override suspend fun request(chatRoomKey: ChatRoomKey, user : Person, text : String) {
         val command = when(text){
-            hostKeyword + helpKeyword -> GroupTextResponse(text = "안녕하세요? 빵구봇입니다.\n\n" +
+            hostKeyword + helpKeyword -> MainChatTextResponse(text = "안녕하세요? 빵구봇입니다.\n\n" +
                 "* 현재 사용 가능한 명령어\n\n" +
                 "- t : 3분 측정 (1분 전 알림)\n"+
                 "- t {분} : 분만큼 측정\n"+
@@ -38,7 +38,7 @@ class CommonContent(override val commandChannel : Channel<Command>) : BaseConten
                         test += temp+ ", "
                     }
                     userMap[currentKey]!!.add(currentName)
-                    GroupTextResponse(text = "${user.name}님 안녕하세요. ${user.name}님은 이전에 ${test}로 오셨군요")
+                    MainChatTextResponse(text = "${user.name}님 안녕하세요. ${user.name}님은 이전에 ${test}로 오셨군요")
                 }else{
                     None
                 }

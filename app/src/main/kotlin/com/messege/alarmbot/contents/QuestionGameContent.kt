@@ -3,9 +3,9 @@ package com.messege.alarmbot.contents
 import android.app.Person
 import com.messege.alarmbot.core.common.arrayOfPlaces
 import com.messege.alarmbot.core.common.hostKeyword
-import com.messege.alarmbot.domain.model.ChatRoomKey
+import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.GroupTextResponse
+import com.messege.alarmbot.domain.model.MainChatTextResponse
 import com.messege.alarmbot.domain.model.None
 import com.messege.alarmbot.domain.model.UserTextResponse
 import kotlinx.coroutines.channels.Channel
@@ -27,19 +27,19 @@ class QuestionGameContent(override val commandChannel : Channel<Command>) : Base
             if(isStart && answer.isBlank() && chatRoomKey.roomName == hostName){
                 command = if(randomJobs.contains(text)){
                     answer = text
-                    GroupTextResponse(text = "$hostName 님이 정답을 정했습니다. \n$hostName 님에게 질문하고 채팅에 답을 올려주세요!")
+                    MainChatTextResponse(text = "$hostName 님이 정답을 정했습니다. \n$hostName 님에게 질문하고 채팅에 답을 올려주세요!")
                 } else {
-                    UserTextResponse(userName = hostName, text = "정답 후보에 들어있지 않아요.")
+                    UserTextResponse(userKey = ChatRoomKey(false, hostName, hostKey), text = "정답 후보에 들어있지 않아요.")
                 }
             }
         }else{
             when(text){
                 hostKeyword + contentsName -> {
                     command = if(isStart){
-                        GroupTextResponse(text = "[이미 게임 진행 중입니다.]\n\n${answerProgressToString()}")
+                        MainChatTextResponse(text = "[이미 게임 진행 중입니다.]\n\n${answerProgressToString()}")
                     }else{
                         startGame(host = user)
-                        GroupTextResponse(text = "[다섯 고개 게임 시작]\n\n" +
+                        MainChatTextResponse(text = "[다섯 고개 게임 시작]\n\n" +
                                 "* 호스트: ${user.name}\n\n" +
                                 "정답 후보 : ${randomJobs.joinToString(", ")}\n\n" +
                                 "* $hostName 님은 저에게 갠톡으로 정답을 정해주세요!")
@@ -49,14 +49,14 @@ class QuestionGameContent(override val commandChannel : Channel<Command>) : Base
                 "$hostKeyword${contentsName}종료" -> {
                     command = if(isStart){
                         clearGame()
-                        GroupTextResponse(text = "[다섯 고개 종료]")
+                        MainChatTextResponse(text = "[다섯 고개 종료]")
                     }else{
-                        GroupTextResponse(text = "[게임이 없습니다.]")
+                        MainChatTextResponse(text = "[게임이 없습니다.]")
                     }
                 }
                 "$hostKeyword${contentsName} 규칙",
                 "$hostKeyword${contentsName}규칙" -> {
-                    command = GroupTextResponse(
+                    command = MainChatTextResponse(
                         text = "[다섯 고개 규칙]\n\n" +
                                 "1. 6명의 인원이 참가한다.\n" +
                                 "2. 같은 카테고리의 10개 단어가 나열된다.\n" +
@@ -77,9 +77,9 @@ class QuestionGameContent(override val commandChannel : Channel<Command>) : Base
                         command = if(answer == text){
                             val response = "[${user.name} 님이 정답을 맞추셨습니다! 정답은 $text 입니다.]\n\n${answerProgressToString()}"
                             clearGame()
-                            GroupTextResponse(text = response)
+                            MainChatTextResponse(text = response)
                         }else if(isAlreadyAnswer){
-                            GroupTextResponse(text = "[${user.name} 님이 말한 $text 는 이미 말한 답입니다.]\n\n${answerProgressToString()}")
+                            MainChatTextResponse(text = "[${user.name} 님이 말한 $text 는 이미 말한 답입니다.]\n\n${answerProgressToString()}")
                         }else {
                             ++step
                             userAnswers.add(UserKey(name = "${user.name}", key = "${user.key}") to text)
@@ -87,9 +87,9 @@ class QuestionGameContent(override val commandChannel : Channel<Command>) : Base
                             if(step > 4){
                                 response += "\n 모든 기회를 소진하여 $hostName 님이 이겼습니다. 정답은 $answer 입니다.\n\n${answerProgressToString()}"
                                 clearGame()
-                                GroupTextResponse(text = response)
+                                MainChatTextResponse(text = response)
                             }else{
-                                GroupTextResponse(text = "$response\n\n${answerProgressToString()}")
+                                MainChatTextResponse(text = "$response\n\n${answerProgressToString()}")
                             }
                         }
                     }

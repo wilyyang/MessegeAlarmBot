@@ -7,16 +7,17 @@ import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.contents.CommonContent
 import com.messege.alarmbot.contents.QuestionGameContent
 import com.messege.alarmbot.contents.TimerContent
-import com.messege.alarmbot.core.common.openChatRoomName
-import com.messege.alarmbot.core.common.tag
-import com.messege.alarmbot.domain.model.ChatRoomKey
+import com.messege.alarmbot.core.common.ChatRoomKey
+import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.GroupTextResponse
+import com.messege.alarmbot.domain.model.MainChatTextResponse
+import com.messege.alarmbot.domain.model.None
 import com.messege.alarmbot.domain.model.UserTextResponse
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,7 +28,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
 class CmdProcessor(private val serviceContext: Context) {
-    private val mainOpenChatRoomKey : ChatRoomKey = ChatRoomKey(isGroupConversation = true, roomName = openChatRoomName)
+
     private var mainOpenChatRoomAction : Notification.Action? = null
     private val userChatRoomMap = mutableMapOf<ChatRoomKey, Notification.Action>()
 
@@ -35,9 +36,9 @@ class CmdProcessor(private val serviceContext: Context) {
     private val commandChannel : Channel<Command> = Channel()
     private val channelFlow = commandChannel.receiveAsFlow().shareIn(scope = scope, started = WhileSubscribed())
 
-    private val commonContents = CommonContent(commandChannel)
-    private val questionGame = QuestionGameContent(commandChannel)
-    private val timerContents = TimerContent(commandChannel)
+    private val contents : Array<BaseContent> = arrayOf(
+        CommonContent(commandChannel), QuestionGameContent(commandChannel), TimerContent(commandChannel)
+    )
 
     init{
         scope.launch {
@@ -48,55 +49,52 @@ class CmdProcessor(private val serviceContext: Context) {
 
     }
 
-    suspend fun deliverNotification(chatRoomKey: ChatRoomKey, action : Notification.Action, user: Person, text : String){
-        Log.i(tag, "[deliver] key : $chatRoomKey")
-        Log.i(tag, "[deliver] userName : ${user.name} / text : $text")
+    suspend fun deliverNotification(chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
         if(!chatRoomKey.isGroupConversation){
+            Logger.e("[deliver.user] key : $chatRoomKey")
+            Logger.e("[deliver.user] userName : ${user.name} / text : $text")
             userChatRoomMap[chatRoomKey] = action
-        }else if(chatRoomKey == mainOpenChatRoomKey){
+        }else if(chatRoomKey == TARGET_KEY){
+            Logger.d("[deliver.main] key : $chatRoomKey")
+            Logger.d("[deliver.main] userName : ${user.name} / text : $text")
             mainOpenChatRoomAction = action
         }
-        commonContents.request(chatRoomKey = chatRoomKey, user = user, text = text)
-        questionGame.request(chatRoomKey = chatRoomKey, user = user, text = text)
-        timerContents.request(chatRoomKey = chatRoomKey, user = user, text = text)
+
+        for(content in contents) content.request(chatRoomKey = chatRoomKey, user = user, text = text)
     }
 
     private fun handleCommand(command: Command){
-        Log.i(tag, "[command] ${command.javaClass.simpleName} / mainOpenChatRoomAction : $mainOpenChatRoomAction")
+        if(command !is None) {
+            Logger.v("[command] $command")
+        }
         when(command){
-            is GroupTextResponse -> {
+            is MainChatTextResponse -> {
                 mainOpenChatRoomAction?.let { action ->
                     sendActionText(serviceContext, action, command.text)
                 }
             }
             is UserTextResponse -> {
-                userChatRoomMap[ChatRoomKey(isGroupConversation = false, roomName = command.userName)]?.let { action ->
+                userChatRoomMap[command.userKey]?.let { action ->
                     sendActionText(serviceContext, action, command.text)
                 }
             }
             else -> {}
         }
     }
-
-
 }
 
-fun sendActionText(context : Context, action: Notification.Action, text : String){
-    for (input in action.remoteInputs ?: emptyArray()) {
-        val intent = Intent()
-        val remoteInputs = mutableMapOf<String, Any>()
-
-        remoteInputs[input.resultKey] = text
-        val bundle = Bundle()
-        for ((inputKey, value) in remoteInputs) {
-            bundle.putCharSequence(inputKey, value.toString())
+fun sendActionText(context: Context, action: Notification.Action, text: String) {
+    val firstInput = action.remoteInputs?.firstOrNull() ?: return
+    val intent = Intent().apply {
+        val bundle = Bundle().apply {
+            putCharSequence(firstInput.resultKey, text)
         }
-        RemoteInput.addResultsToIntent(action.remoteInputs, intent, bundle)
+        RemoteInput.addResultsToIntent(arrayOf(firstInput), this, bundle)
+    }
 
-        try {
-            action.actionIntent.send(context, 0, intent)
-        } catch (e: PendingIntent.CanceledException) {
-            e.printStackTrace()
-        }
+    try {
+        action.actionIntent.send(context, 0, intent)
+    } catch (e: PendingIntent.CanceledException) {
+        e.printStackTrace()
     }
 }

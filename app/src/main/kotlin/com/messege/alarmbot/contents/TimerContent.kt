@@ -1,13 +1,12 @@
 package com.messege.alarmbot.contents
 
 import android.app.Person
-import android.util.Log
 import androidx.core.text.isDigitsOnly
-import com.messege.alarmbot.core.common.tag
-import com.messege.alarmbot.domain.model.ChatRoomKey
+import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.GroupTextResponse
+import com.messege.alarmbot.domain.model.MainChatTextResponse
 import com.messege.alarmbot.domain.model.None
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -29,7 +28,7 @@ class TimerContent(override val commandChannel : Channel<Command>) : BaseContent
 
         if(textList[0] == "t"){
             val (tempMinute, tempName, isEndCommand) = extractInfo(textList)
-            Log.i(tag, "minute : $tempMinute, name : $tempName, isEndCommand : $isEndCommand")
+            Logger.i("minute : $tempMinute, name : $tempName, isEndCommand : $isEndCommand")
 
             val command = if(isStart){
                 val minute = timer.getRemainingTime()/ 60
@@ -38,18 +37,18 @@ class TimerContent(override val commandChannel : Channel<Command>) : BaseContent
                 if(isEndCommand){
                     clearTimer()
                 }
-                GroupTextResponse(text = "${if(isEndCommand) "종료 $nickName : " else ""}$info ")
+                MainChatTextResponse(text = "${if(isEndCommand) "종료 $nickName : " else ""}$info ")
             }else if(!isEndCommand){
                 startTimer(minute = tempMinute, name = tempName)
                 timer.start(
                     onLastMinute = {
-                        commandChannel.send(GroupTextResponse(text = "$nickName 1분 남음"))
+                        commandChannel.send(MainChatTextResponse(text = "$nickName 1분 남음"))
                     }
                 ) {
                     clearTimer()
-                    commandChannel.send(GroupTextResponse(text = "타이머 종료"))
+                    commandChannel.send(MainChatTextResponse(text = "타이머 종료"))
                 }
-                GroupTextResponse(text = "타이머 시작 : $targetMinute 분")
+                MainChatTextResponse(text = "타이머 시작 : $targetMinute 분")
             }else{
                 None
             }
