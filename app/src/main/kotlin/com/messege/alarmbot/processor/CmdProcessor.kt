@@ -67,10 +67,11 @@ class CmdProcessor(
         messageDatabaseDao.insertMessage(
             MessageData(
                 postTime = postTime,
-                userName = "${user.name}",
                 message = text,
-                roomKey = chatRoomKey.roomKey,
-                userKey = "$${user.key}"
+                userName = "${user.name}",
+                userKey = "$${user.key}",
+                roomName = chatRoomKey.roomName,
+                roomKey = chatRoomKey.roomKey
             )
         )
 

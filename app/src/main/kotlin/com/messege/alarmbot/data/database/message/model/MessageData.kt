@@ -8,10 +8,11 @@ import androidx.room.PrimaryKey
 @Keep
 data class MessageData(
     val postTime: Long,
-    val userName: String,
     val message: String,
-    val roomKey: String,
-    val userKey: String
+    val userName: String,
+    val userKey: String,
+    val roomName: String,
+    val roomKey: String
 ) {
     @PrimaryKey(autoGenerate = true) var idx: Long = 0
 }
