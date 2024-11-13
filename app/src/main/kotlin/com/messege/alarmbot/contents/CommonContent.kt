@@ -5,8 +5,6 @@ import com.messege.alarmbot.core.common.helpKeyword
 import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.CommonText
-import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.MainChatTextResponse
 import kotlinx.coroutines.channels.Channel
 
 class CommonContent(override val commandChannel : Channel<Command>) : BaseContent{

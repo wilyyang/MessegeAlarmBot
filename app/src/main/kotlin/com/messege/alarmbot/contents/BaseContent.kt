@@ -2,7 +2,6 @@ package com.messege.alarmbot.contents
 
 import android.app.Person
 import com.messege.alarmbot.core.common.ChatRoomKey
-import com.messege.alarmbot.domain.model.Command
 import kotlinx.coroutines.channels.Channel
 
 interface BaseContent{

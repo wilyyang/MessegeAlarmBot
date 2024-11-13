@@ -8,9 +8,6 @@ import com.messege.alarmbot.core.common.QuestionGameText
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.core.common.questionGameEnd
 import com.messege.alarmbot.core.common.questionGameRule
-import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.MainChatTextResponse
-import com.messege.alarmbot.domain.model.UserTextResponse
 import kotlinx.coroutines.channels.Channel
 
 data class UserKey(val name: String, val key: String)

@@ -15,6 +15,8 @@ import com.messege.alarmbot.core.common.KAKAO_PACKAGE_NAME
 import com.messege.alarmbot.core.common.REPLY_ACTION_INDEX
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.processor.CmdProcessor
+import com.messege.alarmbot.processor.CmdProcessorEntryPoint
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -24,11 +26,15 @@ const val NOTIFICATION_TITLE : String = "AlarmBot"
 const val SERVICE_ID : Int = 18541
 
 class AlarmBotNotificationListenerService : NotificationListenerService() {
-    private val cmdProcessor = CmdProcessor(this)
+    private lateinit var cmdProcessor: CmdProcessor
     private val serviceScope = CoroutineScope(Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
+
+        val entryPoint = EntryPointAccessors.fromApplication(applicationContext, CmdProcessorEntryPoint::class.java)
+        cmdProcessor = entryPoint.getCmdProcessor()
+
         val notificationChannel = NotificationChannel(NOTIFICATION_ID, NOTIFICATION_TITLE, NotificationManager.IMPORTANCE_HIGH)
         val notificationManager = getSystemService(NotificationManager::class.java)
         val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_ID)

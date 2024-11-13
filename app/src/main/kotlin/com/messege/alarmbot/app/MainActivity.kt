@@ -18,9 +18,11 @@ import android.widget.Toast
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import com.messege.alarmbot.core.presentation.compose.theme.AlarmBotTheme
+import dagger.hilt.android.AndroidEntryPoint
 
 const val ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners"
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val notificationPermissionRequestCode = 1
 

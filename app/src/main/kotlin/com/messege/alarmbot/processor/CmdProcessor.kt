@@ -12,10 +12,10 @@ import com.messege.alarmbot.contents.CommonContent
 import com.messege.alarmbot.contents.QuestionGameContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
-import com.messege.alarmbot.domain.model.Command
-import com.messege.alarmbot.domain.model.MainChatTextResponse
-import com.messege.alarmbot.domain.model.None
-import com.messege.alarmbot.domain.model.UserTextResponse
+import com.messege.alarmbot.contents.Command
+import com.messege.alarmbot.contents.MainChatTextResponse
+import com.messege.alarmbot.contents.None
+import com.messege.alarmbot.contents.UserTextResponse
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
-class CmdProcessor(private val serviceContext: Context) {
+class CmdProcessor(private val applicationContext: Context) {
 
     private var mainOpenChatRoomAction : Notification.Action? = null
     private val userChatRoomMap = mutableMapOf<ChatRoomKey, Notification.Action>()
@@ -69,12 +69,12 @@ class CmdProcessor(private val serviceContext: Context) {
         when(command){
             is MainChatTextResponse -> {
                 mainOpenChatRoomAction?.let { action ->
-                    sendActionText(serviceContext, action, command.text)
+                    sendActionText(applicationContext, action, command.text)
                 }
             }
             is UserTextResponse -> {
                 userChatRoomMap[command.userKey]?.let { action ->
-                    sendActionText(serviceContext, action, command.text)
+                    sendActionText(applicationContext, action, command.text)
                 }
             }
             else -> {}

@@ -1,4 +1,4 @@
-package com.messege.alarmbot.domain.model
+package com.messege.alarmbot.contents
 
 import com.messege.alarmbot.core.common.ChatRoomKey
 
