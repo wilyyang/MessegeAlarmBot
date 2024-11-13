@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat
 import com.messege.alarmbot.core.common.KAKAO_PACKAGE_NAME
 import com.messege.alarmbot.core.common.REPLY_ACTION_INDEX
 import com.messege.alarmbot.core.common.ChatRoomKey
-import com.messege.alarmbot.core.common.DEFAULT_ROOM_NAME
 import com.messege.alarmbot.processor.CmdProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +66,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
                 val action = notification?.actions?.get(REPLY_ACTION_INDEX)
                 if (user != null && key != null && action != null) {
                     serviceScope.launch {
-                        cmdProcessor.deliverNotification(chatRoomKey = key, user = user, action = action, text = text)
+                        cmdProcessor.deliverNotification(postTime = postTime, chatRoomKey = key, user = user, action = action, text = text)
                     }
                 }
             }
@@ -87,11 +86,10 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     private fun Notification.getKey(sbnKey: String, user : Person?) : ChatRoomKey? {
         val isGroupConversation = extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION, false)
         val roomName = extras.getString(Notification.EXTRA_SUB_TEXT, "")
+        val sbnIdKey = sbnKey.split("|")[3]
 
         return if (isGroupConversation && roomName.isNotBlank()) {
-            // 방제 변경 문제 -> roomKey 활용
-            // ChatRoomKey(isGroupConversation = true, roomName = roomName, roomKey = sbnKey)
-            ChatRoomKey(isGroupConversation = true, roomName = DEFAULT_ROOM_NAME, roomKey = sbnKey)
+            ChatRoomKey(isGroupConversation = true, roomName = roomName, roomKey = sbnIdKey)
         } else if(!isGroupConversation && user != null && user.name != null && user.key != null){
             ChatRoomKey(isGroupConversation = false, roomName = "${user.name}", roomKey = "${user.key}")
         } else{

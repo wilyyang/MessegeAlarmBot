@@ -9,5 +9,5 @@ interface BaseContent{
     val commandChannel : Channel<Command>
     val contentsName : String
 
-    suspend fun request(chatRoomKey: ChatRoomKey, user : Person, text : String)
+    suspend fun request(postTime : Long, chatRoomKey: ChatRoomKey, user : Person, text : String)
 }

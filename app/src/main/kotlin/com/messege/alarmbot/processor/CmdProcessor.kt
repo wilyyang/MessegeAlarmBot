@@ -10,7 +10,6 @@ import android.os.Bundle
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.contents.CommonContent
 import com.messege.alarmbot.contents.QuestionGameContent
-import com.messege.alarmbot.contents.TimerContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.domain.model.Command
@@ -37,7 +36,7 @@ class CmdProcessor(private val serviceContext: Context) {
     private val channelFlow = commandChannel.receiveAsFlow().shareIn(scope = scope, started = WhileSubscribed())
 
     private val contents : Array<BaseContent> = arrayOf(
-        CommonContent(commandChannel), QuestionGameContent(commandChannel), TimerContent(commandChannel)
+        CommonContent(commandChannel), QuestionGameContent(commandChannel)
     )
 
     init{
@@ -49,7 +48,7 @@ class CmdProcessor(private val serviceContext: Context) {
 
     }
 
-    suspend fun deliverNotification(chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
+    suspend fun deliverNotification(postTime : Long, chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
         if(!chatRoomKey.isGroupConversation){
             Logger.e("[deliver.user] key : $chatRoomKey")
             Logger.e("[deliver.user] userName : ${user.name} / text : $text")
@@ -60,7 +59,7 @@ class CmdProcessor(private val serviceContext: Context) {
             mainOpenChatRoomAction = action
         }
 
-        for(content in contents) content.request(chatRoomKey = chatRoomKey, user = user, text = text)
+        for(content in contents) content.request(postTime = postTime, chatRoomKey = chatRoomKey, user = user, text = text)
     }
 
     private fun handleCommand(command: Command){
