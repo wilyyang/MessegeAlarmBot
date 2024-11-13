@@ -16,6 +16,8 @@ import com.messege.alarmbot.contents.Command
 import com.messege.alarmbot.contents.MainChatTextResponse
 import com.messege.alarmbot.contents.None
 import com.messege.alarmbot.contents.UserTextResponse
+import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
+import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +28,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 
-class CmdProcessor(private val applicationContext: Context) {
+class CmdProcessor(
+    private val applicationContext: Context,
+    private val messageDatabaseDao: MessageDatabaseDao
+) {
 
     private var mainOpenChatRoomAction : Notification.Action? = null
     private val userChatRoomMap = mutableMapOf<ChatRoomKey, Notification.Action>()
@@ -58,6 +63,16 @@ class CmdProcessor(private val applicationContext: Context) {
             Logger.d("[deliver.main] userName : ${user.name} / text : $text")
             mainOpenChatRoomAction = action
         }
+
+        messageDatabaseDao.insertMessage(
+            MessageData(
+                postTime = postTime,
+                userName = "${user.name}",
+                message = text,
+                roomKey = chatRoomKey.roomKey,
+                userKey = "$${user.key}"
+            )
+        )
 
         for(content in contents) content.request(postTime = postTime, chatRoomKey = chatRoomKey, user = user, text = text)
     }

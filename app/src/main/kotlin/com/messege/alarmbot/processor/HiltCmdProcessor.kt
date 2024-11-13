@@ -1,6 +1,7 @@
 package com.messege.alarmbot.processor
 
 import android.content.Context
+import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.EntryPoint
@@ -20,7 +21,10 @@ interface CmdProcessorEntryPoint {
 object CmdProcessorModule {
     @Singleton
     @Provides
-    fun provideCmdProcessor(@ApplicationContext context: Context): CmdProcessor {
-        return CmdProcessor(context)
+    fun provideCmdProcessor(
+        @ApplicationContext context : Context,
+        messageDatabaseDao : MessageDatabaseDao
+    ) : CmdProcessor {
+        return CmdProcessor(context, messageDatabaseDao)
     }
 }
