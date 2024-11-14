@@ -18,6 +18,7 @@ import com.messege.alarmbot.contents.None
 import com.messege.alarmbot.contents.UserTextResponse
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
+import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,7 @@ import kotlinx.coroutines.launch
 
 class CmdProcessor(
     private val applicationContext: Context,
+    private val userDatabaseDao: UserDatabaseDao,
     private val messageDatabaseDao: MessageDatabaseDao
 ) {
 
@@ -40,23 +42,29 @@ class CmdProcessor(
     private val commandChannel : Channel<Command> = Channel()
     private val channelFlow = commandChannel.receiveAsFlow().shareIn(scope = scope, started = WhileSubscribed())
 
-    private val contents : Array<BaseContent> = arrayOf(
-        CommonContent(commandChannel), QuestionGameContent(commandChannel)
+    private var contents: Array<BaseContent> = arrayOf(
+        CommonContent(
+            commandChannel = commandChannel,
+            insertUser = userDatabaseDao::insertUser,
+            getUserNameList = userDatabaseDao::getUserNames
+        ),
+
+        QuestionGameContent(commandChannel)
     )
 
     init{
+
         scope.launch {
             channelFlow.collect { command ->
                 handleCommand(command)
             }
         }
-
     }
 
     suspend fun deliverNotification(postTime : Long, chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
         if(!chatRoomKey.isGroupConversation){
-            Logger.e("[deliver.user] key : $chatRoomKey")
-            Logger.e("[deliver.user] userName : ${user.name} / text : $text")
+            Logger.w("[deliver.user] key : $chatRoomKey")
+            Logger.w("[deliver.user] userName : ${user.name} / text : $text")
             userChatRoomMap[chatRoomKey] = action
         }else if(chatRoomKey == TARGET_KEY){
             Logger.d("[deliver.main] key : $chatRoomKey")

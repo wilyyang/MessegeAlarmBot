@@ -10,8 +10,8 @@ object CommonText{
             "- .다섯고개종료"
 
     fun alreadyUser(name: String, alreadyUsers : List<String>) : String{
-        val alreadyText = alreadyUsers.joinToString { ", " }
-        return "${name}님 안녕하세요. ${name}님은 이전에 ${alreadyText}로 오셨군요"
+        val alreadyText = alreadyUsers.joinToString(", ")
+        return "${name}님 안녕하세요. 이전에 $alreadyText 닉네임으로 오셨군요"
     }
 }
 
