@@ -4,6 +4,8 @@ import android.app.Person
 import com.messege.alarmbot.core.common.arrayOfPlaces
 import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.ChatRoomKey
+import com.messege.alarmbot.core.common.DEBUG_KEY
+import com.messege.alarmbot.core.common.MAIN_KEY
 import com.messege.alarmbot.core.common.QuestionGameText
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.core.common.questionGameEnd
@@ -31,7 +33,7 @@ class QuestionGameContent(override val commandChannel: Channel<Command>) : BaseC
         user: Person,
         text: String
     ) {
-        if (chatRoomKey == TARGET_KEY) {
+        if (chatRoomKey == MAIN_KEY || chatRoomKey == DEBUG_KEY) {
             when (text) {
                 "$hostKeyword${contentsName} $questionGameRule",
                 "$hostKeyword${contentsName}${questionGameRule}" -> {
