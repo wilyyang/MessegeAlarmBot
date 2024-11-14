@@ -17,8 +17,6 @@ import com.messege.alarmbot.contents.MafiaGameContent
 import com.messege.alarmbot.contents.MainChatTextResponse
 import com.messege.alarmbot.contents.None
 import com.messege.alarmbot.contents.UserTextResponse
-import com.messege.alarmbot.core.common.DEBUG_KEY
-import com.messege.alarmbot.core.common.MAIN_KEY
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
@@ -71,7 +69,7 @@ class CmdProcessor(
             Logger.w("[deliver.user] key : $chatRoomKey")
             Logger.w("[deliver.user] userName : ${user.name} / text : $text")
             userChatRoomMap[chatRoomKey] = action
-        }else if(chatRoomKey == MAIN_KEY || chatRoomKey == DEBUG_KEY){
+        }else if(chatRoomKey == TARGET_KEY){
             Logger.d("[deliver.main] key : $chatRoomKey")
             Logger.d("[deliver.main] userName : ${user.name} / text : $text")
             mainOpenChatRoomAction = action
