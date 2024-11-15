@@ -4,9 +4,9 @@ import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "UserData")
+@Entity(tableName = "UserNameData")
 @Keep
-data class UserData(
+data class UserNameData(
     val updateTime: Long,
     val userKey: String,
     val name: String

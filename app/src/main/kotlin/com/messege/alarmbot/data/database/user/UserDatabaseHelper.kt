@@ -6,14 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
-import com.messege.alarmbot.data.database.user.model.UserData
+import com.messege.alarmbot.data.database.user.model.UserNameData
 import kotlinx.coroutines.CoroutineScope
 
 @Database(
     version = 1,
     exportSchema = true,
     entities = [
-        UserData::class
+        UserNameData::class
     ]
 )
 abstract class UserDatabaseHelper : RoomDatabase() {

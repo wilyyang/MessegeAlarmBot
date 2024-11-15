@@ -51,8 +51,8 @@ class CmdProcessor(
             getUserNameList = userDatabaseDao::getUserNames
         ),
 
-        // QuestionGameContent(commandChannel),
-        // MafiaGameContent(commandChannel)
+         QuestionGameContent(commandChannel),
+         MafiaGameContent(commandChannel)
     )
 
     init{

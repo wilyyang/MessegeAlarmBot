@@ -6,12 +6,12 @@ import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.CommonText
 import com.messege.alarmbot.core.common.TARGET_KEY
-import com.messege.alarmbot.data.database.user.model.UserData
+import com.messege.alarmbot.data.database.user.model.UserNameData
 import kotlinx.coroutines.channels.Channel
 
 class CommonContent(
     override val commandChannel: Channel<Command>,
-    private val insertUser: suspend (UserData) -> Unit,
+    private val insertUser: suspend (UserNameData) -> Unit,
     private val getUserNameList: suspend (String) -> List<String>
 ) : BaseContent {
     override val contentsName: String = "기본"
@@ -27,9 +27,9 @@ class CommonContent(
                     val currentKey = "${user.key}"
                     val userNameList = getUserNameList(currentKey)
                     if(userNameList.isEmpty()){
-                        insertUser(UserData(updateTime = postTime, userKey = currentKey, name = currentName))
+                        insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
                     }else if(userNameList.first() != currentName){
-                        insertUser(UserData(updateTime = postTime, userKey = currentKey, name = currentName))
+                        insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
                         commandChannel.send(MainChatTextResponse(text = CommonText.alreadyUser(name = currentName, alreadyUsers = userNameList)))
                     }
                 }

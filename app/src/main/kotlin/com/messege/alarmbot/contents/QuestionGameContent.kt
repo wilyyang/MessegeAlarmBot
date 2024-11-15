@@ -44,7 +44,7 @@ class QuestionGameContent(override val commandChannel: Channel<Command>) : BaseC
                         commandChannel.send(
                             MainChatTextResponse(
                                 text = QuestionGameText.hostStartGame(
-                                    hostName = "${user.name}",
+                                    hostName = gameState.hostKey!!.name,
                                     totalWords = totalWords
                                 )
                             )
@@ -72,33 +72,61 @@ class QuestionGameContent(override val commandChannel: Channel<Command>) : BaseC
                     }
                 }
 
-
                 else -> {
-                    if (gameState.isStart && user.key != gameState.hostKey?.key) {
-                        if (gameState.answer != text) {
-                            val isAlreadyAnswer = userWords.firstOrNull { it.second == text } != null
-                            if (isAlreadyAnswer) {
+                    val isExistWord = totalWords.firstOrNull { it == text } != null
+                    /**
+                     * * 게임 진행중 / 단어 선택됨 / 호스트 아님 / 단어 후보에 있음
+                     */
+                    if (gameState.isStart && gameState.answer.isNotBlank() && "${user.key}" != gameState.hostKey!!.key && isExistWord) {
+                        val isAlreadyAnswer = userWords.firstOrNull { it.second == text } != null
+                        if (isAlreadyAnswer) {
+                            commandChannel.send(
+                                MainChatTextResponse(
+                                    text = QuestionGameText.userSelectAlreadyWord(
+                                        userName = "${user.name}",
+                                        text = text,
+                                        userWords = userWords,
+                                        notSelectWords = notSelectWords
+                                    )
+                                )
+                            )
+                        } else {
+                            /**
+                             * * 최초 선택 단어
+                             *
+                             * - 진행 단계 증가
+                             * - 유저 단어에 추가
+                             * - 단어 후보 에서 제거
+                             */
+                            gameState.step++
+                            userWords.add(
+                                UserKey(
+                                    name = "${user.name}",
+                                    key = "${user.key}"
+                                ) to text
+                            )
+                            notSelectWords.remove(text)
+
+                            if (gameState.answer == text) {
                                 commandChannel.send(
                                     MainChatTextResponse(
-                                        text = QuestionGameText.userSelectAlreadyWord(
+                                        text = QuestionGameText.userSelectAnswer(
                                             userName = "${user.name}",
-                                            text = text,
+                                            answer = text,
                                             userWords = userWords,
                                             notSelectWords = notSelectWords
                                         )
                                     )
                                 )
+                                clearGame()
                             } else {
-                                gameState.step++
-                                userWords.add(UserKey(name = "${user.name}", key = "${user.key}") to text)
-
                                 if (gameState.step > 4) {
                                     commandChannel.send(
                                         MainChatTextResponse(
                                             text = QuestionGameText.userSelectNotAnswerAndHostWin(
                                                 userName = "${user.name}",
                                                 text = text,
-                                                hostName = gameState.hostKey?.name ?: "",
+                                                hostName = gameState.hostKey!!.name,
                                                 answer = gameState.answer,
                                                 userWords = userWords,
                                                 notSelectWords = notSelectWords
@@ -119,41 +147,28 @@ class QuestionGameContent(override val commandChannel: Channel<Command>) : BaseC
                                     )
                                 }
                             }
-                        } else {
-                            commandChannel.send(
-                                MainChatTextResponse(
-                                    text = QuestionGameText.userSelectAnswer(
-                                        userName = "${user.name}",
-                                        answer = text,
-                                        userWords = userWords,
-                                        notSelectWords = notSelectWords
-                                    )
-                                )
-                            )
-                            clearGame()
                         }
                     }
                 }
             }
         } else {
+            /**
+             * * 게임 진행중 / 정답 선택중 / 호스트
+             */
             if (gameState.isStart && gameState.answer.isBlank() && "${gameState.hostKey?.key}" == user.key) {
                 if (totalWords.contains(text)) {
                     gameState.answer = text
                     commandChannel.send(
                         MainChatTextResponse(
                             text = QuestionGameText.hostSelectCompleteAnswer(
-                                "${gameState.hostKey?.name}"
+                                hostName = gameState.hostKey!!.name
                             )
                         )
                     )
                 } else {
                     commandChannel.send(
                         UserTextResponse(
-                            userKey = ChatRoomKey(
-                                false,
-                                "${user.name}",
-                                "${user.key}"
-                            ), text = QuestionGameText.NOT_ANSWER
+                            userKey = chatRoomKey, text = QuestionGameText.NOT_ANSWER
                         )
                     )
                 }
@@ -164,16 +179,20 @@ class QuestionGameContent(override val commandChannel: Channel<Command>) : BaseC
     private fun startGame(host: Person) {
         gameState = GameState(
             isStart = true,
-            hostKey = UserKey(name = host.name.toString(), key = host.key.toString())
+            hostKey = UserKey(name = "${host.name}", key = "${host.key}")
         )
         totalWords.clear()
+        notSelectWords.clear()
         userWords.clear()
+
         totalWords.addAll(arrayOfPlaces.toList().shuffled().take(10))
+        notSelectWords.addAll(totalWords)
     }
 
     private fun clearGame() {
         gameState = GameState()
         totalWords.clear()
+        notSelectWords.clear()
         userWords.clear()
     }
 }
