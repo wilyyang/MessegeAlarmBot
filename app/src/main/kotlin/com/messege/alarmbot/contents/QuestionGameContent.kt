@@ -10,7 +10,6 @@ import com.messege.alarmbot.core.common.questionGameEnd
 import com.messege.alarmbot.core.common.questionGameRule
 import kotlinx.coroutines.channels.Channel
 
-data class UserKey(val name: String, val key: String)
 data class GameState(
     val isStart: Boolean = false,
     var step: Int = 0,

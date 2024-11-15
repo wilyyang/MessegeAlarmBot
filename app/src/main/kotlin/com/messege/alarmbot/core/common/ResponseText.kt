@@ -8,8 +8,9 @@ object CommonText{
             "- .다섯고개\n" +
             "- .다섯고개규칙\n" +
             "- .다섯고개종료\n" +
-            "- 마피아?\n" +
-            "- 마피아 (준비중)"
+            "- .마피아\n" +
+            "- .마피아규칙\n" +
+            "- .마피아종료\n"
 
     fun alreadyUser(name: String, alreadyUsers : List<String>) : String{
         val alreadyText = alreadyUsers.joinToString(", ")
