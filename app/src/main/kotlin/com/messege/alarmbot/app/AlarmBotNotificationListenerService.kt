@@ -97,7 +97,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         return if (isGroupConversation && roomName.isNotBlank()) {
             ChatRoomKey(isGroupConversation = true, roomName = roomName, roomKey = sbnIdKey)
         } else if(!isGroupConversation && user != null && user.name != null){
-            ChatRoomKey(isGroupConversation = false, roomName = roomName, roomKey = "${user.name}")
+            ChatRoomKey(isGroupConversation = false, roomName = "${user.name}", roomKey = "${user.name}")
         } else{
             null
         }

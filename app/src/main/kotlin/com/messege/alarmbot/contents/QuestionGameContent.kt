@@ -155,7 +155,7 @@ class QuestionGameContent(override val commandChannel: Channel<Command>) : BaseC
             /**
              * * 게임 진행중 / 정답 선택중 / 호스트
              */
-            if (gameState.isStart && gameState.answer.isBlank() && "${gameState.hostKey?.key}" == user.key) {
+            if (gameState.isStart && gameState.answer.isBlank() && "${gameState.hostKey?.name}" == user.name) {
                 if (totalWords.contains(text)) {
                     gameState.answer = text
                     commandChannel.send(
