@@ -30,7 +30,7 @@ object MafiaText {
     const val GAME_WAIT_END = "[인원이 마감되었거나 게임 진행중이 아닙니다.]"
 
 
-    fun gameRemainingTime(state: String, total: Int, remain: Int) = "[$state 단계 남은 시간 : $remain / $total 초]"
+    fun gameRemainingTime(state: String, total: Int, remain: Int) = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]"
 
     fun gameEndWaitTimeOut(num : Int) = "[시간 만료. 인원이 부족하여 게임을 시작할 수 없습니다. ($num 명) ]"
 
@@ -43,7 +43,7 @@ object MafiaText {
     fun hostStartGame(hostName: String) =
         "[마피아 게임 시작]\n\n" +
                 "* 호스트: $hostName\n"+
-                "!! 마피아 게임을 원하면 같은 닉네임으로 봇에게 \"참여\"라고 말해주세요.\n" +
+                "!! 마피아 게임을 원하면 같은 닉네임으로 봇에게 개인톡으로 \"참여\"라고 말해주세요.\n" +
                 "!! 인원이 충분하면 $hostName 님은 \".참여종료\"라고 톡해주세요."
 
     fun userInviteGame(userName: String, players : List<Player>) = "[$userName 가 게임에 참여했습니다]\n${playerProgressToText(players)}"

@@ -2,12 +2,15 @@ package com.messege.alarmbot.contents.mafia
 
 
 sealed class MafiaGameState{
-    data object End : MafiaGameState()
+    abstract val korName: String
+
+    data class End(override val korName : String = "종료") : MafiaGameState()
 
     sealed class Play : MafiaGameState(){
         abstract val time: Int
 
         data class Wait(
+            override val korName : String = "참여 대기",
             val players : MutableList<Player.None> = mutableListOf()
         ) : Play() {
             override val time = 3 * 60
@@ -16,6 +19,7 @@ sealed class MafiaGameState{
         }
 
         data class Check(
+            override val korName : String = "참여 확인",
             val players : MutableList<Player.None>
         ) : Play() {
             override val time = players.size * 30
@@ -24,6 +28,7 @@ sealed class MafiaGameState{
         }
 
         data class AssignJob(
+            override val korName : String = "직업 할당",
             val players : MutableList<Player.None>
         ) : Play() {
             override val time = players.size * 10
@@ -75,6 +80,7 @@ sealed class MafiaGameState{
 
             sealed class CitizenTime : Progress(){
                 data class Talk(
+                    override val korName : String = "대화",
                     override val survivors : MutableList<Player.Assign>
                 ) : CitizenTime(){
                     override val time = survivors.size * 30
@@ -83,6 +89,7 @@ sealed class MafiaGameState{
                 }
 
                 data class Vote(
+                    override val korName : String = "투표",
                     override val survivors : MutableList<Player.Assign>
                 ) : CitizenTime() {
                     override val time = survivors.size * 15
@@ -100,6 +107,7 @@ sealed class MafiaGameState{
                 }
 
                 data class VoteComplete(
+                    override val korName : String = "투표 완료",
                     val votedCount : List<Pair<String, Int>>,
                     override val survivors : MutableList<Player.Assign>
                 ) : CitizenTime(){
@@ -123,6 +131,7 @@ sealed class MafiaGameState{
                 }
 
                 data class Determine(
+                    override val korName : String = "투표 결과",
                     override val survivors : MutableList<Player.Assign>,
                     val votedMan : Player.Assign
                 ) : CitizenTime(){
@@ -136,6 +145,7 @@ sealed class MafiaGameState{
                 abstract val mafias: List<Player.Assign.Mafia>
 
                 data class Kill(
+                    override val korName : String = "암살",
                     override val survivors : MutableList<Player.Assign>,
                     override val mafias : List<Player.Assign.Mafia>
                 )  : MafiaTime(){
@@ -154,6 +164,7 @@ sealed class MafiaGameState{
                 }
 
                 data class KillComplete(
+                    override val korName : String = "암살 완료",
                     val targetedCount : List<Pair<String, Int>>,
                     override val survivors : MutableList<Player.Assign>,
                     override val mafias : List<Player.Assign.Mafia>
@@ -178,6 +189,7 @@ sealed class MafiaGameState{
                 }
 
                 data class Determine(
+                    override val korName : String = "암살 결과",
                     override val survivors : MutableList<Player.Assign>,
                     override val mafias : List<Player.Assign.Mafia>,
                     val targetedMan : Player.Assign
@@ -190,6 +202,7 @@ sealed class MafiaGameState{
             }
 
             data class PoliceTime(
+                override val korName : String = "경찰 수사",
                 override val survivors : MutableList<Player.Assign>
             ) : Progress() {
                 override val time: Int = 0

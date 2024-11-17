@@ -13,6 +13,7 @@ import com.messege.alarmbot.core.common.gameRemainingTime
 import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.participateGame
 import com.messege.alarmbot.core.common.questionGameRule
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,11 +35,12 @@ class MafiaGameContent(
     private var metaData: MafiaPlayMetaData = MafiaPlayMetaData()
 
     private val timer = Timer()
-    private val _stateFlow = MutableStateFlow<MafiaGameState>(MafiaGameState.End)
+    private val _stateFlow = MutableStateFlow<MafiaGameState>(MafiaGameState.End())
 
     init {
         scope.launch {
             _stateFlow.collect { state ->
+                Logger.e("[mafia.state] ${state.javaClass.simpleName}")
                 when(state){
                     is MafiaGameState.Play.Wait -> {
                         timer.start(state.time) {
@@ -115,7 +117,7 @@ class MafiaGameContent(
                 commandChannel.send(
                     MainChatTextResponse(
                         text = MafiaText.gameRemainingTime(
-                            state = gameState.javaClass.simpleName, total = gameState.time, remain = current
+                            state = gameState.korName, total = gameState.time, remain = current
                         )
                     )
                 )
@@ -202,6 +204,6 @@ class MafiaGameContent(
 
     private fun endGame() {
         metaData = MafiaPlayMetaData()
-        _stateFlow.value = MafiaGameState.End
+        _stateFlow.value = MafiaGameState.End()
     }
 }
