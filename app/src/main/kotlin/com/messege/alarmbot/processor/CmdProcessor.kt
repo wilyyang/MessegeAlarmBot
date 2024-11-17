@@ -13,7 +13,7 @@ import com.messege.alarmbot.contents.QuestionGameContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.contents.Command
-import com.messege.alarmbot.contents.MafiaGameContent
+import com.messege.alarmbot.contents.mafia.MafiaGameContent
 import com.messege.alarmbot.contents.MainChatTextResponse
 import com.messege.alarmbot.contents.None
 import com.messege.alarmbot.contents.UserTextResponse
@@ -52,7 +52,7 @@ class CmdProcessor(
         ),
 
          QuestionGameContent(commandChannel),
-         MafiaGameContent(commandChannel)
+         MafiaGameContent(commandChannel, scope)
     )
 
     init{
