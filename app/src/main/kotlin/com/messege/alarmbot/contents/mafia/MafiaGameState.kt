@@ -213,7 +213,13 @@ sealed class MafiaGameState{
             ) : Progress() {
                 override val time: Int = 0
 
-                fun toTalk() = CitizenTime.Talk(survivors = survivors)
+                fun toTalk() : CitizenTime.Talk{
+                    survivors.forEach {
+                        it.reset()
+                    }
+
+                    return CitizenTime.Talk(survivors = survivors)
+                }
             }
         }
     }

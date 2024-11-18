@@ -39,6 +39,7 @@ object MafiaText {
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다.]"
 
     const val VOTE_RESULT_NOT    = "[누구도 투표로 죽지 않았습니다.]"
+    const val KILL_RESULT_NOT    = "[누구도 암살로 죽지 않았습니다.]"
 
     fun winFool(name : String, players: List<Player>) = "[죽은 $name 님은 바보입니다. 투표로 죽은 바보의 단독 승리입니다!]\n${playerProgressToText(players, true)}"
 
@@ -56,7 +57,14 @@ object MafiaText {
 
     fun gameStateKill(time: Int) = "[밤이 되었습니다. 마피아는 봇에게 개인톡을 하면 서로 대화가 가능합니다. 봇 개인톡으로 죽일 이름을 말해주세요. ($time 초)]"
 
+    fun gameStatePoliceTime(time: Int, players: List<Player>)
+    = "[경찰의 수사시간입니다. 경찰은 봇 개인톡으로 수사 대상을 말해주세요. ($time 초)]\n바보는 시민으로 뜹니다.\n" + playerProgressToText(players)
+
     fun voteKillUser(voteName : String, voteCount : Int) = "[투표로 인해 $voteName 님이 죽었습니다. (투표수 : $voteCount)]"
+
+    fun mafiaKillUser(targetName : String, targetCount : Int) = "[$targetName 님이 마피아에 의해 암살당했습니다.]"
+
+    fun policeMessage(name: String, job : String) = "[$name 의 직업은 $job 입니다.]"
 
     fun gameRemainingTime(state: String, total: Int, remain: Int) = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]"
 
