@@ -1,6 +1,7 @@
 package com.messege.alarmbot.core.common
 
 import com.messege.alarmbot.contents.mafia.Player
+import kotlin.reflect.KClass
 
 object MafiaText {
     const val GAME_RULE = "마피아 게임 설명입니다.\n\n" +
@@ -25,9 +26,17 @@ object MafiaText {
             "7: 마피아2, 바보1, 시민3, 경찰1\n" +
             "8: 마피아3, 시민4, 경찰1"
 
+    const val GAME_END_COMMAND = "[마피아를 종료합니다.]"
     const val GAME_ALREADY_START = "[이미 게임 진행 중입니다.]"
     const val GAME_ALREADY_USER = "[이미 같은 이름의 플레이어가 있습니다.]"
     const val GAME_WAIT_END = "[인원이 마감되었거나 게임 진행중이 아닙니다.]"
+    const val GAME_NOT_START_MORE_PLAYER = "[인원이 부족하여 게임을 시작할 수 없습니다.]"
+    const val GAME_ASSIGN_JOB = "[직업 할당중 ...]"
+
+    const val ASSIGN_JOB_CITIZEN = "[당신은 시민입니다.]"
+    const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다.]"
+    const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다.]"
+    const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다.]"
 
 
     fun gameRemainingTime(state: String, total: Int, remain: Int) = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]"
@@ -36,6 +45,9 @@ object MafiaText {
 
     fun gameWaitTimeOutGoToCheck(players : List<Player>) = "[시간 만료. (${players.size} 명) ]\n* 참여인원\n${playerProgressToText(players)}"
 
+    fun gameEndCheckTimeOut(num : Int) = "[시간 만료. 확인된 인원이 게임을 시작하기에 부족합니다. ($num 명) ]"
+
+    fun gameCheckTimeOutGoToAssign(players : List<Player>) = "[시간 만료. (${players.size} 명) ]\n* 확인인원\n${playerProgressToText(players)}"
 
     fun mafiaMessage(name: String, text : String) =
         "[$name 마피아님이 전달한 메시지]\n$text"
@@ -43,10 +55,19 @@ object MafiaText {
     fun hostStartGame(hostName: String) =
         "[마피아 게임 시작]\n\n" +
                 "* 호스트: $hostName\n"+
-                "!! 마피아 게임을 원하면 같은 닉네임으로 봇에게 개인톡으로 \"참여\"라고 말해주세요.\n" +
+                "!! 마피아를 하려면 채팅에 \"참여\"라고 톡해주세요.\n" +
                 "!! 인원이 충분하면 $hostName 님은 \".참여종료\"라고 톡해주세요."
 
+    fun checkPlayer(hostName: String, players : List<Player>) =
+        "[참여 확인중]\n\n" +
+                "* 호스트: $hostName\n"+
+                "!! ${players.size}인원이 참여했습니다.\n" +
+                "!! 개인톡으로 봇에게 \"확인\"이라고 톡해주세요.\n" +
+                playerProgressToText(players)
+
     fun userInviteGame(userName: String, players : List<Player>) = "[$userName 가 게임에 참여했습니다]\n${playerProgressToText(players)}"
+
+    fun userCheckGame(userName: String) = "[$userName 님의 개인톡이 확인되었습니다]"
 
     private fun playerProgressToText(
         players: List<Player>): String {

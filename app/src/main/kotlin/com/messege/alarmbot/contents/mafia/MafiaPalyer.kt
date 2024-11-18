@@ -6,7 +6,7 @@ enum class Side {
 
 sealed class Player {
     abstract val name : String
-    open var key : String = ""
+    abstract val key : String
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -19,22 +19,22 @@ sealed class Player {
         return 31 * name.hashCode() + key.hashCode()
     }
 
-    data class None(override val name : String) : Player() {
-        fun toCitizen(key : String) = Assign.Citizen(name, key)
-        fun toPolice(key : String) = Assign.Police(name, key)
-        fun toMafia(key : String) = Assign.Mafia(name, key)
-        fun toFool(key : String) = Assign.Fool(name, key)
+    data class None(override val name : String, override var key : String) : Player() {
+        var isCheck : Boolean = false
+
+        fun toCitizen() = Assign.Citizen(name, key)
+        fun toPolice() = Assign.Police(name, key)
+        fun toMafia() = Assign.Mafia(name, key)
+        fun toFool() = Assign.Fool(name, key)
     }
 
     sealed class Assign(open val side : Side): Player() {
         var isSurvive : Boolean = true
 
         var votedName : String = ""
-        var isTalkSkip : Boolean = false
 
         open fun reset() {
             votedName = ""
-            isTalkSkip = false
         }
 
         data class Citizen(override val name : String, override var key : String) : Assign(side = Side.Citizen)

@@ -32,43 +32,43 @@ sealed class MafiaGameState{
             val players : MutableList<Player.None>
         ) : Play() {
             override val time = players.size * 10
-            private val assignedPlayers : MutableList<Player.Assign> = mutableListOf()
+            val assignedPlayers : MutableList<Player.Assign> = mutableListOf()
 
             fun assignJob() {
                 players.shuffle()
                 players.getOrNull(0)?.let {
-                    assignedPlayers.add(it.toMafia(it.key))
+                    assignedPlayers.add(it.toMafia())
                 }
                 players.getOrNull(1)?.let {
-                    assignedPlayers.add(it.toCitizen(it.key))
+                    assignedPlayers.add(it.toCitizen())
                 }
                 players.getOrNull(2)?.let {
-                    assignedPlayers.add(it.toCitizen(it.key))
+                    assignedPlayers.add(it.toCitizen())
                 }
                 players.getOrNull(3)?.let {
-                    assignedPlayers.add(it.toCitizen(it.key))
+                    assignedPlayers.add(it.toCitizen())
                 }
 
                 if(players.size == 5){
-                    assignedPlayers.add(players[4].toFool(players[4].key))
+                    assignedPlayers.add(players[4].toFool())
                 }
 
                 if(players.size == 6){
-                    assignedPlayers.add(players[4].toMafia(players[4].key))
-                    assignedPlayers.add(players[5].toPolice(players[5].key))
+                    assignedPlayers.add(players[4].toMafia())
+                    assignedPlayers.add(players[5].toPolice())
                 }
 
                 if(players.size == 7){
-                    assignedPlayers.add(players[4].toMafia(players[4].key))
-                    assignedPlayers.add(players[5].toPolice(players[5].key))
-                    assignedPlayers.add(players[6].toFool(players[6].key))
+                    assignedPlayers.add(players[4].toMafia())
+                    assignedPlayers.add(players[5].toPolice())
+                    assignedPlayers.add(players[6].toFool())
                 }
 
                 if(players.size == 8){
-                    assignedPlayers.add(players[4].toMafia(players[4].key))
-                    assignedPlayers.add(players[5].toMafia(players[5].key))
-                    assignedPlayers.add(players[6].toPolice(players[6].key))
-                    assignedPlayers.add(players[7].toCitizen(players[7].key))
+                    assignedPlayers.add(players[4].toMafia())
+                    assignedPlayers.add(players[5].toMafia())
+                    assignedPlayers.add(players[6].toPolice())
+                    assignedPlayers.add(players[7].toCitizen())
                 }
             }
 
