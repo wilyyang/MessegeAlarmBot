@@ -46,7 +46,6 @@ class Timer(private val scope: CoroutineScope) {
             timerJob?.cancel()
             Logger.i("[game.timer] : stopped")
             if (!onCompleteCalled) {
-                timeWork.onComplete()
                 onCompleteCalled = true
             }
         }
