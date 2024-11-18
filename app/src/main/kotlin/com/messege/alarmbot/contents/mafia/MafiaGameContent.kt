@@ -28,6 +28,7 @@ import com.messege.alarmbot.core.common.timeSkip
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -76,7 +77,7 @@ class MafiaGameContent(
                                     _stateFlow.value = state.toCheck()
                                 }
                             }
-
+                            delay(500)
                             commandChannel.send(
                                 MainChatTextResponse(
                                     text = MafiaText.hostStartGame(
@@ -98,6 +99,7 @@ class MafiaGameContent(
                                 }
                             }
 
+                            delay(500)
                             commandChannel.send(
                                 MainChatTextResponse(
                                     text = MafiaText.checkPlayer(
@@ -118,6 +120,7 @@ class MafiaGameContent(
 
                             state.assignedPlayers.forEach { player ->
                                 metaData.allPlayers.add(player)
+                                delay(500)
                                 commandChannel.send(
                                     UserTextResponse(
                                         userKey = ChatRoomKey(
@@ -295,6 +298,7 @@ class MafiaGameContent(
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVote()
                 }
+                delay(500)
                 commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateTalk(state.time)))
             }
 
@@ -302,12 +306,14 @@ class MafiaGameContent(
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVoteComplete()
                 }
+                delay(500)
                 commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateVote(state.time)))
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.VoteComplete -> {
                 _timerFlow.value = TimeWork(state.time){}
 
+                delay(500)
                 state.votedCount.let { counts ->
                     val vote = if(counts.isEmpty()){
                         null
@@ -341,6 +347,7 @@ class MafiaGameContent(
             is MafiaGameState.Play.Progress.CitizenTime.Determine -> {
                 _timerFlow.value = TimeWork(state.time) {}
 
+                delay(500)
                 when(state.votedMan){
                     is Player.Assign.Fool -> {
                         commandChannel.send(MainChatTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
@@ -378,6 +385,8 @@ class MafiaGameContent(
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toKillComplete()
                 }
+
+                delay(500)
                 commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateKill(state.time)))
             }
 
@@ -396,6 +405,7 @@ class MafiaGameContent(
                         }
                     }
 
+                    delay(500)
                     if(target == null){
                         commandChannel.send(MainChatTextResponse(KILL_RESULT_NOT))
                         _stateFlow.value = state.toPoliceTime()
@@ -419,6 +429,7 @@ class MafiaGameContent(
                 val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                 val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
 
+                delay(500)
                 if(mafiaCount == citizenCount){
                     commandChannel.send(MainChatTextResponse(MafiaText.winMafia(state.targetedMan.name, metaData.allPlayers)))
                     _stateFlow.value = MafiaGameState.End()
@@ -432,6 +443,7 @@ class MafiaGameContent(
                     _stateFlow.value = state.toTalk()
                 }
 
+                delay(500)
                 val police = state.survivors.firstOrNull { it is Player.Assign.Police }
 
                 if(police != null){
@@ -453,7 +465,7 @@ class MafiaGameContent(
 
             is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
                 val target = if(text.startsWith("@")){
-                    text.substring(1)
+                    text.substring(1).trim()
                 }else{
                     text
                 }
@@ -474,7 +486,7 @@ class MafiaGameContent(
             is MafiaGameState.Play.Progress.MafiaTime.Kill -> {
                 if(!isMainChat){
                     val target = if(text.startsWith("@")){
-                        text.substring(1)
+                        text.substring(1).trim()
                     }else{
                         text
                     }
@@ -496,7 +508,7 @@ class MafiaGameContent(
             is MafiaGameState.Play.Progress.PoliceTime -> {
                 if(!isMainChat) {
                     val target = if (text.startsWith("@")) {
-                        text.substring(1)
+                        text.substring(1).trim()
                     } else {
                         text
                     }
