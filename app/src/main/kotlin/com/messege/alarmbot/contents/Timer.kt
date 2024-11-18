@@ -4,7 +4,7 @@ import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-class TimeWork(val seconds : Int, val onComplete: () -> Unit)
+class TimeWork(val seconds : Int, val onComplete: suspend () -> Unit)
 class Timer(private val scope: CoroutineScope) {
     private var totalSeconds: Int = 0
     private val _remainingTimeFlow = MutableStateFlow(0)
@@ -40,7 +40,7 @@ class Timer(private val scope: CoroutineScope) {
         }
     }
 
-    fun stop() {
+    suspend fun stop() {
         if (timerJob?.isActive == true) {
             isStopped = true
             timerJob?.cancel()

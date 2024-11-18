@@ -69,10 +69,10 @@ class MafiaGameContent(
                             state.players.add(Player.None(key = metaData.hostKey, name = metaData.hostName))
                             _timerFlow.value = TimeWork(state.time){
                                 if(state.players.size < 4){
-                                    MainChatTextResponse(text = MafiaText.gameEndWaitTimeOut(state.players.size))
+                                    commandChannel.send(MainChatTextResponse(text = MafiaText.gameEndWaitTimeOut(state.players.size)))
                                     _stateFlow.value = MafiaGameState.End()
                                 }else{
-                                    MainChatTextResponse(text = MafiaText.gameWaitTimeOutGoToCheck(state.players))
+                                    commandChannel.send(MainChatTextResponse(text = MafiaText.gameWaitTimeOutGoToCheck(state.players)))
                                     _stateFlow.value = state.toCheck()
                                 }
                             }
@@ -90,10 +90,10 @@ class MafiaGameContent(
                             _timerFlow.value = TimeWork(state.time){
                                 val checkedPlayers = state.players.filter { it.isCheck }
                                 if(checkedPlayers.size < 4){
-                                    MainChatTextResponse(text = MafiaText.gameEndCheckTimeOut(state.players.size))
+                                    commandChannel.send(MainChatTextResponse(text = MafiaText.gameEndCheckTimeOut(state.players.size)))
                                     _stateFlow.value = MafiaGameState.End()
                                 }else{
-                                    MainChatTextResponse(text = MafiaText.gameCheckTimeOutGoToAssign(state.players))
+                                    commandChannel.send(MainChatTextResponse(text = MafiaText.gameCheckTimeOutGoToAssign(state.players)))
                                     _stateFlow.value = state.toAssignJob()
                                 }
                             }
@@ -462,7 +462,7 @@ class MafiaGameContent(
                 val isTargetSurviveAndNotUser = state.survivors.firstOrNull { it.name != userName && it.name == target} != null
                 if(isMainChat && surviveUser != null && isTargetSurviveAndNotUser){
                     surviveUser.votedName = target
-                    MainChatTextResponse(text = MafiaText.userVote(userName = userName, voteName = target))
+                    commandChannel.send(MainChatTextResponse(text = MafiaText.userVote(userName = userName, voteName = target)))
 
                     val voteCount = state.survivors.count { it.votedName.isNotBlank() }
                     if(voteCount == state.survivors.size){
@@ -527,7 +527,7 @@ class MafiaGameContent(
         }
     }
 
-    private fun startGame(host: Person) {
+    private suspend fun startGame(host: Person) {
         timer.stop()
         metaData = MafiaPlayMetaData(
             isStart = true,
@@ -537,7 +537,7 @@ class MafiaGameContent(
         _stateFlow.value = MafiaGameState.Play.Wait()
     }
 
-    private fun endGame() {
+    private suspend fun endGame() {
         timer.stop()
         metaData = MafiaPlayMetaData()
     }
