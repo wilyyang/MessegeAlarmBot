@@ -138,7 +138,13 @@ sealed class MafiaGameState{
                     override val time: Int = 0
                 }
 
-                fun toKill() = MafiaTime.Kill(survivors = survivors, mafias = survivors.filterIsInstance<Player.Assign.Mafia>())
+                fun toKill() : MafiaTime.Kill{
+                    survivors.forEach {
+                        it.reset()
+                    }
+
+                    return MafiaTime.Kill(survivors = survivors, mafias = survivors.filterIsInstance<Player.Assign.Mafia>())
+                }
             }
 
             sealed class MafiaTime : Progress(){

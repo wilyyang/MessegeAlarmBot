@@ -10,3 +10,4 @@ const val gameRemainingTime = "시간"
 const val gameEndText = "종료"
 
 const val checkGame = "확인"
+const val timeSkip = "스킵"

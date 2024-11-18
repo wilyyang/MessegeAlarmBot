@@ -15,14 +15,15 @@ import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_MAFIA
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_POLICE
 import com.messege.alarmbot.core.common.MafiaText.GAME_ASSIGN_JOB
 import com.messege.alarmbot.core.common.MafiaText.GAME_NOT_START_MORE_PLAYER
+import com.messege.alarmbot.core.common.MafiaText.VOTE_RESULT_NOT
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.core.common.checkGame
 import com.messege.alarmbot.core.common.gameEndText
 import com.messege.alarmbot.core.common.gameRemainingTime
 import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.participateGame
-import com.messege.alarmbot.core.common.questionGameEnd
 import com.messege.alarmbot.core.common.questionGameRule
+import com.messege.alarmbot.core.common.timeSkip
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -71,7 +72,7 @@ class MafiaGameContent(
                                     _stateFlow.value = MafiaGameState.End()
                                 }else{
                                     MainChatTextResponse(text = MafiaText.gameWaitTimeOutGoToCheck(state.players))
-                                    _stateFlow.value = MafiaGameState.Play.Check(players = state.players)
+                                    _stateFlow.value = state.toCheck()
                                 }
                             }
 
@@ -92,7 +93,7 @@ class MafiaGameContent(
                                     _stateFlow.value = MafiaGameState.End()
                                 }else{
                                     MainChatTextResponse(text = MafiaText.gameCheckTimeOutGoToAssign(state.players))
-                                    _stateFlow.value = MafiaGameState.Play.AssignJob(players = state.players)
+                                    _stateFlow.value = state.toAssignJob()
                                 }
                             }
 
@@ -108,13 +109,14 @@ class MafiaGameContent(
 
                         is MafiaGameState.Play.AssignJob -> {
                             _timerFlow.value = TimeWork(state.time){
-                                _stateFlow.value = MafiaGameState.Play.Progress.CitizenTime.Talk(survivors = state.assignedPlayers)
+                                _stateFlow.value = state.toTalk()
                             }
 
                             commandChannel.send(MainChatTextResponse(text = GAME_ASSIGN_JOB))
                             state.assignJob()
 
                             state.assignedPlayers.forEach { player ->
+                                metaData.allPlayers.add(player)
                                 commandChannel.send(
                                     UserTextResponse(
                                         userKey = ChatRoomKey(
@@ -242,7 +244,7 @@ class MafiaGameContent(
                                     )
                                 )
                                 if(players.size == 8){
-                                    _stateFlow.value = MafiaGameState.Play.Check(players = players)
+                                    _stateFlow.value = localState.toCheck()
                                 }
                             }
                         }
@@ -250,7 +252,7 @@ class MafiaGameContent(
                         if(localState.players.size < 4){
                             commandChannel.send(MainChatTextResponse(GAME_NOT_START_MORE_PLAYER))
                         }else{
-                            _stateFlow.value = MafiaGameState.Play.Check(players = localState.players)
+                            _stateFlow.value = localState.toCheck()
                         }
                     }
                 }
@@ -268,7 +270,7 @@ class MafiaGameContent(
 
                                     val checkedSize = players.count { it.isCheck }
                                     if(checkedSize == players.size){
-                                        _stateFlow.value = MafiaGameState.Play.AssignJob(players = localState.players)
+                                        _stateFlow.value = localState.toAssignJob()
                                     }
                                 }
                             }
@@ -278,7 +280,7 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress -> {
-                progressStateMessage(state = localState, userName = "${user.name}", text = text)
+                progressStateMessage(isMainChat = chatRoomKey == TARGET_KEY, state = localState, userName = "${user.name}", text = text)
             }
 
             else -> {}
@@ -286,14 +288,152 @@ class MafiaGameContent(
     }
 
 
-    private fun progressStateHandle(state : MafiaGameState.Play.Progress){
+    private suspend fun progressStateHandle(state : MafiaGameState.Play.Progress){
         when(state){
+            is MafiaGameState.Play.Progress.CitizenTime.Talk -> {
+                _timerFlow.value = TimeWork(state.time){
+                    _stateFlow.value = state.toVote()
+                }
+                commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateTalk(state.time)))
+            }
+
+            is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
+                _timerFlow.value = TimeWork(state.time){
+                    _stateFlow.value = state.toVoteComplete()
+                }
+                commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateVote(state.time)))
+            }
+
+            is MafiaGameState.Play.Progress.CitizenTime.VoteComplete -> {
+                _timerFlow.value = TimeWork(state.time){}
+
+                state.votedCount.let { counts ->
+                    val vote = if(counts.isEmpty()){
+                        null
+                    }else if(counts.size == 1){
+                        counts[0]
+                    }else{
+                        if(counts[0] == counts[1]){
+                            null
+                        }else{
+                            counts[0]
+                        }
+                    }
+
+                    if(vote == null){
+                        commandChannel.send(MainChatTextResponse(VOTE_RESULT_NOT))
+                        _stateFlow.value = state.toKill()
+                    }else{
+                        val votedMan = state.survivors.firstOrNull{it.name == vote.first}
+                        if(votedMan == null){
+                            commandChannel.send(MainChatTextResponse(VOTE_RESULT_NOT))
+                            _stateFlow.value = state.toKill()
+                        }else{
+                            votedMan.isSurvive = false
+                            state.survivors.removeIf { it.name == votedMan.name }
+                            commandChannel.send(MainChatTextResponse(MafiaText.voteKillUser(vote.first, vote.second)))
+                            _stateFlow.value = state.toDetermine(votedMan)
+                        }
+                    }
+                }
+            }
+            is MafiaGameState.Play.Progress.CitizenTime.Determine -> {
+                _timerFlow.value = TimeWork(state.time) {}
+
+                when(state.votedMan){
+                    is Player.Assign.Fool -> {
+                        commandChannel.send(MainChatTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
+                        _stateFlow.value = MafiaGameState.End()
+                    }
+
+                    is Player.Assign.Citizen,
+                    is Player.Assign.Police -> {
+                        val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
+                        val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
+
+                        if(mafiaCount == citizenCount){
+                            commandChannel.send(MainChatTextResponse(MafiaText.winMafia(state.votedMan.name, metaData.allPlayers)))
+                            _stateFlow.value = MafiaGameState.End()
+                        }else{
+                            commandChannel.send(MainChatTextResponse(MafiaText.citizenVoted(state.votedMan.name, metaData.allPlayers)))
+                            _stateFlow.value = state.toKill()
+                        }
+                    }
+
+                    is Player.Assign.Mafia -> {
+                        val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
+                        if(mafiaCount == 0){
+                            commandChannel.send(MainChatTextResponse(MafiaText.winCitizen(state.votedMan.name, metaData.allPlayers)))
+                            _stateFlow.value = MafiaGameState.End()
+                        }else{
+                            commandChannel.send(MainChatTextResponse(MafiaText.mafiaVoted(state.votedMan.name, metaData.allPlayers)))
+                            _stateFlow.value = state.toKill()
+                        }
+                    }
+                }
+            }
+
+            is MafiaGameState.Play.Progress.MafiaTime.Kill -> {
+                _timerFlow.value = TimeWork(state.time){
+                    _stateFlow.value = state.toKillComplete()
+                }
+                commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateKill(state.time)))
+            }
+
             else -> {}
         }
     }
 
-    private fun progressStateMessage(state : MafiaGameState.Play.Progress, userName : String, text : String){
+    private suspend fun progressStateMessage(isMainChat : Boolean, state : MafiaGameState.Play.Progress, userName : String, text : String){
         when(state){
+            is MafiaGameState.Play.Progress.CitizenTime.Talk -> {
+                if(isMainChat && text == timeSkip && userName == metaData.hostName){
+                    _stateFlow.value = state.toVote()
+                }
+            }
+
+            is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
+                val target = if(text.startsWith("@")){
+                    text.substring(1)
+                }else{
+                    text
+                }
+
+                val surviveUser = state.survivors.firstOrNull { it.name == userName && it.votedName.isBlank() }
+                val isTargetSurviveAndNotUser = state.survivors.firstOrNull { it.name != userName && it.name == target} != null
+                if(isMainChat && surviveUser != null && isTargetSurviveAndNotUser){
+                    surviveUser.votedName = target
+                    MainChatTextResponse(text = MafiaText.userVote(userName = userName, voteName = target))
+
+                    val voteCount = state.survivors.count { it.votedName.isNotBlank() }
+                    if(voteCount == state.survivors.size){
+                        _stateFlow.value = state.toVoteComplete()
+                    }
+                }
+            }
+
+            is MafiaGameState.Play.Progress.MafiaTime.Kill -> {
+                if(!isMainChat){
+                    val target = if(text.startsWith("@")){
+                        text.substring(1)
+                    }else{
+                        text
+                    }
+
+                    val mafiaUser = state.mafias.firstOrNull { it.name == userName }
+                    val isTargetSurviveAndNotUser = state.survivors.firstOrNull { it !is Player.Assign.Mafia && it.name == target} != null
+
+                    if(mafiaUser != null && mafiaUser.targetedName.isBlank() && isTargetSurviveAndNotUser){
+                        mafiaUser.targetedName = target
+
+                        val targetCount = state.mafias.count { it.targetedName.isNotBlank() }
+                        if(targetCount == state.mafias.size){
+                            _stateFlow.value = state.toKillComplete()
+                        }
+                    }
+                }
+            }
+
             else -> {}
         }
     }

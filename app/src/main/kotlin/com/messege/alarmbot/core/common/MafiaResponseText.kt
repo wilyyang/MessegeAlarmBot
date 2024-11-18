@@ -38,6 +38,25 @@ object MafiaText {
     const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다.]"
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다.]"
 
+    const val VOTE_RESULT_NOT    = "[누구도 투표로 죽지 않았습니다.]"
+
+    fun winFool(name : String, players: List<Player>) = "[죽은 $name 님은 바보입니다. 투표로 죽은 바보의 단독 승리입니다!]\n${playerProgressToText(players, true)}"
+
+    fun winCitizen(name : String, players: List<Player>) = "[죽은 $name 님은 마피아입니다. 마피아가 모두 죽어 시민이 승리합니다!]\n${playerProgressToText(players, true)}"
+
+    fun winMafia(name : String, players: List<Player>) = "[죽은 $name 님은 시민입니다. 시민 수가 적어 마피아가 이겼습니다!]\n${playerProgressToText(players, true)}"
+
+    fun mafiaVoted(name : String, players: List<Player>) = "[죽은 $name 님은 마피아입니다.]\n${playerProgressToText(players)}"
+
+    fun citizenVoted(name : String, players: List<Player>) = "[죽은 $name 님은 마피아가 아닙니다.]\n${playerProgressToText(players)}"
+
+    fun gameStateTalk(time: Int) = "[아침이 되었습니다. 모두 마피아를 찾기 위해 대화를 나누세요. ($time 초)]\n호스트가 \"스킵\"이라고 치면 대화가 넘어갑니다."
+
+    fun gameStateVote(time: Int) = "[투표 시간입니다. 전체 채팅에 마피아로 파악되는 유저 이름을 정확하게 톡해주세요. 앞에 @를 붙여도 됩니다. ($time 초)]"
+
+    fun gameStateKill(time: Int) = "[밤이 되었습니다. 마피아는 봇에게 개인톡을 하면 서로 대화가 가능합니다. 봇 개인톡으로 죽일 이름을 말해주세요. ($time 초)]"
+
+    fun voteKillUser(voteName : String, voteCount : Int) = "[투표로 인해 $voteName 님이 죽었습니다. (투표수 : $voteCount)]"
 
     fun gameRemainingTime(state: String, total: Int, remain: Int) = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]"
 
@@ -48,6 +67,8 @@ object MafiaText {
     fun gameEndCheckTimeOut(num : Int) = "[시간 만료. 확인된 인원이 게임을 시작하기에 부족합니다. ($num 명) ]"
 
     fun gameCheckTimeOutGoToAssign(players : List<Player>) = "[시간 만료. (${players.size} 명) ]\n* 확인인원\n${playerProgressToText(players)}"
+
+    fun userVote(userName: String, voteName: String) = "[$userName 님이 $voteName 님을 투표했습니다.]"
 
     fun mafiaMessage(name: String, text : String) =
         "[$name 마피아님이 전달한 메시지]\n$text"
@@ -70,12 +91,13 @@ object MafiaText {
     fun userCheckGame(userName: String) = "[$userName 님의 개인톡이 확인되었습니다]"
 
     private fun playerProgressToText(
-        players: List<Player>): String {
+        players: List<Player>, isJob : Boolean = false): String {
 
         val playersText = players.joinToString("\n") {
             "- ${it.name} : ${
                 if (it is Player.Assign) {
-                    if (it.isSurvive) "생존" else "사망"
+                    val job = if(isJob) it.javaClass.simpleName else ""
+                    if (it.isSurvive) "생존 $job" else "사망 $job"
                 } else {
                     "직업 미할당"
                 }
@@ -83,8 +105,4 @@ object MafiaText {
         }
         return playersText
     }
-
-
-    const val GAME_END = "[마피아 종료]"
-    const val GAME_NOT_START = "[게임이 없습니다.]"
 }
