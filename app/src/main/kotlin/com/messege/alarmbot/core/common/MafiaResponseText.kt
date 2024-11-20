@@ -33,10 +33,10 @@ object MafiaText {
     const val GAME_NOT_START_MORE_PLAYER = "[인원이 부족하여 게임을 시작할 수 없습니다.]"
     const val GAME_ASSIGN_JOB = "[직업 할당중 ...]"
 
-    const val ASSIGN_JOB_CITIZEN = "[당신은 시민입니다.]"
-    const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다.]"
-    const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다.]"
-    const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다.]"
+    const val ASSIGN_JOB_CITIZEN = "[당신은 시민입니다. 마피아를 모두 찾아 죽이면 승리합니다.]"
+    const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 수사시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
+    const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다. 시민보다 마피아가 많으면 승리합니다.]"
+    const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다. 투표시간에 지목당해 죽으면 승리합니다.]"
 
     const val VOTE_RESULT_NOT    = "[누구도 투표로 죽지 않았습니다.]"
     const val KILL_RESULT_NOT    = "[누구도 암살로 죽지 않았습니다.]"

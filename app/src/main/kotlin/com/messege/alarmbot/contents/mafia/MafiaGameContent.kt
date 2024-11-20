@@ -42,7 +42,7 @@ data class MafiaPlayMetaData(
 
 class MafiaGameContent(
     override val commandChannel: Channel<Command>,
-    scope : CoroutineScope
+    private val scope : CoroutineScope
 ) : BaseContent {
     override val contentsName: String = "마피아"
     private var metaData: MafiaPlayMetaData = MafiaPlayMetaData()
@@ -77,7 +77,6 @@ class MafiaGameContent(
                                     _stateFlow.value = state.toCheck()
                                 }
                             }
-                            delay(500)
                             commandChannel.send(
                                 MainChatTextResponse(
                                     text = MafiaText.hostStartGame(
@@ -99,7 +98,6 @@ class MafiaGameContent(
                                 }
                             }
 
-                            delay(500)
                             commandChannel.send(
                                 MainChatTextResponse(
                                     text = MafiaText.checkPlayer(
@@ -120,7 +118,7 @@ class MafiaGameContent(
 
                             state.assignedPlayers.forEach { player ->
                                 metaData.allPlayers.add(player)
-                                delay(500)
+                                delay(2000)
                                 commandChannel.send(
                                     UserTextResponse(
                                         userKey = ChatRoomKey(
@@ -207,6 +205,7 @@ class MafiaGameContent(
             val userMafia = mafias.firstOrNull { it.name == "${user.name}" }
             if(userMafia != null){
                 mafias.filter { it.name != userMafia.name }.forEach { mafia ->
+                    delay(1000)
                     commandChannel.send(
                         UserTextResponse(
                             userKey = ChatRoomKey(isGroupConversation = false, mafia.name, mafia.name),
@@ -295,25 +294,25 @@ class MafiaGameContent(
     private suspend fun progressStateHandle(state : MafiaGameState.Play.Progress){
         when(state){
             is MafiaGameState.Play.Progress.CitizenTime.Talk -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVote()
                 }
-                delay(500)
                 commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateTalk(state.time)))
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVoteComplete()
                 }
-                delay(500)
                 commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateVote(state.time)))
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.VoteComplete -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time){}
 
-                delay(500)
                 state.votedCount.let { counts ->
                     val vote = if(counts.isEmpty()){
                         null
@@ -345,9 +344,9 @@ class MafiaGameContent(
                 }
             }
             is MafiaGameState.Play.Progress.CitizenTime.Determine -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time) {}
 
-                delay(500)
                 when(state.votedMan){
                     is Player.Assign.Fool -> {
                         commandChannel.send(MainChatTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
@@ -382,15 +381,16 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.MafiaTime.Kill -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toKillComplete()
                 }
 
-                delay(500)
                 commandChannel.send(MainChatTextResponse(text = MafiaText.gameStateKill(state.time)))
             }
 
             is MafiaGameState.Play.Progress.MafiaTime.KillComplete -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time){}
                 state.targetedCount.let { counts ->
                     val target = if(counts.isEmpty()){
@@ -405,7 +405,6 @@ class MafiaGameContent(
                         }
                     }
 
-                    delay(500)
                     if(target == null){
                         commandChannel.send(MainChatTextResponse(KILL_RESULT_NOT))
                         _stateFlow.value = state.toPoliceTime()
@@ -425,11 +424,11 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.MafiaTime.Determine -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time) {}
                 val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                 val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
 
-                delay(500)
                 if(mafiaCount == citizenCount){
                     commandChannel.send(MainChatTextResponse(MafiaText.winMafia(state.targetedMan.name, metaData.allPlayers)))
                     _stateFlow.value = MafiaGameState.End()
@@ -439,11 +438,11 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.PoliceTime -> {
+                delay(1000)
                 _timerFlow.value = TimeWork(state.time) {
                     _stateFlow.value = state.toTalk()
                 }
 
-                delay(500)
                 val police = state.survivors.firstOrNull { it is Player.Assign.Police }
 
                 if(police != null){

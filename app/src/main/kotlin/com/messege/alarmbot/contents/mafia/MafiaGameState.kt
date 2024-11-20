@@ -83,7 +83,7 @@ sealed class MafiaGameState{
                     override val korName : String = "대화",
                     override val survivors : MutableList<Player.Assign>
                 ) : CitizenTime(){
-                    override val time = survivors.size * 30
+                    override val time = survivors.size * 40
 
                     fun toVote() = Vote(survivors = survivors)
                 }
@@ -92,7 +92,7 @@ sealed class MafiaGameState{
                     override val korName : String = "투표",
                     override val survivors : MutableList<Player.Assign>
                 ) : CitizenTime() {
-                    override val time = survivors.size * 15
+                    override val time = survivors.size * 20
 
                     fun toVoteComplete() : VoteComplete {
                         val votedCount = survivors
@@ -155,7 +155,7 @@ sealed class MafiaGameState{
                     override val survivors : MutableList<Player.Assign>,
                     override val mafias : List<Player.Assign.Mafia>
                 )  : MafiaTime(){
-                    override val time = mafias.size * 30
+                    override val time = mafias.size * 45
 
                     fun toKillComplete() : KillComplete {
                         val targetedCount = mafias
@@ -211,7 +211,7 @@ sealed class MafiaGameState{
                 override val korName : String = "경찰 수사",
                 override val survivors : MutableList<Player.Assign>
             ) : Progress() {
-                override val time: Int = 0
+                override val time: Int = 120
 
                 fun toTalk() : CitizenTime.Talk{
                     survivors.forEach {
