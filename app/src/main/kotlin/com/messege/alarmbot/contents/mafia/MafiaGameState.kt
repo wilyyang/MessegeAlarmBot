@@ -24,7 +24,10 @@ sealed class MafiaGameState{
         ) : Play() {
             override val time = players.size * 30
 
-            fun toAssignJob() = AssignJob(players = players)
+            fun toAssignJob() : AssignJob {
+                players.removeAll { !it.isCheck }
+                return AssignJob(players = players)
+            }
         }
 
         data class AssignJob(

@@ -315,7 +315,7 @@ class MafiaGameContent(
                     }else if(counts.size == 1){
                         counts[0]
                     }else{
-                        if(counts[0] == counts[1]){
+                        if(counts[0].second == counts[1].second){
                             null
                         }else{
                             counts[0]
@@ -394,7 +394,7 @@ class MafiaGameContent(
                     }else if(counts.size == 1){
                         counts[0]
                     }else{
-                        if(counts[0] == counts[1]){
+                        if(counts[0].second == counts[1].second){
                             null
                         }else{
                             counts[0]
@@ -548,6 +548,8 @@ class MafiaGameContent(
 
     private suspend fun endGame() {
         timer.stop()
+
+        commandChannel.send(MainChatTextResponse(text = "미션은 ${metaData.mission} 입니다."))
         metaData = MafiaPlayMetaData()
     }
 }
