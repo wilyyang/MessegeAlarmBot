@@ -7,8 +7,7 @@ import com.messege.alarmbot.contents.MainChatTextResponse
 import com.messege.alarmbot.contents.TimeWork
 import com.messege.alarmbot.contents.Timer
 import com.messege.alarmbot.contents.UserTextResponse
-import com.messege.alarmbot.core.common.ChatRoomKey
-import com.messege.alarmbot.core.common.MafiaText
+import com.messege.alarmbot.core.common.*
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_CITIZEN
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_FOOL
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_MAFIA
@@ -17,14 +16,6 @@ import com.messege.alarmbot.core.common.MafiaText.GAME_ASSIGN_JOB
 import com.messege.alarmbot.core.common.MafiaText.GAME_NOT_START_MORE_PLAYER
 import com.messege.alarmbot.core.common.MafiaText.KILL_RESULT_NOT
 import com.messege.alarmbot.core.common.MafiaText.VOTE_RESULT_NOT
-import com.messege.alarmbot.core.common.TARGET_KEY
-import com.messege.alarmbot.core.common.checkGame
-import com.messege.alarmbot.core.common.gameEndText
-import com.messege.alarmbot.core.common.gameRemainingTime
-import com.messege.alarmbot.core.common.hostKeyword
-import com.messege.alarmbot.core.common.participateGame
-import com.messege.alarmbot.core.common.questionGameRule
-import com.messege.alarmbot.core.common.timeSkip
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -37,8 +28,13 @@ data class MafiaPlayMetaData(
     val hostKey: String = "",
     val allPlayers : MutableList<Player> = mutableListOf(),
     val isStart: Boolean = false,
-    var playStep : Int = 0
+    var playStep : Int = 0,
+    val mission: String = ""
 )
+
+fun Player.isUser(user : Person, roomKey : ChatRoomKey) : Boolean {
+    return this.name == "${user.name}" || this.name == roomKey.roomName
+}
 
 class MafiaGameContent(
     override val commandChannel: Channel<Command>,
@@ -129,7 +125,7 @@ class MafiaGameContent(
                                         text = when(player){
                                             is Player.Assign.Citizen -> ASSIGN_JOB_CITIZEN
                                             is Player.Assign.Police -> ASSIGN_JOB_POLICE
-                                            is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA
+                                            is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
                                             is Player.Assign.Fool -> ASSIGN_JOB_FOOL
                                         }
                                     )
@@ -202,7 +198,7 @@ class MafiaGameContent(
          */
         if(chatRoomKey != TARGET_KEY && localState is MafiaGameState.Play.Progress){
             val mafias = localState.survivors.filterIsInstance<Player.Assign.Mafia>()
-            val userMafia = mafias.firstOrNull { it.name == "${user.name}" }
+            val userMafia = mafias.firstOrNull { it.isUser(user,chatRoomKey) }
             if(userMafia != null){
                 mafias.filter { it.name != userMafia.name }.forEach { mafia ->
                     delay(1000)
@@ -265,7 +261,7 @@ class MafiaGameContent(
                 if(chatRoomKey != TARGET_KEY){
                     if(text == checkGame){
                         localState.players.let { players ->
-                            players.firstOrNull { it.name == "${user.name}" }?.let { player ->
+                            players.firstOrNull { it.isUser(user, chatRoomKey) }?.let { player ->
                                 if(!player.isCheck){
                                     player.isCheck = true
 
@@ -540,10 +536,12 @@ class MafiaGameContent(
 
     private suspend fun startGame(host: Person) {
         timer.stop()
+        val mission = arrayOfMafiaMissions.toList().shuffled()[0]
         metaData = MafiaPlayMetaData(
             isStart = true,
             hostName = "${host.name}",
-            hostKey = "${host.key}"
+            hostKey = "${host.key}",
+            mission = mission
         )
         _stateFlow.value = MafiaGameState.Play.Wait()
     }
