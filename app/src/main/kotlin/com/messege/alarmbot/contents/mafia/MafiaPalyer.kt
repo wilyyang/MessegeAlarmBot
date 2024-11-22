@@ -26,6 +26,8 @@ sealed class Player {
         fun toPolice() = Assign.Police(name, key)
         fun toMafia() = Assign.Mafia(name, key)
         fun toFool() = Assign.Fool(name, key)
+        fun toDoctor() = Assign.Doctor(name, key)
+        fun toBodyguard() = Assign.Bodyguard(name, key)
     }
 
     sealed class Assign(open val side : Side): Player() {
@@ -45,6 +47,12 @@ sealed class Player {
                 super.reset()
                 isInvestigate = false
             }
+        }
+        data class Doctor(override val name : String, override var key : String) : Assign(side = Side.Citizen) {
+            var saveTarget : String = ""
+        }
+        data class Bodyguard(override val name : String, override var key : String) : Assign(side = Side.Citizen) {
+            var guardTarget : String = ""
         }
 
         data class Mafia(override val name : String, override var key : String) : Assign(side = Side.Mafia) {

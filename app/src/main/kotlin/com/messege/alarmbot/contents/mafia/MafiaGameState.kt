@@ -43,35 +43,25 @@ sealed class MafiaGameState{
                     assignedPlayers.add(it.toMafia())
                 }
                 players.getOrNull(1)?.let {
-                    assignedPlayers.add(it.toCitizen())
+                    assignedPlayers.add(it.toPolice())
                 }
                 players.getOrNull(2)?.let {
-                    assignedPlayers.add(it.toCitizen())
+                    assignedPlayers.add(it.toDoctor())
                 }
                 players.getOrNull(3)?.let {
+                    assignedPlayers.add(it.toFool())
+                }
+                players.getOrNull(4)?.let {
+                    assignedPlayers.add(it.toBodyguard())
+                }
+                players.getOrNull(5)?.let {
+                    assignedPlayers.add(it.toMafia())
+                }
+                players.getOrNull(6)?.let {
                     assignedPlayers.add(it.toCitizen())
                 }
-
-                if(players.size == 5){
-                    assignedPlayers.add(players[4].toFool())
-                }
-
-                if(players.size == 6){
-                    assignedPlayers.add(players[4].toMafia())
-                    assignedPlayers.add(players[5].toPolice())
-                }
-
-                if(players.size == 7){
-                    assignedPlayers.add(players[4].toMafia())
-                    assignedPlayers.add(players[5].toPolice())
-                    assignedPlayers.add(players[6].toFool())
-                }
-
-                if(players.size == 8){
-                    assignedPlayers.add(players[4].toMafia())
-                    assignedPlayers.add(players[5].toMafia())
-                    assignedPlayers.add(players[6].toPolice())
-                    assignedPlayers.add(players[7].toCitizen())
+                players.getOrNull(7)?.let {
+                    assignedPlayers.add(it.toMafia())
                 }
             }
 

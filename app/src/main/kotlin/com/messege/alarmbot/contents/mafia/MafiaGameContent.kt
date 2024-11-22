@@ -8,7 +8,9 @@ import com.messege.alarmbot.contents.TimeWork
 import com.messege.alarmbot.contents.Timer
 import com.messege.alarmbot.contents.UserTextResponse
 import com.messege.alarmbot.core.common.*
+import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_BODYGUARD
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_CITIZEN
+import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_DOCTOR
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_FOOL
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_MAFIA
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_POLICE
@@ -127,6 +129,8 @@ class MafiaGameContent(
                                             is Player.Assign.Police -> ASSIGN_JOB_POLICE
                                             is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
                                             is Player.Assign.Fool -> ASSIGN_JOB_FOOL
+                                            is Player.Assign.Doctor -> ASSIGN_JOB_DOCTOR
+                                            is Player.Assign.Bodyguard -> ASSIGN_JOB_BODYGUARD
                                         }
                                     )
                                 )
@@ -197,17 +201,62 @@ class MafiaGameContent(
          * 마피아 대화 : return 없음!
          */
         if(chatRoomKey != TARGET_KEY && localState is MafiaGameState.Play.Progress){
-            val mafias = localState.survivors.filterIsInstance<Player.Assign.Mafia>()
-            val userMafia = mafias.firstOrNull { it.isUser(user,chatRoomKey) }
-            if(userMafia != null){
-                mafias.filter { it.name != userMafia.name }.forEach { mafia ->
-                    delay(1000)
-                    commandChannel.send(
-                        UserTextResponse(
-                            userKey = ChatRoomKey(isGroupConversation = false, mafia.name, mafia.name),
-                            text = MafiaText.mafiaMessage(userMafia.name, text)
-                        )
-                    )
+            val chatUser = localState.survivors.firstOrNull{ it.isUser(user,chatRoomKey) }
+            if(chatUser != null){
+                when(chatUser){
+                    is Player.Assign.Mafia -> {
+                        val mafias = localState.survivors.filterIsInstance<Player.Assign.Mafia>()
+                        mafias.filter { it.name != chatUser.name }.forEach { mafia ->
+                            delay(1000)
+                            commandChannel.send(
+                                UserTextResponse(
+                                    userKey = ChatRoomKey(isGroupConversation = false, mafia.name, mafia.name),
+                                    text = MafiaText.mafiaMessage(chatUser.name, text)
+                                )
+                            )
+                        }
+                    }
+                    is Player.Assign.Doctor -> {
+                        val target = if(text.startsWith("@")){
+                            text.substring(1).trim()
+                        }else{
+                            text
+                        }
+                        val targetUser = localState.survivors.firstOrNull { it.name != chatUser.name && it.name == target}
+                        if(targetUser != null){
+                            chatUser.saveTarget = target
+                            delay(1000)
+
+                            commandChannel.send(
+                                UserTextResponse(
+                                    userKey = chatRoomKey,
+                                    text = MafiaText.doctorMessage(chatUser.name, text)
+                                )
+                            )
+                        }
+                    }
+
+                    is Player.Assign.Bodyguard -> {
+                        val target = if(text.startsWith("@")){
+                            text.substring(1).trim()
+                        }else{
+                            text
+                        }
+                        val targetUser = localState.survivors.firstOrNull { it.name != chatUser.name && it.name == target}
+                        if(targetUser != null){
+                            chatUser.guardTarget = target
+                            delay(1000)
+
+                            commandChannel.send(
+                                UserTextResponse(
+                                    userKey = chatRoomKey,
+                                    text = MafiaText.bodyguardMessage(chatUser.name, text)
+                                )
+                            )
+                        }
+                    }
+
+                    else -> {}
                 }
             }
         }
@@ -343,6 +392,13 @@ class MafiaGameContent(
                 delay(1000)
                 _timerFlow.value = TimeWork(state.time) {}
 
+                val bodyguard = state.survivors.firstOrNull { it is Player.Assign.Bodyguard }
+                if(bodyguard != null && bodyguard is Player.Assign.Bodyguard && bodyguard.guardTarget == state.votedMan.name){
+                    commandChannel.send(MainChatTextResponse(MafiaText.bodyguardSaveMan(state.votedMan.name)))
+                    _stateFlow.value = state.toKill()
+                    return
+                }
+
                 when(state.votedMan){
                     is Player.Assign.Fool -> {
                         commandChannel.send(MainChatTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
@@ -350,6 +406,8 @@ class MafiaGameContent(
                     }
 
                     is Player.Assign.Citizen,
+                    is Player.Assign.Doctor,
+                    is Player.Assign.Bodyguard,
                     is Player.Assign.Police -> {
                         val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                         val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
@@ -422,6 +480,14 @@ class MafiaGameContent(
             is MafiaGameState.Play.Progress.MafiaTime.Determine -> {
                 delay(1000)
                 _timerFlow.value = TimeWork(state.time) {}
+
+                val doctor = state.survivors.firstOrNull { it is Player.Assign.Doctor }
+                if(doctor != null && doctor is Player.Assign.Doctor && doctor.saveTarget == state.targetedMan.name){
+                    commandChannel.send(MainChatTextResponse(MafiaText.doctorSaveMan(state.targetedMan.name)))
+                    _stateFlow.value = state.toPoliceTime()
+                    return
+                }
+
                 val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                 val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
 

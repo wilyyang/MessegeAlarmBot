@@ -20,11 +20,11 @@ object MafiaText {
             "2. 마피아 : 마피아 많으면 승리\n" +
             "3. 바보 : 투표로 죽으면 승리\n\n" +
             "* 인원 배합\n" +
-            "4: 마피아1, 시민3\n" +
+            "4: 마피아1, 바보1, 시민2\n" +
             "5: 마피아1, 바보1, 시민3\n" +
-            "6: 마피아2, 시민3, 경찰1\n" +
-            "7: 마피아2, 바보1, 시민3, 경찰1\n" +
-            "8: 마피아3, 시민4, 경찰1"
+            "6: 마피아2, 바보1, 시민3\n" +
+            "7: 마피아2, 바보1, 시민4\n" +
+            "8: 마피아3, 바보1, 시민4"
 
     const val GAME_END_COMMAND = "[마피아를 종료합니다.]"
     const val GAME_ALREADY_START = "[이미 게임 진행 중입니다.]"
@@ -37,6 +37,9 @@ object MafiaText {
     const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 수사시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
     const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다. 시민보다 마피아가 많으면 승리합니다.]"
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다. 투표시간에 지목당해 죽으면 승리합니다.]"
+
+    const val ASSIGN_JOB_DOCTOR         = "[당신은 의사입니다. 시민보다 마피아가 많으면 승리합니다.]\n* 능력 : 개인톡으로 지목한 사람을 암살에서 구해냅니다. (대상은 언제든 바꿀 수 있어요)"
+    const val ASSIGN_JOB_BODYGUARD      = "[당신은 보디가드입니다. 투표시간에 지목당해 죽으면 승리합니다.]\n* 능력 : 개인톡으로 지목한 사람을 투표에서 구해냅니다. (대상은 언제든 바꿀 수 있어요)"
 
     const val VOTE_RESULT_NOT    = "[누구도 투표로 죽지 않았습니다.]"
     const val KILL_RESULT_NOT    = "[누구도 암살로 죽지 않았습니다.]"
@@ -77,6 +80,12 @@ object MafiaText {
     fun gameCheckTimeOutGoToAssign(players : List<Player>) = "[시간 만료. (${players.size} 명) ]\n* 확인인원\n${playerProgressToText(players)}"
 
     fun userVote(userName: String, voteName: String) = "[$userName 님이 $voteName 님을 투표했습니다.]"
+
+    fun doctorMessage(name: String, target : String) = "[$name 님이 $target 님을 암살로부터 보호합니다.]"
+    fun bodyguardMessage(name: String, target : String) = "[$name 님이 $target 님을 투표로부터 보호합니다.]"
+
+    fun doctorSaveMan(target : String) = "[의사가 $target 님을 암살로부터 보호합니다.]"
+    fun bodyguardSaveMan(target : String) = "[보디가드가 $target 님을 투표로부터 보호합니다.]"
 
     fun mafiaMessage(name: String, text : String) =
         "[$name 마피아님이 전달한 메시지]\n$text"
