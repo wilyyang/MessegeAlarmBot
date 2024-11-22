@@ -525,6 +525,11 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
+                if(isMainChat && text == timeSkip && userName == metaData.hostName){
+                    _stateFlow.value = state.toVoteComplete()
+                    return
+                }
+
                 val target = if(text.startsWith("@")){
                     text.substring(1).trim()
                 }else{
