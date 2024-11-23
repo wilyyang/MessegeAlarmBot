@@ -34,7 +34,8 @@ data class MafiaPlayMetaData(
     val allPlayers : MutableList<Player> = mutableListOf(),
     val isStart: Boolean = false,
     var playStep : Int = 0,
-    val mission: String = ""
+    val mission: String = "",
+    val missions: List<String> = listOf()
 )
 
 fun Player.isUser(user : Person, roomKey : ChatRoomKey) : Boolean {
@@ -53,6 +54,7 @@ class MafiaGameContent(
 
     private val _timerFlow = MutableStateFlow<TimeWork>(TimeWork(0) {})
     private var agentUserRoomKey : ChatRoomKey? = null
+    private val GAME_KEY = TARGET_KEY
 
     init {
         scope.launch {
@@ -117,8 +119,8 @@ class MafiaGameContent(
 
                             commandChannel.send(MainChatTextResponse(text = GAME_ASSIGN_JOB))
                             state.assignJob()
-                            state.assignedPlayers.firstOrNull{ it is Player.Assign.Agent}?.let {
-                                agentUserRoomKey = ChatRoomKey(isGroupConversation = false, roomName = it.name, roomKey = it.key)
+                            state.assignedPlayers.firstOrNull{ it is Player.Assign.Agent}?.let { agent ->
+                                agentUserRoomKey = ChatRoomKey(isGroupConversation = false, roomName = agent.name, roomKey = agent.name)
                             }
 
                             state.assignedPlayers.forEach { player ->
@@ -145,6 +147,8 @@ class MafiaGameContent(
                                     )
                                 )
                             }
+                            delay(2000)
+                            commandChannel.send(MainChatTextResponse(text = "마피아 미션은 이중에 하나입니다\n" + metaData.missions.joinToString("\n")))
                         }
                         is MafiaGameState.Play.Progress -> {
                             progressStateHandle(state)
@@ -163,15 +167,23 @@ class MafiaGameContent(
         /**
          * 게임 규칙
          */
-        if(chatRoomKey == TARGET_KEY && text == "$hostKeyword${contentsName}$questionGameRule") {
+        if(chatRoomKey == GAME_KEY && text == "$hostKeyword${contentsName}$questionGameRule") {
             commandChannel.send(MainChatTextResponse(text = MafiaText.GAME_RULE))
+            return
+        }
+
+        /**
+         * 미션 모음
+         */
+        if(chatRoomKey == GAME_KEY && text == "$hostKeyword$mission") {
+            commandChannel.send(MainChatTextResponse(text = arrayOfMafiaMissions.joinToString("\n")))
             return
         }
 
         /**
          * 게임 시작
          */
-        if(chatRoomKey == TARGET_KEY && text == hostKeyword + contentsName) {
+        if(chatRoomKey == GAME_KEY && text == hostKeyword + contentsName) {
             if(localState is MafiaGameState.Play){
                 commandChannel.send(MainChatTextResponse(MafiaText.GAME_ALREADY_START))
             }else{
@@ -183,7 +195,7 @@ class MafiaGameContent(
         /**
          * 남은 시간
          */
-        if(chatRoomKey == TARGET_KEY && text == "$hostKeyword${contentsName}$gameRemainingTime" && localState is MafiaGameState.Play){
+        if(chatRoomKey == GAME_KEY && text == "$hostKeyword${contentsName}$gameRemainingTime" && localState is MafiaGameState.Play){
             val currentSeconds = timer.getRemainingTime()
             if (localState.time != 0 && currentSeconds != 0) {
                 commandChannel.send(
@@ -200,7 +212,7 @@ class MafiaGameContent(
         /**
          * 참여 마감
          */
-        if(chatRoomKey == TARGET_KEY && text == participateGame && localState !is MafiaGameState.Play.Wait){
+        if(chatRoomKey == GAME_KEY && text == participateGame && localState !is MafiaGameState.Play.Wait){
             commandChannel.send(
                 MainChatTextResponse(MafiaText.GAME_WAIT_END)
             )
@@ -210,7 +222,7 @@ class MafiaGameContent(
         /**
          * 마피아 대화 : return 없음!
          */
-        if(chatRoomKey != TARGET_KEY && localState is MafiaGameState.Play.Progress){
+        if(!chatRoomKey.isGroupConversation && localState is MafiaGameState.Play.Progress){
             val chatUser = localState.survivors.firstOrNull{ it.isUser(user,chatRoomKey) }
             if(chatUser != null){
                 when(chatUser){
@@ -283,7 +295,7 @@ class MafiaGameContent(
         /**
          * 게임 종료
          */
-        if(chatRoomKey == TARGET_KEY && text == "$hostKeyword${contentsName}$gameEndText" && "${user.key}" == metaData.hostKey) {
+        if(chatRoomKey == GAME_KEY && text == "$hostKeyword${contentsName}$gameEndText" && "${user.key}" == metaData.hostKey) {
             if(localState is MafiaGameState.Play){
                 commandChannel.send(MainChatTextResponse(MafiaText.GAME_END_COMMAND))
                 _stateFlow.value = MafiaGameState.End()
@@ -296,7 +308,7 @@ class MafiaGameContent(
          */
         when(localState){
             is MafiaGameState.Play.Wait -> {
-                if(chatRoomKey == TARGET_KEY){
+                if(chatRoomKey == GAME_KEY){
                     if(text == participateGame){
                         localState.players.let { players ->
                             val isNewUser = players.firstOrNull { it.name == "${user.name}" } == null
@@ -326,7 +338,7 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Check -> {
-                if(chatRoomKey != TARGET_KEY){
+                if(!chatRoomKey.isGroupConversation){
                     if(text == checkGame){
                         localState.players.let { players ->
                             players.firstOrNull { it.isUser(user, chatRoomKey) }?.let { player ->
@@ -347,7 +359,9 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress -> {
-                progressStateMessage(isMainChat = chatRoomKey == TARGET_KEY, state = localState, userName = "${user.name}", text = text)
+                if(chatRoomKey == GAME_KEY || !chatRoomKey.isGroupConversation){
+                    progressStateMessage(isMainChat = chatRoomKey == GAME_KEY, state = localState, userName = "${user.name}", text = text)
+                }
             }
 
             else -> {}
@@ -651,12 +665,14 @@ class MafiaGameContent(
 
     private suspend fun startGame(host: Person) {
         timer.stop()
-        val mission = arrayOfMafiaMissions.toList().shuffled()[0]
+        val missions = arrayOfMafiaMissions.toList().shuffled().take(8)
+        val mission = missions[0]
         metaData = MafiaPlayMetaData(
             isStart = true,
             hostName = "${host.name}",
             hostKey = "${host.key}",
-            mission = mission
+            mission = mission,
+            missions = missions.shuffled()
         )
         _stateFlow.value = MafiaGameState.Play.Wait()
     }
