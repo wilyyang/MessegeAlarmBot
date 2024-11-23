@@ -38,30 +38,31 @@ sealed class MafiaGameState{
             val assignedPlayers : MutableList<Player.Assign> = mutableListOf()
 
             fun assignJob() {
+                val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Shaman).shuffled()
                 players.shuffle()
                 players.getOrNull(0)?.let {
                     assignedPlayers.add(it.toMafia())
                 }
                 players.getOrNull(1)?.let {
-                    assignedPlayers.add(it.toPolice())
+                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[0]))
                 }
                 players.getOrNull(2)?.let {
-                    assignedPlayers.add(it.toDoctor())
+                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[1]))
                 }
                 players.getOrNull(3)?.let {
-                    assignedPlayers.add(it.toFool())
+                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[2]))
                 }
                 players.getOrNull(4)?.let {
-                    assignedPlayers.add(it.toBodyguard())
+                    assignedPlayers.add(it.toFool())
                 }
                 players.getOrNull(5)?.let {
-                    assignedPlayers.add(it.toMafia())
+                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[3]))
                 }
                 players.getOrNull(6)?.let {
-                    assignedPlayers.add(it.toCitizen())
+                    assignedPlayers.add(it.toMafia())
                 }
                 players.getOrNull(7)?.let {
-                    assignedPlayers.add(it.toMafia())
+                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[4]))
                 }
             }
 
@@ -88,13 +89,18 @@ sealed class MafiaGameState{
                     override val time = survivors.size * 20
 
                     fun toVoteComplete() : VoteComplete {
-                        val votedCount = survivors
+                        val tempCount = survivors
                             .filter { it.votedName.isNotBlank() }
                             .groupingBy { it.votedName }
                             .eachCount()
                             .toList()
-                            .sortedByDescending { it.second }
+                            .toMutableList()
 
+                        survivors.firstOrNull { it is Player.Assign.Politician }?.let { politician ->
+                            tempCount.replaceAll { if (it.first == politician.votedName) it.copy(second = it.second + 1) else it }
+                        }
+
+                        val votedCount = tempCount.sortedByDescending { it.second }.toList()
                         return VoteComplete(votedCount = votedCount, survivors = survivors)
                     }
                 }
@@ -148,7 +154,7 @@ sealed class MafiaGameState{
                     override val survivors : MutableList<Player.Assign>,
                     override val mafias : List<Player.Assign.Mafia>
                 )  : MafiaTime(){
-                    override val time = mafias.size * 45
+                    override val time = mafias.size * 60
 
                     fun toKillComplete() : KillComplete {
                         val targetedCount = mafias
@@ -201,7 +207,7 @@ sealed class MafiaGameState{
             }
 
             data class PoliceTime(
-                override val korName : String = "경찰 수사",
+                override val korName : String = "탐문 조사",
                 override val survivors : MutableList<Player.Assign>
             ) : Progress() {
                 override val time: Int = 120

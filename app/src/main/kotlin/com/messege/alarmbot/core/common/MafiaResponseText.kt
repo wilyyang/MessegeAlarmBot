@@ -1,7 +1,6 @@
 package com.messege.alarmbot.core.common
 
 import com.messege.alarmbot.contents.mafia.Player
-import kotlin.reflect.KClass
 
 object MafiaText {
     const val GAME_RULE = "마피아 게임 설명입니다.\n\n" +
@@ -13,20 +12,25 @@ object MafiaText {
             "-- 1 대화 : 3분\n" +
             "-- 2 투표 : 마피아를 투표\n" +
             "-- 3 암살 : 마피아가 암살\n" +
-            "-- 4 수사 : 경찰이 수사\n\n" +
+            "-- 4 조사 : 영매나 경찰이 조사\n\n" +
             "* 세력\n" +
+            "* 시민 세력 직업은 랜덤이지만 중복되지 않습니다.\n" +
             "1. 시민 : 마피아를 제거하여 승리\n" +
-            "1.1 경찰 : 수사 시간에 직업 확인\n" +
-            "1.2 의사 : 암살 대상을 보호\n" +
-            "1.3 보디가드 : 투표 대상을 보호\n" +
+            "1.1 경찰 : 조사 시간에 생존자 마피아 여부 확인\n" +
+            "1.2 영매 : 조사 시간에 사망자 직업 확인\n" +
+            "1.3 의사 : 암살 대상을 보호\n" +
+            "1.4 보디가드 : 투표 대상을 보호\n" +
+            "1.5 정치인 : 투표 한번이 2개로 적용\n" +
+            "1.6 국정원 : 마피아의 대화를 엿들음\n" +
+            "1.7 시민\n" +
             "2. 마피아 : 마피아 많으면 승리\n" +
             "3. 바보 : 투표로 죽으면 승리\n\n" +
             "* 인원 배합\n" +
-            "4: 마피아1, 바보1, 시민2\n" +
+            "4: 마피아1, 시민3\n" +
             "5: 마피아1, 바보1, 시민3\n" +
-            "6: 마피아2, 바보1, 시민3\n" +
+            "6: 마피아1, 바보1, 시민4\n" +
             "7: 마피아2, 바보1, 시민4\n" +
-            "8: 마피아3, 바보1, 시민4"
+            "8: 마피아2, 바보1, 시민5"
 
     const val GAME_END_COMMAND = "[마피아를 종료합니다.]"
     const val GAME_ALREADY_START = "[이미 게임 진행 중입니다.]"
@@ -36,12 +40,21 @@ object MafiaText {
     const val GAME_ASSIGN_JOB = "[직업 할당중 ...]"
 
     const val ASSIGN_JOB_CITIZEN = "[당신은 시민입니다. 마피아를 모두 찾아 죽이면 승리합니다.]"
-    const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 수사시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
+    const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 조사시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
+    const val ASSIGN_JOB_SHAMAN  = "[당신은 영매입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 조사시간에 죽은 사람을 지목하여 직업을 확인할 수 있어요"
     const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다. 시민보다 마피아가 많으면 승리합니다.]"
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다. 투표시간에 지목당해 죽으면 승리합니다.]"
 
-    const val ASSIGN_JOB_DOCTOR         = "[당신은 의사입니다. 시민보다 마피아가 많으면 승리합니다.]\n* 능력 : 개인톡으로 지목한 사람을 암살에서 구해냅니다. (대상은 언제든 바꿀 수 있어요)"
-    const val ASSIGN_JOB_BODYGUARD      = "[당신은 보디가드입니다. 투표시간에 지목당해 죽으면 승리합니다.]\n* 능력 : 개인톡으로 지목한 사람을 투표에서 구해냅니다. (대상은 언제든 바꿀 수 있어요)"
+    const val ASSIGN_JOB_DOCTOR         = "[당신은 의사입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n" +
+        "* 능력 : 개인톡으로 지목한 사람을 암살에서 구해냅니다. (대상은 언제든 바꿀 수 있으며 능력이 아침마다 리셋됩니다.)"
+    const val ASSIGN_JOB_BODYGUARD      = "[당신은 보디가드입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n" +
+        "* 능력 : 개인톡으로 지목한 사람을 투표에서 구해냅니다. (대상은 언제든 바꿀 수 있으며 능력이 아침마다 리셋됩니다.)"
+
+
+    const val ASSIGN_JOB_POLITICIAN = "[당신은 정치인입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n" +
+        "* 능력 : 당신의 투표는 투표 결과에 2표로 적용됩니다.)"
+    const val ASSIGN_JOB_AGENT = "[당신은 국정원 요원입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n" +
+        "* 능력 : 마피아의 대화를 엿들을 수 있습니다.)"
 
     const val VOTE_RESULT_NOT    = "[누구도 투표로 죽지 않았습니다.]"
     const val KILL_RESULT_NOT    = "[누구도 암살로 죽지 않았습니다.]"
@@ -63,13 +76,15 @@ object MafiaText {
     fun gameStateKill(time: Int) = "[밤이 되었습니다. 마피아는 봇에게 개인톡을 하면 서로 대화가 가능합니다. 봇 개인톡으로 죽일 이름을 말해주세요. ($time 초)]"
 
     fun gameStatePoliceTime(time: Int, players: List<Player>)
-    = "[경찰의 수사시간입니다. 경찰은 봇 개인톡으로 수사 대상을 말해주세요. ($time 초)]\n바보는 시민으로 뜹니다.\n" + playerProgressToText(players)
+    = "[새벽의 조사시간입니다. 경찰이나 영매는 봇 개인톡으로 조사 대상을 말해주세요. ($time 초)]\n바보는 시민으로 뜹니다.\n" + playerProgressToText(players)
 
     fun voteKillUser(voteName : String, voteCount : Int) = "[투표로 인해 $voteName 님이 죽었습니다. (투표수 : $voteCount)]"
 
     fun mafiaKillUser(targetName : String, targetCount : Int) = "[$targetName 님이 마피아에 의해 암살당했습니다.]"
 
-    fun policeMessage(name: String, job : String) = "[$name 의 직업은 $job 입니다.]"
+    fun policeMessage(name: String, isMafia : Boolean) = "[$name 는 마피아 편${ if(isMafia) "입니다." else "이 아닙니다." }]"
+
+    fun shamanMessage(name: String, job : String) = "[$name 의 직업은 $job 입니다.]"
 
     fun gameRemainingTime(state: String, total: Int, remain: Int) = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]"
 
@@ -115,7 +130,7 @@ object MafiaText {
         val playersText = players.joinToString("\n") {
             "- ${it.name} : ${
                 if (it is Player.Assign) {
-                    val job = if(isJob) it.javaClass.simpleName else ""
+                    val job = if(isJob) it.job.korName else ""
                     if (it.isSurvive) "생존 $job" else "사망 $job"
                 } else {
                     "직업 미할당"
