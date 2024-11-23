@@ -679,7 +679,7 @@ class MafiaGameContent(
 
     private suspend fun endGame() {
         timer.stop()
-
+        agentUserRoomKey = null
         commandChannel.send(MainChatTextResponse(text = "미션은 ${metaData.mission} 입니다."))
         metaData = MafiaPlayMetaData()
     }
