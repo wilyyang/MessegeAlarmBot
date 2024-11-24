@@ -7,16 +7,11 @@ import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import com.messege.alarmbot.contents.BaseContent
-import com.messege.alarmbot.contents.CommonContent
-import com.messege.alarmbot.contents.QuestionGameContent
+import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
-import com.messege.alarmbot.contents.Command
+import com.messege.alarmbot.core.common.GAME_ROOM_KEY
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
-import com.messege.alarmbot.contents.MainChatTextResponse
-import com.messege.alarmbot.contents.None
-import com.messege.alarmbot.contents.UserTextResponse
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
@@ -38,6 +33,7 @@ class CmdProcessor(
 ) {
 
     private var mainOpenChatRoomAction : Notification.Action? = null
+    private var gameOpenChatRoomAction : Notification.Action? = null
     private val userChatRoomMap = mutableMapOf<ChatRoomKey, Notification.Action>()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -73,6 +69,10 @@ class CmdProcessor(
             Logger.d("[deliver.main] key : $chatRoomKey")
             Logger.d("[deliver.main] userName : ${user.name} / text : $text")
             mainOpenChatRoomAction = action
+        }else if(chatRoomKey == GAME_ROOM_KEY){
+            Logger.d("[deliver.game] key : $chatRoomKey")
+            Logger.d("[deliver.game] userName : ${user.name} / text : $text")
+            gameOpenChatRoomAction = action
         }
 
         messageDatabaseDao.insertMessage(
@@ -96,12 +96,17 @@ class CmdProcessor(
         when(command){
             is MainChatTextResponse -> {
                 mainOpenChatRoomAction?.let { action ->
-                    sendActionText(applicationContext, action, replyFormat(command.text))
+                    sendActionText(applicationContext, action, command.text)
+                }
+            }
+            is GameChatTextResponse -> {
+                gameOpenChatRoomAction?.let { action ->
+                    sendActionText(applicationContext, action, command.text)
                 }
             }
             is UserTextResponse -> {
                 userChatRoomMap[command.userKey]?.let { action ->
-                    sendActionText(applicationContext, action, replyFormat(command.text))
+                    sendActionText(applicationContext, action, command.text)
                 }
             }
             else -> {}
