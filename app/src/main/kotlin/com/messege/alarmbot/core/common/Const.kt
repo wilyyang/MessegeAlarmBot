@@ -12,7 +12,8 @@ const val GAME_CHAT_ROOM_KEY = "18435309809930728"
 const val DEBUG_CHAT_ROOM_KEY = "18434244645817433"
 
 val MAIN_KEY = ChatRoomKey(isGroupConversation = true, roomName = MAIN_CHAT_ROOM_NAME, roomKey = MAIN_CHAT_ROOM_KEY)
+val GAME_SUB_KEY = ChatRoomKey(isGroupConversation = true, roomName = GAME_CHAT_ROOM_NAME, roomKey = GAME_CHAT_ROOM_KEY)
 val SUB_KEY = ChatRoomKey(isGroupConversation = true, roomName = DEBUG_CHAT_ROOM_NAME, roomKey = DEBUG_CHAT_ROOM_KEY)
-val GAME_KEY = ChatRoomKey(isGroupConversation = true, roomName = GAME_CHAT_ROOM_NAME, roomKey = GAME_CHAT_ROOM_KEY)
+var GAME_KEY = GAME_SUB_KEY
 
 val TARGET_KEY = MAIN_KEY

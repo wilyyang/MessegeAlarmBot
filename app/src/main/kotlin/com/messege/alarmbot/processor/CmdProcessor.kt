@@ -10,12 +10,11 @@ import android.os.Bundle
 import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
-import com.messege.alarmbot.core.common.GAME_ROOM_KEY
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
+import com.messege.alarmbot.core.common.GAME_KEY
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
-import com.messege.alarmbot.util.format.replyFormat
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,11 +64,13 @@ class CmdProcessor(
             Logger.w("[deliver.user] key : $chatRoomKey")
             Logger.w("[deliver.user] userName : ${user.name} / text : $text")
             userChatRoomMap[chatRoomKey] = action
-        }else if(chatRoomKey == TARGET_KEY){
+        }
+        if(chatRoomKey == TARGET_KEY){
             Logger.d("[deliver.main] key : $chatRoomKey")
             Logger.d("[deliver.main] userName : ${user.name} / text : $text")
             mainOpenChatRoomAction = action
-        }else if(chatRoomKey == GAME_ROOM_KEY){
+        }
+        if(chatRoomKey == GAME_KEY){
             Logger.d("[deliver.game] key : $chatRoomKey")
             Logger.d("[deliver.game] userName : ${user.name} / text : $text")
             gameOpenChatRoomAction = action
