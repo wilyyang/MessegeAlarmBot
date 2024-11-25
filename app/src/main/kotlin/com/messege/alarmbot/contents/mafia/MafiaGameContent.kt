@@ -498,12 +498,12 @@ class MafiaGameContent(
 
                     if(target == null){
                         commandChannel.send(GameChatTextResponse(KILL_RESULT_NOT))
-                        _stateFlow.value = state.toPoliceTime()
+                        _stateFlow.value = state.toInvestigateTime()
                     }else{
                         val targetedMan = state.survivors.firstOrNull{it.name == target.first}
                         if(targetedMan == null){
                             commandChannel.send(GameChatTextResponse(KILL_RESULT_NOT))
-                            _stateFlow.value = state.toPoliceTime()
+                            _stateFlow.value = state.toInvestigateTime()
                         }else{
                             targetedMan.isSurvive = false
                             state.survivors.removeIf { it.name == targetedMan.name }
@@ -523,7 +523,7 @@ class MafiaGameContent(
                     state.targetedMan.isSurvive = true
                     state.survivors.add(state.targetedMan)
                     commandChannel.send(GameChatTextResponse(MafiaText.doctorSaveMan(state.targetedMan.name)))
-                    _stateFlow.value = state.toPoliceTime()
+                    _stateFlow.value = state.toInvestigateTime()
                     return
                 }
 
@@ -534,11 +534,11 @@ class MafiaGameContent(
                     commandChannel.send(GameChatTextResponse(MafiaText.winMafia(state.targetedMan.name, metaData.allPlayers)))
                     _stateFlow.value = MafiaGameState.End()
                 }else{
-                    _stateFlow.value = state.toPoliceTime()
+                    _stateFlow.value = state.toInvestigateTime()
                 }
             }
 
-            is MafiaGameState.Play.Progress.PoliceTime -> {
+            is MafiaGameState.Play.Progress.InvestigateTime -> {
                 delay(2000)
                 _timerFlow.value = TimeWork(state.time) {
                     _stateFlow.value = state.toTalk()
@@ -618,7 +618,7 @@ class MafiaGameContent(
                 }
             }
 
-            is MafiaGameState.Play.Progress.PoliceTime -> {
+            is MafiaGameState.Play.Progress.InvestigateTime -> {
                 if(!isMainChat) {
                     val target = if (text.startsWith("@")) {
                         text.substring(1).trim()

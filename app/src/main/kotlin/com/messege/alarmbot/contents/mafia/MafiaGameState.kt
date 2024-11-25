@@ -203,10 +203,10 @@ sealed class MafiaGameState{
                 }
 
 
-                fun toPoliceTime() = PoliceTime(survivors = survivors)
+                fun toInvestigateTime() = InvestigateTime(survivors = survivors)
             }
 
-            data class PoliceTime(
+            data class InvestigateTime(
                 override val korName : String = "탐문 조사",
                 override val survivors : MutableList<Player.Assign>
             ) : Progress() {
