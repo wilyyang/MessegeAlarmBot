@@ -12,9 +12,11 @@ enum class Job(val korName : String) {
     Shaman("영매"),
     Doctor("의사"),
     Bodyguard("보디가드"),
-    Mafia("마피아"),
+    Soldier("군인"),
+
+    Magician("마술사"),
     Fool("바보"),
-    Soldier("군인")
+    Mafia("마피아")
 }
 
 sealed class Player {
@@ -35,7 +37,7 @@ sealed class Player {
     data class None(override val name : String, override var key : String) : Player() {
         var isCheck : Boolean = false
 
-        fun toRandomCitizen(job : Job) = when (job) {
+        fun toCitizen(job : Job) = when (job) {
             Job.Politician -> toPolitician()
             Job.Agent -> toAgent()
             Job.Police -> toPolice()
@@ -46,11 +48,18 @@ sealed class Player {
             else -> toCitizen()
         }
 
+        fun toRandomHidden(job : Job) = when (job) {
+            Job.Magician -> toMagician()
+            Job.Fool -> toFool()
+            else -> toFool()
+        }
+
         fun toCitizen() = Assign.Citizen(name, key)
         fun toPolitician() = Assign.Politician(name, key)
         fun toAgent() = Assign.Agent(name, key)
         fun toPolice() = Assign.Police(name, key)
         fun toShaman() = Assign.Shaman(name, key)
+        fun toMagician() = Assign.Magician(name, key)
         fun toMafia() = Assign.Mafia(name, key)
         fun toFool() = Assign.Fool(name, key)
         fun toDoctor() = Assign.Doctor(name, key)
@@ -106,6 +115,22 @@ sealed class Player {
             }
         }
 
+        data class Magician(override val name : String, override var key : String) : Assign(side = Side.Citizen, job = Job.Magician){
+            fun toMafia() : Assign {
+                val newJob = None(name, key)
+                newJob.isCheck = true
+                return newJob.toMafia()
+            }
+
+            fun toCitizen(job : Job) : Assign {
+                val newJob = None(name, key)
+                newJob.isCheck = true
+                return newJob.toCitizen(job)
+            }
+        }
+
+        data class Fool(override val name : String, override var key : String) : Assign(side = Side.Fool, job = Job.Fool)
+
         data class Mafia(override val name : String, override var key : String) : Assign(side = Side.Mafia, job = Job.Mafia) {
             var targetedName : String = ""
 
@@ -114,7 +139,5 @@ sealed class Player {
                 targetedName = ""
             }
         }
-
-        data class Fool(override val name : String, override var key : String) : Assign(side = Side.Fool, job = Job.Fool)
     }
 }

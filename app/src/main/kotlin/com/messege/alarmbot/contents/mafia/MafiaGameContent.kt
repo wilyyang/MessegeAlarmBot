@@ -14,6 +14,7 @@ import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_CITIZEN
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_DOCTOR
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_FOOL
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_MAFIA
+import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_MAGICIAN
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_POLICE
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_POLITICIAN
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_SHAMAN
@@ -21,6 +22,7 @@ import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_SOLDIER
 import com.messege.alarmbot.core.common.MafiaText.GAME_ASSIGN_JOB
 import com.messege.alarmbot.core.common.MafiaText.GAME_NOT_START_MORE_PLAYER
 import com.messege.alarmbot.core.common.MafiaText.KILL_RESULT_NOT
+import com.messege.alarmbot.core.common.MafiaText.MAGICIAN_GET_YOUR_JOB
 import com.messege.alarmbot.core.common.MafiaText.VOTE_RESULT_NOT
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -140,10 +142,11 @@ class MafiaGameContent(
                                             is Player.Assign.Soldier -> ASSIGN_JOB_SOLDIER
                                             is Player.Assign.Police -> ASSIGN_JOB_POLICE
                                             is Player.Assign.Shaman -> ASSIGN_JOB_SHAMAN
-                                            is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
-                                            is Player.Assign.Fool -> ASSIGN_JOB_FOOL
                                             is Player.Assign.Doctor -> ASSIGN_JOB_DOCTOR
                                             is Player.Assign.Bodyguard -> ASSIGN_JOB_BODYGUARD
+                                            is Player.Assign.Magician -> ASSIGN_JOB_MAGICIAN
+                                            is Player.Assign.Fool -> ASSIGN_JOB_FOOL
+                                            is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
                                         }
                                     )
                                 )
@@ -450,6 +453,7 @@ class MafiaGameContent(
                     is Player.Assign.Bodyguard,
                     is Player.Assign.Shaman,
                     is Player.Assign.Soldier,
+                    is Player.Assign.Magician,
                     is Player.Assign.Police -> {
                         val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                         val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
@@ -576,6 +580,66 @@ class MafiaGameContent(
                 if(isMainChat && text == timeSkip && userName == metaData.hostName){
                     _stateFlow.value = state.toVote()
                 }
+
+                if(!isMainChat){
+                    val currentUser = state.survivors.firstOrNull { it.name == userName }
+                    if(currentUser is Player.Assign.Magician){
+                        val target = if(text.startsWith("@")){
+                            text.substring(1).trim()
+                        }else{
+                            text
+                        }
+
+                        val targetUser = state.survivors.firstOrNull { it.name == target && currentUser.name != target}
+                        metaData.allPlayers.removeIf { currentUser.name == it.name }
+                        state.survivors.removeIf { currentUser.name == it.name }
+
+                        when(targetUser){
+                            is Player.Assign.Mafia -> {
+                                targetUser.isSurvive = false
+                                state.survivors.removeIf { targetUser.name == it.name }
+
+                                val newJob = currentUser.toMafia()
+                                metaData.allPlayers.add(newJob)
+                                state.survivors.add(newJob)
+
+                                commandChannel.send(GameChatTextResponse(MafiaText.magicianKillMafia(targetUser.name)))
+                            }
+                            is Player.Assign -> {
+                                metaData.allPlayers.removeIf { targetUser.name == it.name }
+                                state.survivors.removeIf { targetUser.name == it.name }
+
+                                val targetInit = Player.None(targetUser.name, targetUser.key)
+                                targetInit.isCheck = true
+                                val targetNewJob = targetInit.toCitizen()
+                                metaData.allPlayers.add(targetNewJob)
+                                state.survivors.add(targetNewJob)
+
+                                val newJob = currentUser.toCitizen(targetUser.job)
+                                metaData.allPlayers.add(newJob)
+                                state.survivors.add(newJob)
+
+                                commandChannel.send(
+                                    UserTextResponse(
+                                        userKey = ChatRoomKey(isGroupConversation = false, targetUser.name, targetUser.name),
+                                        text = MAGICIAN_GET_YOUR_JOB
+                                    )
+                                )
+                            }
+                            else -> {}
+                        }
+
+                        delay(1000)
+                        if(targetUser is Player.Assign){
+                            commandChannel.send(
+                                UserTextResponse(
+                                    userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
+                                    text = MafiaText.magicianHaveJob(targetUser.job.korName)
+                                )
+                            )
+                        }
+                    }
+                }
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
@@ -629,7 +693,7 @@ class MafiaGameContent(
                         }
                         is Player.Assign.Police -> {
                             if(!currentUser.isInvestigate){
-                                val targetUser = state.survivors.firstOrNull { it.name == target}
+                                val targetUser = state.survivors.firstOrNull { it.name == target && currentUser.name != target}
 
                                 if(targetUser != null){
                                     currentUser.isInvestigate = true
@@ -644,7 +708,7 @@ class MafiaGameContent(
                         }
                         is Player.Assign.Shaman -> {
                             if(!currentUser.isPossess){
-                                val targetUser = metaData.allPlayers.firstOrNull { it.name == target }
+                                val targetUser = metaData.allPlayers.firstOrNull { it.name == target && currentUser.name != target}
 
                                 if(targetUser != null && targetUser is Player.Assign && !targetUser.isSurvive){
                                     currentUser.isPossess = true

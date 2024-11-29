@@ -1,5 +1,6 @@
 package com.messege.alarmbot.core.common
 
+import com.messege.alarmbot.contents.mafia.Job
 import com.messege.alarmbot.contents.mafia.Player
 
 object MafiaText {
@@ -26,13 +27,16 @@ object MafiaText {
             "1.7 군인 : 밤에 암살당하면 마피아 한명 죽음\n" +
             "1.8 시민\n" +
             "2. 마피아 : 마피아 많으면 승리\n" +
-            "3. 바보 : 투표로 죽으면 승리\n\n" +
+            "3. 히든 직업\n" +
+            "3.1 바보 : 투표로 죽으면 승리\n"+
+            "3.2 마술사 : 대화시간에 선택한 직업으로 변경\n" +
+            "(마피아는 사망, 다른 직업은 시민이 됨)\n\n"+
             "* 인원 배합\n" +
             "4: 마피아1, 시민3\n" +
-            "5: 마피아1, 바보1, 시민3\n" +
-            "6: 마피아1, 바보1, 시민4\n" +
-            "7: 마피아2, 바보1, 시민4\n" +
-            "8: 마피아2, 바보1, 시민5"
+            "5: 마피아1, 히든1, 시민3\n" +
+            "6: 마피아1, 히든1, 시민4\n" +
+            "7: 마피아2, 히든1, 시민4\n" +
+            "8: 마피아2, 히든1, 시민5"
 
     const val GAME_END_COMMAND = "[마피아를 종료합니다.]"
     const val GAME_ALREADY_START = "[이미 게임 진행 중입니다.]"
@@ -45,6 +49,7 @@ object MafiaText {
     const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 밤시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
     const val ASSIGN_JOB_SHAMAN  = "[당신은 영매입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 밤시간에 죽은 사람을 지목하여 직업을 확인할 수 있어요"
     const val ASSIGN_JOB_SOLDIER = "[당신은 군인입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 마피아에게 암살당하면, 마피아 한 명을 죽입니다"
+    const val ASSIGN_JOB_MAGICIAN = "[당신은 마술사입니다. 대화시간에 선택한 직업이 됩니다.]\n* 선택 대상의 경우, 마피아는 사망, 시민 직업은 시민이 됨"
     const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다. 시민보다 마피아가 많으면 승리합니다.]"
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다. 투표시간에 지목당해 죽으면 승리합니다.]"
 
@@ -61,6 +66,11 @@ object MafiaText {
 
     const val VOTE_RESULT_NOT    = "[누구도 투표로 죽지 않았습니다.]"
     const val KILL_RESULT_NOT    = "[누구도 암살로 죽지 않았습니다.]"
+
+    fun magicianKillMafia(mafia: String) = "[$mafia 님이 마술사에 의해 죽었습니다]"
+    fun magicianHaveJob(job: String) = "[당신은 이제 $job 입니다. $job 으로 행동해주세요.]"
+
+    const val MAGICIAN_GET_YOUR_JOB = "[마술사가 당신의 직업을 가져갔습니다. 당신은 이제 시민입니다.]"
 
     fun winFool(name : String, players: List<Player>) = "[죽은 $name 님은 바보입니다. 투표로 죽은 바보의 단독 승리입니다!]\n${playerProgressToText(players, true)}"
 

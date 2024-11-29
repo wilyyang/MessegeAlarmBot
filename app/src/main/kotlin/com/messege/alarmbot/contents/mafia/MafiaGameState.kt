@@ -39,30 +39,31 @@ sealed class MafiaGameState{
 
             fun assignJob() {
                 val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Soldier, Job.Shaman).shuffled()
+                val hiddenJobs = listOf(Job.Fool, Job.Magician).shuffled()
                 players.shuffle()
                 players.getOrNull(0)?.let {
                     assignedPlayers.add(it.toMafia())
                 }
                 players.getOrNull(1)?.let {
-                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[0]))
+                    assignedPlayers.add(it.toCitizen(citizenJobs[0]))
                 }
                 players.getOrNull(2)?.let {
-                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[1]))
+                    assignedPlayers.add(it.toCitizen(citizenJobs[1]))
                 }
                 players.getOrNull(3)?.let {
-                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[2]))
+                    assignedPlayers.add(it.toCitizen(citizenJobs[2]))
                 }
                 players.getOrNull(4)?.let {
-                    assignedPlayers.add(it.toFool())
+                    assignedPlayers.add(it.toRandomHidden(hiddenJobs[0]))
                 }
                 players.getOrNull(5)?.let {
-                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[3]))
+                    assignedPlayers.add(it.toCitizen(citizenJobs[3]))
                 }
                 players.getOrNull(6)?.let {
                     assignedPlayers.add(it.toMafia())
                 }
                 players.getOrNull(7)?.let {
-                    assignedPlayers.add(it.toRandomCitizen(citizenJobs[4]))
+                    assignedPlayers.add(it.toCitizen(citizenJobs[4]))
                 }
             }
 
