@@ -619,6 +619,14 @@ class MafiaGameContent(
                                 metaData.allPlayers.add(newJob)
                                 state.survivors.add(newJob)
 
+                                if (targetUser is Player.Assign.Agent) {
+                                    agentUserRoomKey = ChatRoomKey(
+                                        isGroupConversation = false,
+                                        roomName = currentUser.name,
+                                        roomKey = currentUser.name
+                                    )
+                                }
+
                                 commandChannel.send(
                                     UserTextResponse(
                                         userKey = ChatRoomKey(isGroupConversation = false, targetUser.name, targetUser.name),
