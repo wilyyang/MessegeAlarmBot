@@ -79,9 +79,9 @@ object MafiaText {
     fun gameStatePoliceTime(time: Int, players: List<Player>)
     = "[새벽의 조사시간입니다. 경찰이나 영매는 봇 개인톡으로 조사 대상을 말해주세요. ($time 초)]\n바보는 시민으로 뜹니다.\n" + playerProgressToText(players)
 
-    fun voteKillUser(voteName : String, voteCount : Int) = "[투표로 인해 $voteName 님이 죽었습니다. (투표수 : $voteCount)]"
+    fun voteKillUser(voteName : String) = "[투표로 인해 $voteName 님이 죽었습니다.]"
 
-    fun mafiaKillUser(targetName : String, targetCount : Int) = "[$targetName 님이 마피아에 의해 암살당했습니다.]"
+    fun mafiaKillUser(targetName : String) = "[$targetName 님이 마피아에 의해 암살당했습니다.]"
 
     fun policeMessage(name: String, isMafia : Boolean) = "[$name 는 마피아 편${ if(isMafia) "입니다." else "이 아닙니다." }]"
 
