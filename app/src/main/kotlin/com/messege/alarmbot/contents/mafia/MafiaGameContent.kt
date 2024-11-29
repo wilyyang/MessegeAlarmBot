@@ -17,6 +17,7 @@ import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_MAFIA
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_POLICE
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_POLITICIAN
 import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_SHAMAN
+import com.messege.alarmbot.core.common.MafiaText.ASSIGN_JOB_SOLDIER
 import com.messege.alarmbot.core.common.MafiaText.GAME_ASSIGN_JOB
 import com.messege.alarmbot.core.common.MafiaText.GAME_NOT_START_MORE_PLAYER
 import com.messege.alarmbot.core.common.MafiaText.KILL_RESULT_NOT
@@ -136,6 +137,7 @@ class MafiaGameContent(
                                             is Player.Assign.Citizen -> ASSIGN_JOB_CITIZEN
                                             is Player.Assign.Politician -> ASSIGN_JOB_POLITICIAN
                                             is Player.Assign.Agent -> ASSIGN_JOB_AGENT
+                                            is Player.Assign.Soldier -> ASSIGN_JOB_SOLDIER
                                             is Player.Assign.Police -> ASSIGN_JOB_POLICE
                                             is Player.Assign.Shaman -> ASSIGN_JOB_SHAMAN
                                             is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
@@ -447,6 +449,7 @@ class MafiaGameContent(
                     is Player.Assign.Doctor,
                     is Player.Assign.Bodyguard,
                     is Player.Assign.Shaman,
+                    is Player.Assign.Soldier,
                     is Player.Assign.Police -> {
                         val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                         val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
@@ -529,10 +532,30 @@ class MafiaGameContent(
                 commandChannel.send(GameChatTextResponse(MafiaText.mafiaKillUser(state.targetedMan.name)))
                 delay(2000)
 
+                if(state.targetedMan is Player.Assign.Soldier){
+                    state.mafias.shuffled().getOrNull(0)?.let { soldierTarget ->
+                        soldierTarget.isSurvive = false
+                        state.survivors.removeIf { it.name == soldierTarget.name }
+
+                        commandChannel.send(
+                            GameChatTextResponse(
+                                MafiaText.soldierKilledMessage(
+                                    name = soldierTarget.name,
+                                    soldier = state.targetedMan.name
+                                )
+                            )
+                        )
+                        delay(1000)
+                    }
+                }
+
                 val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                 val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
 
-                if(mafiaCount == citizenCount){
+                if(mafiaCount == 0){
+                    commandChannel.send(GameChatTextResponse(MafiaText.winCitizenWithSoldier(state.targetedMan.name, metaData.allPlayers)))
+                    _stateFlow.value = MafiaGameState.End()
+                }else if(mafiaCount == citizenCount){
                     commandChannel.send(GameChatTextResponse(MafiaText.winMafia(state.targetedMan.name, metaData.allPlayers)))
                     _stateFlow.value = MafiaGameState.End()
                 }else{

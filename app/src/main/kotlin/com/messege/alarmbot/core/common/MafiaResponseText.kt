@@ -23,7 +23,8 @@ object MafiaText {
             "1.4 보디가드 : 투표 대상을 보호\n" +
             "1.5 정치인 : 투표 한번이 2개로 적용\n" +
             "1.6 국정원 : 마피아의 대화를 엿들음\n" +
-            "1.7 시민\n" +
+            "1.7 군인 : 밤에 암살당하면 마피아 한명 죽음\n" +
+            "1.8 시민\n" +
             "2. 마피아 : 마피아 많으면 승리\n" +
             "3. 바보 : 투표로 죽으면 승리\n\n" +
             "* 인원 배합\n" +
@@ -43,6 +44,7 @@ object MafiaText {
     const val ASSIGN_JOB_CITIZEN = "[당신은 시민입니다. 마피아를 모두 찾아 죽이면 승리합니다.]"
     const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 밤시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
     const val ASSIGN_JOB_SHAMAN  = "[당신은 영매입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 밤시간에 죽은 사람을 지목하여 직업을 확인할 수 있어요"
+    const val ASSIGN_JOB_SOLDIER = "[당신은 군인입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 마피아에게 암살당하면, 마피아 한 명을 죽입니다"
     const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다. 시민보다 마피아가 많으면 승리합니다.]"
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다. 투표시간에 지목당해 죽으면 승리합니다.]"
 
@@ -63,6 +65,8 @@ object MafiaText {
     fun winFool(name : String, players: List<Player>) = "[죽은 $name 님은 바보입니다. 투표로 죽은 바보의 단독 승리입니다!]\n${playerProgressToText(players, true)}"
 
     fun winCitizen(name : String, players: List<Player>) = "[죽은 $name 님은 마피아입니다. 마피아가 모두 죽어 시민이 승리합니다!]\n${playerProgressToText(players, true)}"
+
+    fun winCitizenWithSoldier(name : String, players: List<Player>) = "[죽은 $name 님에 의해 마피아가 모두 죽어 시민이 승리합니다!]\n${playerProgressToText(players, true)}"
 
     fun winMafia(name : String, players: List<Player>) = "[죽은 $name 님은 시민입니다. 시민 수가 적어 마피아가 이겼습니다!]\n${playerProgressToText(players, true)}"
 
@@ -107,6 +111,9 @@ object MafiaText {
 
     fun mafiaMessage(name: String, text : String) =
         "[$name 마피아님이 전달한 메시지]\n$text"
+
+    fun soldierKilledMessage(name: String, soldier: String) =
+        "[마피아 $name 님이 군인 $soldier 님에 의해 죽었습니다]"
 
     fun hostStartGame(hostName: String) =
         "[마피아 게임 시작]\n\n" +

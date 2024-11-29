@@ -13,7 +13,8 @@ enum class Job(val korName : String) {
     Doctor("의사"),
     Bodyguard("보디가드"),
     Mafia("마피아"),
-    Fool("바보")
+    Fool("바보"),
+    Soldier("군인")
 }
 
 sealed class Player {
@@ -41,6 +42,7 @@ sealed class Player {
             Job.Shaman -> toShaman()
             Job.Doctor -> toDoctor()
             Job.Bodyguard -> toBodyguard()
+            Job.Soldier -> toSoldier()
             else -> toCitizen()
         }
 
@@ -53,6 +55,7 @@ sealed class Player {
         fun toFool() = Assign.Fool(name, key)
         fun toDoctor() = Assign.Doctor(name, key)
         fun toBodyguard() = Assign.Bodyguard(name, key)
+        fun toSoldier() = Assign.Soldier(name, key)
     }
 
     sealed class Assign(open val side : Side, open val job: Job): Player() {
@@ -68,6 +71,7 @@ sealed class Player {
         data class Citizen(override val name : String, override var key : String) : Assign(side = Side.Citizen, job = Job.Citizen)
         data class Politician(override val name : String, override var key : String) : Assign(side = Side.Citizen, job = Job.Politician)
         data class Agent(override val name : String, override var key : String) : Assign(side = Side.Citizen, job = Job.Agent)
+        data class Soldier(override val name : String, override var key : String) : Assign(side = Side.Citizen, job = Job.Soldier)
         data class Police(override val name : String, override var key : String) : Assign(side = Side.Citizen, job = Job.Police) {
             var isInvestigate : Boolean = false
 

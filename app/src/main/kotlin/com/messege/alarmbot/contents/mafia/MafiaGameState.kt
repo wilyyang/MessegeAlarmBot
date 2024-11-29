@@ -38,7 +38,7 @@ sealed class MafiaGameState{
             val assignedPlayers : MutableList<Player.Assign> = mutableListOf()
 
             fun assignJob() {
-                val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Shaman).shuffled()
+                val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Soldier, Job.Shaman).shuffled()
                 players.shuffle()
                 players.getOrNull(0)?.let {
                     assignedPlayers.add(it.toMafia())
