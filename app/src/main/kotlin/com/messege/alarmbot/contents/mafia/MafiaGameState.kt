@@ -155,7 +155,7 @@ sealed class MafiaGameState{
                     override val survivors : MutableList<Player.Assign>,
                     override val mafias : List<Player.Assign.Mafia>
                 )  : MafiaTime(){
-                    override val time = mafias.size * 60 + 30
+                    override val time = mafias.size * 40 + 30
 
                     fun toKillComplete() : KillComplete {
                         val targetedCount = mafias

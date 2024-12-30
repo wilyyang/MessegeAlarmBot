@@ -88,7 +88,11 @@ object MafiaText {
 
     fun gameStateVote(time: Int) = "[투표 시간입니다. 전체 채팅에 마피아로 파악되는 유저 이름을 정확하게 톡해주세요. 앞에 @를 붙여도 됩니다. ($time 초)]"
 
+    fun gameVoteCompleteSoon() = "[투표 종료 10초 전입니다!]"
+
     fun gameStateKill(time: Int) = "[밤이 되었습니다. 마피아는 봇에게 개인톡을 하면 서로 대화가 가능합니다. 봇 개인톡으로 죽일 이름을 말해주세요. 경찰이나 영매도 봇 개인톡으로 조사 대상을 말해주세요. ($time 초)]"
+
+    fun gameKillCompleteSoon() = "[밤 시간 종료 10초 전입니다!]"
 
     fun gameStatePoliceTime(time: Int, players: List<Player>)
     = "[새벽의 조사시간입니다. 경찰이나 영매는 봇 개인톡으로 조사 대상을 말해주세요. ($time 초)]\n바보는 시민으로 뜹니다.\n" + playerProgressToText(players)

@@ -53,15 +53,23 @@ class MafiaGameContent(
     private var metaData: MafiaPlayMetaData = MafiaPlayMetaData()
 
     private val timer = Timer(scope)
+    private val alarmTimer = Timer(scope)
     private val _stateFlow = MutableStateFlow<MafiaGameState>(MafiaGameState.End())
 
     private val _timerFlow = MutableStateFlow<TimeWork>(TimeWork(0) {})
+    private val _alarmTimerFlow = MutableStateFlow<TimeWork>(TimeWork(0) {})
     private var agentUserRoomKey : ChatRoomKey? = null
 
     init {
         scope.launch {
             _timerFlow.collect { timeWork ->
                 timer.start(timeWork)
+            }
+        }
+
+        scope.launch {
+            _alarmTimerFlow.collect { timeWork ->
+                alarmTimer.start(timeWork)
             }
         }
 
@@ -388,6 +396,10 @@ class MafiaGameContent(
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVoteComplete()
                 }
+
+                _alarmTimerFlow.value = TimeWork(state.time - 10){
+                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameVoteCompleteSoon()))
+                }
                 commandChannel.send(GameChatTextResponse(text = MafiaText.gameStateVote(state.time)))
             }
 
@@ -484,6 +496,9 @@ class MafiaGameContent(
                     _stateFlow.value = state.toKillComplete()
                 }
 
+                _alarmTimerFlow.value = TimeWork(state.time - 10){
+                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameKillCompleteSoon()))
+                }
                 commandChannel.send(GameChatTextResponse(text = MafiaText.gameStateKill(state.time)))
             }
 
@@ -739,7 +754,7 @@ class MafiaGameContent(
 
     private suspend fun startGame(host: Person) {
         timer.stop()
-        val missions = arrayOfMafiaMissions.toList().shuffled().take(8)
+        val missions = arrayOfMafiaMissions.toList().shuffled().take(6)
         val mission = missions[0]
         metaData = MafiaPlayMetaData(
             isStart = true,
