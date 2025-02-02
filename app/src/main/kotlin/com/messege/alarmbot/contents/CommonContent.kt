@@ -30,7 +30,7 @@ class CommonContent(
                         insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
                     }else if(userNameList.first() != currentName){
                         insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
-                        commandChannel.send(MainChatTextResponse(text = CommonText.alreadyUser(name = currentName, alreadyUsers = userNameList)))
+                        commandChannel.send(HostChatTextResponse(text = CommonText.alreadyUser(name = currentName, alreadyUsers = userNameList)))
                     }
                 }
             }

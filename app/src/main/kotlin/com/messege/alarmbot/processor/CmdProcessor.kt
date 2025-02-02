@@ -12,6 +12,7 @@ import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
 import com.messege.alarmbot.core.common.GAME_KEY
+import com.messege.alarmbot.core.common.HOST_KEY
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
@@ -33,6 +34,7 @@ class CmdProcessor(
 
     private var mainOpenChatRoomAction : Notification.Action? = null
     private var gameOpenChatRoomAction : Notification.Action? = null
+    private var hostOpenChatRoomAction : Notification.Action? = null
     private val userChatRoomMap = mutableMapOf<ChatRoomKey, Notification.Action>()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -75,6 +77,11 @@ class CmdProcessor(
             Logger.d("[deliver.game] userName : ${user.name} / text : $text")
             gameOpenChatRoomAction = action
         }
+        if(chatRoomKey == HOST_KEY){
+            Logger.d("[deliver.host] key : $chatRoomKey")
+            Logger.d("[deliver.host] userName : ${user.name} / text : $text")
+            hostOpenChatRoomAction = action
+        }
 
         messageDatabaseDao.insertMessage(
             MessageData(
@@ -102,6 +109,11 @@ class CmdProcessor(
             }
             is GameChatTextResponse -> {
                 gameOpenChatRoomAction?.let { action ->
+                    sendActionText(applicationContext, action, command.text)
+                }
+            }
+            is HostChatTextResponse -> {
+                hostOpenChatRoomAction?.let { action ->
                     sendActionText(applicationContext, action, command.text)
                 }
             }
