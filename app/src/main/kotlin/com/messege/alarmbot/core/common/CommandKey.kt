@@ -12,3 +12,5 @@ const val mission = "미션"
 
 const val checkGame = "확인"
 const val timeSkip = "스킵"
+
+const val topicRecommend = "추천"

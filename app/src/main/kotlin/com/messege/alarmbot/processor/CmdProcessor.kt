@@ -16,6 +16,7 @@ import com.messege.alarmbot.core.common.HOST_KEY
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
+import com.messege.alarmbot.data.network.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,8 @@ import kotlinx.coroutines.launch
 class CmdProcessor(
     private val applicationContext: Context,
     private val userDatabaseDao: UserDatabaseDao,
-    private val messageDatabaseDao: MessageDatabaseDao
+    private val messageDatabaseDao: MessageDatabaseDao,
+    private val topicDatabaseDao: TopicDatabaseDao
 ) {
 
     private var mainOpenChatRoomAction : Notification.Action? = null
@@ -45,7 +47,9 @@ class CmdProcessor(
         CommonContent(
             commandChannel = commandChannel,
             insertUser = userDatabaseDao::insertUser,
-            getUserNameList = userDatabaseDao::getUserNames
+            getUserNameList = userDatabaseDao::getUserNames,
+            insertTopic = topicDatabaseDao::insertTopic,
+            recommendTopic = topicDatabaseDao::getRandomTopic
         ),
 
          QuestionGameContent(commandChannel),
