@@ -14,3 +14,4 @@ const val checkGame = "확인"
 const val timeSkip = "스킵"
 
 const val topicRecommend = "추천"
+const val topicAdd = "주제"

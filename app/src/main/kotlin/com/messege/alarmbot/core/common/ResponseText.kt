@@ -5,9 +5,13 @@ import com.messege.alarmbot.contents.UserKey
 object CommonText{
     const val HELP = "안녕하세요? 빵구봇입니다.\n\n" +
             "* 현재 사용 가능한 명령어\n\n" +
+            "- .주제 ... : 주제 추가\n" +
+            "- .추천 : 주제 추천\n\n" +
             "- .다섯고개\n" +
-            "- .다섯고개규칙\n" +
-            "- .다섯고개종료"
+            "- .다섯고개규칙\n\n" +
+            "- .마피아\n" +
+            "- .마피아규칙\n" +
+            "- .미션"
 
     fun alreadyUser(name: String, alreadyUsers : List<String>) : String{
         val alreadyText = alreadyUsers.joinToString(", ")

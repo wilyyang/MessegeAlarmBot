@@ -6,10 +6,11 @@ import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.CommonText
 import com.messege.alarmbot.core.common.TARGET_KEY
+import com.messege.alarmbot.core.common.topicAdd
 import com.messege.alarmbot.core.common.topicRecommend
 import com.messege.alarmbot.data.database.user.model.UserNameData
 import com.messege.alarmbot.data.network.topic.model.TopicData
-import com.messege.alarmbot.util.format.toTimeFormat
+import com.messege.alarmbot.util.format.toTimeFormatHHmm
 import kotlinx.coroutines.channels.Channel
 
 class CommonContent(
@@ -27,21 +28,20 @@ class CommonContent(
                 text == "$hostKeyword$helpKeyword" -> {
                     commandChannel.send(MainChatTextResponse(text = CommonText.HELP))
                 }
-                "$hostKeyword$topicRecommend" in text -> {
+                text =="$hostKeyword$topicRecommend" -> {
+                    val topic = recommendTopic()
+                    val recommendTopicText = topic?.let {
+                        "${it.topic} \n- [${it.updateTime.toTimeFormatHHmm()} ${it.userName}]"
+                    }?: "등록된 주제가 없습니다."
+                    commandChannel.send(MainChatTextResponse(text = recommendTopicText))
+                }
+                text.startsWith("$hostKeyword$topicAdd ") -> {
                     val topicText = text.substringAfter(" ", missingDelimiterValue = "")
-                    if(topicText.isNotEmpty()){
-                        val updateTime = System.currentTimeMillis()
-                        val currentKey = "${user.key}"
-                        val currentName = "${user.name}"
-                        insertTopic(TopicData(updateTime = updateTime, userKey = currentKey, userName = currentName, topic = topicText))
-                        commandChannel.send(MainChatTextResponse(text = "주제가 추가되었습니다."))
-                    }else{
-                        val topic = recommendTopic()
-                        val recommendTopicText = topic?.let {
-                            "${it.topic} - [${it.updateTime.toTimeFormat()} ${it.userName}]"
-                        }?: "등록된 주제가 없습니다."
-                        commandChannel.send(MainChatTextResponse(text = recommendTopicText))
-                    }
+                    val updateTime = System.currentTimeMillis()
+                    val currentKey = "${user.key}"
+                    val currentName = "${user.name}"
+                    insertTopic(TopicData(updateTime = updateTime, userKey = currentKey, userName = currentName, topic = topicText))
+                    commandChannel.send(MainChatTextResponse(text = "주제가 추가되었습니다."))
                 }
                 else -> {
                     val currentName = "${user.name}"
