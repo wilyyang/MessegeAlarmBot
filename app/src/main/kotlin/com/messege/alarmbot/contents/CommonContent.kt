@@ -10,7 +10,7 @@ import com.messege.alarmbot.core.common.topicAdd
 import com.messege.alarmbot.core.common.topicRecommend
 import com.messege.alarmbot.data.database.user.model.UserNameData
 import com.messege.alarmbot.data.network.topic.model.TopicData
-import com.messege.alarmbot.util.format.toTimeFormatHHmm
+import com.messege.alarmbot.util.format.toTimeFormatDate
 import kotlinx.coroutines.channels.Channel
 
 class CommonContent(
@@ -31,7 +31,7 @@ class CommonContent(
                 text =="$hostKeyword$topicRecommend" -> {
                     val topic = recommendTopic()
                     val recommendTopicText = topic?.let {
-                        "${it.topic} \n- [${it.updateTime.toTimeFormatHHmm()} ${it.userName}]"
+                        "${it.topic} \n- ${it.updateTime.toTimeFormatDate()} ${it.userName}"
                     }?: "등록된 주제가 없습니다."
                     commandChannel.send(MainChatTextResponse(text = recommendTopicText))
                 }
