@@ -11,6 +11,7 @@ import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
+import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.GAME_KEY
 import com.messege.alarmbot.core.common.HOST_KEY
 import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
@@ -48,12 +49,15 @@ class CmdProcessor(
             commandChannel = commandChannel,
             insertUser = userDatabaseDao::insertUser,
             getLatestUserName = userDatabaseDao::getLatestUserName,
-            getUserNameList = userDatabaseDao::getUserNames,
+            getUserNameList = userDatabaseDao::getUserNames
+        ),
+        TopicContent(
+            commandChannel = commandChannel,
+            getLatestUserName = userDatabaseDao::getLatestUserName,
             insertTopic = topicDatabaseDao::insertTopic,
             recommendTopic = topicDatabaseDao::getRandomTopic,
             selectTopic = topicDatabaseDao::getSelectTopic
         ),
-
          QuestionGameContent(commandChannel),
          MafiaGameContent(commandChannel, scope)
     )
