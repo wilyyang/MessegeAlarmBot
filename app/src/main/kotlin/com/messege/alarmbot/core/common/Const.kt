@@ -17,3 +17,15 @@ val HOST_KEY = ChatRoomKey(isGroupConversation = true, roomName = HOST_CHAT_ROOM
 var GAME_KEY = GAME_SUB_KEY
 
 val TARGET_KEY = MAIN_KEY
+
+val admins = listOf(
+    "오토주" to "5dbddf17a31bc9b293cbf7e7b78fca62ebb4397b78916d299c8f92aa2cd4c76d",
+    "애디" to "5881b8ed3e4a0b71b37f2861f7fd82a84c152fd1490d9500e97db99b620f7423",
+    "빵구" to "cdbecb0381aaaede10beaa443e9c6171ba96a7409ad968d0e0dd320509b242b2",
+    "토리" to "2ed008a16d7193c9525bf1ba06fda2055a4b7112dcc4050188b7acf91e506cf9",
+    "인간" to "0a2f06f8dbe09b9c23fb747cf2455f063355f8ff914bc0b866d794f29f9fd6cc",
+    "모순" to "db21ed676531b454baa457ef435a8c24a9b5a9289c9a9f23de7fea67ae1fe1c7",
+    "신" to "de8cb26bccc35ad5df66938394782c838a9595baedaf8f320e832a50e99ca74c",
+    "텨붕" to "6c3190ec886056f9bddb071d77fe05cd9f00d4df60f8c3fbb346307aa125bedb",
+    "연" to "f35c56279d010dcb24c471f3a44c0217192a13c1503a2d03c5907b4e5ce1fa59"
+)

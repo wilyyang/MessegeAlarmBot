@@ -56,7 +56,8 @@ class CmdProcessor(
             getLatestUserName = userDatabaseDao::getLatestUserName,
             insertTopic = topicDatabaseDao::insertTopic,
             recommendTopic = topicDatabaseDao::getRandomTopic,
-            selectTopic = topicDatabaseDao::getSelectTopic
+            selectTopic = topicDatabaseDao::getSelectTopic,
+            deleteTopic = topicDatabaseDao::deleteTopic
         ),
          QuestionGameContent(commandChannel),
          MafiaGameContent(commandChannel, scope)

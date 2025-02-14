@@ -7,7 +7,9 @@ import com.messege.alarmbot.contents.MainChatTextResponse
 import com.messege.alarmbot.core.common.hostKeyword
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.TARGET_KEY
+import com.messege.alarmbot.core.common.admins
 import com.messege.alarmbot.core.common.topicAdd
+import com.messege.alarmbot.core.common.topicDelete
 import com.messege.alarmbot.core.common.topicRecommend
 import com.messege.alarmbot.data.network.topic.model.TopicData
 import com.messege.alarmbot.util.format.toTimeFormatDate
@@ -18,7 +20,8 @@ class TopicContent(
     private val getLatestUserName: suspend (String) -> String?,
     private val insertTopic: suspend (TopicData) -> Long,
     private val recommendTopic: suspend () -> TopicData?,
-    private val selectTopic: suspend (Long) -> TopicData?
+    private val selectTopic: suspend (Long) -> TopicData?,
+    private val deleteTopic: suspend (Long) -> TopicData?
 ) : BaseContent {
     override val contentsName: String = "기본"
 
@@ -44,6 +47,26 @@ class TopicContent(
                     val topicText = text.substringAfter(" ", missingDelimiterValue = "")
                     val key = insertTopic(TopicData(updateTime = updateTime, userKey = currentKey, userName = currentName, topic = topicText))
                     commandChannel.send(MainChatTextResponse(text = "주제가 추가되었습니다. (key = $key)"))
+                }
+
+                text.startsWith("$hostKeyword$topicDelete") -> {
+                    val currentKey = "${user.key}"
+                    val number = text.substringAfter(" ", missingDelimiterValue = "").toIntOrNull()
+                    val message = if (number == null) {
+                        "삭제할 주제 넘버를 지정해주세요."
+                    } else {
+                        if(currentKey in admins.map { it.second }){
+                            val target = deleteTopic(number.toLong())
+                            if(target == null){
+                                "삭제할 주제가 없어요."
+                            }else {
+                                "$number 번 주제가 삭제되었습니다."
+                            }
+                        }else{
+                            "관리자만 삭제가 가능합니다."
+                        }
+                    }
+                    commandChannel.send(MainChatTextResponse(text = message))
                 }
             }
         }

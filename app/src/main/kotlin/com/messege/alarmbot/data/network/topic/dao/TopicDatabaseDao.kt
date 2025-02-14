@@ -14,4 +14,7 @@ interface TopicDatabaseDao {
 
     @Query("SELECT * FROM TopicData WHERE idx = :idx")
     suspend fun getSelectTopic(idx: Long): TopicData?
+
+    @Query("DELETE FROM TopicData WHERE idx = :idx")
+    suspend fun deleteTopic(idx: Long): TopicData?
 }
