@@ -7,8 +7,11 @@ import com.messege.alarmbot.data.network.topic.model.TopicData
 interface TopicDatabaseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTopic(topic: TopicData)
+    suspend fun insertTopic(topic: TopicData): Long
 
     @Query("SELECT * FROM TopicData ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomTopic(): TopicData?
+
+    @Query("SELECT * FROM TopicData WHERE idx = :idx")
+    suspend fun getSelectTopic(idx: Long): TopicData?
 }

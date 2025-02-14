@@ -12,4 +12,7 @@ interface UserDatabaseDao {
 
     @Query("SELECT name FROM UserNameData WHERE userKey = :userKey ORDER BY updateTime DESC")
     suspend fun getUserNames(userKey: String) : List<String>
+
+    @Query("SELECT name FROM UserNameData WHERE userKey = :userKey ORDER BY updateTime DESC LIMIT 1")
+    suspend fun getLatestUserName(userKey: String): String?
 }

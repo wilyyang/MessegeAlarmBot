@@ -47,9 +47,11 @@ class CmdProcessor(
         CommonContent(
             commandChannel = commandChannel,
             insertUser = userDatabaseDao::insertUser,
+            getLatestUserName = userDatabaseDao::getLatestUserName,
             getUserNameList = userDatabaseDao::getUserNames,
             insertTopic = topicDatabaseDao::insertTopic,
-            recommendTopic = topicDatabaseDao::getRandomTopic
+            recommendTopic = topicDatabaseDao::getRandomTopic,
+            selectTopic = topicDatabaseDao::getSelectTopic
         ),
 
          QuestionGameContent(commandChannel),

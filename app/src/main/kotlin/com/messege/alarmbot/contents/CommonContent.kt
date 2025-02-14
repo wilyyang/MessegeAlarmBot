@@ -16,45 +16,55 @@ import kotlinx.coroutines.channels.Channel
 class CommonContent(
     override val commandChannel: Channel<Command>,
     private val insertUser: suspend (UserNameData) -> Unit,
+    private val getLatestUserName: suspend (String) -> String?,
     private val getUserNameList: suspend (String) -> List<String>,
-    private val insertTopic: suspend (TopicData) -> Unit,
+    private val insertTopic: suspend (TopicData) -> Long,
     private val recommendTopic: suspend () -> TopicData?,
+    private val selectTopic: suspend (Long) -> TopicData?
 ) : BaseContent {
     override val contentsName: String = "기본"
 
     override suspend fun request(postTime : Long, chatRoomKey: ChatRoomKey, user : Person, text : String) {
         if(chatRoomKey == TARGET_KEY){
+            updateUserName(postTime, user)
             when {
                 text == "$hostKeyword$helpKeyword" -> {
                     commandChannel.send(MainChatTextResponse(text = CommonText.HELP))
                 }
-                text =="$hostKeyword$topicRecommend" -> {
-                    val topic = recommendTopic()
+                text.startsWith("$hostKeyword$topicRecommend") -> {
+                    val number = text.substringAfter(" ", missingDelimiterValue = "").toIntOrNull()
+                    val topic = if (number == null) {
+                        recommendTopic()
+                    } else selectTopic(number.toLong())
+
                     val recommendTopicText = topic?.let {
-                        "${it.topic} \n- ${it.updateTime.toTimeFormatDate()} ${it.userName}"
-                    }?: "등록된 주제가 없습니다."
+                        val latestName = getLatestUserName(it.userKey)?:"-"
+                        "${it.idx}. ${it.topic} \n- ${it.updateTime.toTimeFormatDate()} $latestName"
+                    } ?: "등록된 주제가 없습니다."
                     commandChannel.send(MainChatTextResponse(text = recommendTopicText))
                 }
                 text.startsWith("$hostKeyword$topicAdd ") -> {
-                    val topicText = text.substringAfter(" ", missingDelimiterValue = "")
                     val updateTime = System.currentTimeMillis()
                     val currentKey = "${user.key}"
                     val currentName = "${user.name}"
-                    insertTopic(TopicData(updateTime = updateTime, userKey = currentKey, userName = currentName, topic = topicText))
-                    commandChannel.send(MainChatTextResponse(text = "주제가 추가되었습니다."))
-                }
-                else -> {
-                    val currentName = "${user.name}"
-                    val currentKey = "${user.key}"
-                    val userNameList = getUserNameList(currentKey)
-                    if(userNameList.isEmpty()){
-                        insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
-                    }else if(userNameList.first() != currentName){
-                        insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
-                        commandChannel.send(HostChatTextResponse(text = CommonText.alreadyUser(name = currentName, alreadyUsers = userNameList)))
-                    }
+                    val topicText = text.substringAfter(" ", missingDelimiterValue = "")
+                    val key = insertTopic(TopicData(updateTime = updateTime, userKey = currentKey, userName = currentName, topic = topicText))
+                    commandChannel.send(MainChatTextResponse(text = "주제가 추가되었습니다. (key = $key)"))
                 }
             }
+        }
+    }
+
+    private suspend fun updateUserName(postTime : Long, user : Person){
+        val currentName = "${user.name}"
+        val currentKey = "${user.key}"
+        val latestSavedName = getLatestUserName(currentKey)?:""
+        if(latestSavedName == ""){
+            insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
+        }else if(latestSavedName != currentName){
+            val userNameList = getUserNameList(currentKey)
+            insertUser(UserNameData(updateTime = postTime, userKey = currentKey, name = currentName))
+            commandChannel.send(HostChatTextResponse(text = CommonText.alreadyUser(name = currentName, alreadyUsers = userNameList)))
         }
     }
 }
