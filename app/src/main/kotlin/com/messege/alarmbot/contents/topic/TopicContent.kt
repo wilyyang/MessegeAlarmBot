@@ -21,7 +21,7 @@ class TopicContent(
     private val insertTopic: suspend (TopicData) -> Long,
     private val recommendTopic: suspend () -> TopicData?,
     private val selectTopic: suspend (Long) -> TopicData?,
-    private val deleteTopic: suspend (Long) -> TopicData?
+    private val deleteTopic: suspend (Long) -> Int
 ) : BaseContent {
     override val contentsName: String = "기본"
 
@@ -56,11 +56,11 @@ class TopicContent(
                         "삭제할 주제 넘버를 지정해주세요."
                     } else {
                         if(currentKey in admins.map { it.second }){
-                            val target = deleteTopic(number.toLong())
-                            if(target == null){
-                                "삭제할 주제가 없어요."
-                            }else {
+                            val deleteNumber = deleteTopic(number.toLong())
+                            if(deleteNumber > 0){
                                 "$number 번 주제가 삭제되었습니다."
+                            }else {
+                                "삭제할 주제가 없어요."
                             }
                         }else{
                             "관리자만 삭제가 가능합니다."
