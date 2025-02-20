@@ -18,6 +18,8 @@ import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
 import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
 import com.messege.alarmbot.data.network.topic.dao.TopicDatabaseDao
+import com.messege.alarmbot.kakao.ChatLogsObserver
+import com.messege.alarmbot.util.format.toTimeFormat
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +66,14 @@ class CmdProcessor(
     )
 
     init{
+        scope.launch {
+            val dbName = "KakaoTalk.db"
+            val chatLogsObserver = ChatLogsObserver(applicationContext, dbName)
+
+            chatLogsObserver.observeChatLogs().collect { log ->
+                println("WILLY >> ${log.time.toTimeFormat()} : ${log.message}")
+            }
+        }
 
         scope.launch {
             channelFlow.collect { command ->
