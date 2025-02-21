@@ -17,6 +17,9 @@ class ChatLogsObserver(private val applicationContext: Context, private val dbNa
     private var lastLogId: Int = -1
 
     fun observeChatLogs(): Flow<MessageData> = flow {
+        val test = KakaoDecrypt.decrypt(6598349262818898425, 31, "85sv+7kXckWfykLBcxEgvP6nnkcuBLgPe7nVZR5AA/s=")
+        println(">> $test")
+
         val dbFile = File(applicationContext.getDatabasePath(dbName).absolutePath)
         if (!dbFile.exists()) {
             emit(MessageData(0L, ""))
