@@ -71,7 +71,7 @@ class CmdProcessor(
             val chatLogsObserver = ChatLogsObserver(applicationContext, dbName)
 
             chatLogsObserver.observeChatLogs().collect { log ->
-                println("WILLY >> ${log.time.toTimeFormat()} : ${log.message}")
+                println("WILLY >> ${log.time.toTimeFormat()} : userId = ${log.userid}, enc = ${log.enc} :: ${log.message}")
             }
         }
 

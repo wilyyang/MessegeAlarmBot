@@ -3,13 +3,45 @@ package com.messege.alarmbot.kakao
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.os.Environment
+import com.google.gson.Gson
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
 
+data class ChatLog(
+    val id: Long,
+    val type: Int?,
+    val chatId: Long,
+    val userId: Long?,
+    val message: String?,
+    val attachment: String?,
+    val createdAt: Long?,
+    val deletedAt: Long?,
+    val clientMessageId: Long?,
+    val prevId: Long?,
+    val referer: Int?,
+    val supplement: String?,
+    val v: ChatMetadata?
+)
+
+data class ChatMetadata(
+    val notDecoded: Boolean,
+    val origin: String,
+    val c: String,
+    val modifyRevision: Int,
+    val isSingleDefaultEmoticon: Boolean,
+    val defaultEmoticonsCount: Int,
+    val isMine: Boolean,
+    val enc: Int
+)
+
 data class MessageData(
     val time: Long,
+    val userid: Long? = null,
+    val enc : Int? = null,
     val message: String
 )
 
@@ -17,12 +49,10 @@ class ChatLogsObserver(private val applicationContext: Context, private val dbNa
     private var lastLogId: Int = -1
 
     fun observeChatLogs(): Flow<MessageData> = flow {
-        val test = KakaoDecrypt.decrypt(6598349262818898425, 31, "85sv+7kXckWfykLBcxEgvP6nnkcuBLgPe7nVZR5AA/s=")
-        println(">> $test")
-
-        val dbFile = File(applicationContext.getDatabasePath(dbName).absolutePath)
+        val dbPath = "${Environment.getExternalStorageDirectory()}/$dbName"
+        val dbFile = File(dbPath)
         if (!dbFile.exists()) {
-            emit(MessageData(0L, ""))
+            emit(MessageData(0L, null, null, ""))
             return@flow
         }
 
@@ -36,16 +66,64 @@ class ChatLogsObserver(private val applicationContext: Context, private val dbNa
 
                 if (logId != lastLogId) {
                     lastLogId = logId
+                    val chatLog = cursor.getChatLog()
 
-                    val time = cursor.getLong(cursor.getColumnIndexOrThrow("created_at"))
-                    val message = cursor.getString(cursor.getColumnIndexOrThrow("message"))
-
-                    emit(MessageData(time * 1000, message))
+                    chatLog?.takeIf {
+                        it.userId != null && it.v?.enc != null && it.message != null && it.createdAt != null
+                    }?.run {
+                        val decryptMessage = KakaoDecrypt.decrypt(userId!!,  v!!.enc, message!!)
+                        emit(MessageData(createdAt!! * 1000, userId, v.enc, decryptMessage))
+                    }
                 }
             }
 
             cursor.close()
             delay(500)
         }
+    }
+
+    fun Cursor.getChatLog(): ChatLog? {
+
+        return if (moveToFirst()) {
+            val gson = Gson()
+            val vJson = getStringOrNull("v") // JSON 문자열 가져오기
+            val chatMetadata = vJson?.let { gson.fromJson(it, ChatMetadata::class.java) }
+
+            val chatLog = ChatLog(
+                id = getLong(getColumnIndexOrThrow("id")),
+                type = getIntOrNull("type"),
+                chatId = getLong(getColumnIndexOrThrow("chat_id")),
+                userId = getLongOrNull("user_id"),
+                message = getStringOrNull("message"),
+                attachment = getStringOrNull("attachment"),
+                createdAt = getLongOrNull("created_at"),
+                deletedAt = getLongOrNull("deleted_at"),
+                clientMessageId = getLongOrNull("client_message_id"),
+                prevId = getLongOrNull("prev_id"),
+                referer = getIntOrNull("referer"),
+                supplement = getStringOrNull("supplement"),
+                v = chatMetadata
+            )
+            close()
+            chatLog
+        } else {
+            close()
+            null
+        }
+    }
+
+    private fun Cursor.getIntOrNull(columnName: String): Int? {
+        val index = getColumnIndex(columnName)
+        return if (index != -1 && !isNull(index)) getInt(index) else null
+    }
+
+    private fun Cursor.getLongOrNull(columnName: String): Long? {
+        val index = getColumnIndex(columnName)
+        return if (index != -1 && !isNull(index)) getLong(index) else null
+    }
+
+    private fun Cursor.getStringOrNull(columnName: String): String? {
+        val index = getColumnIndex(columnName)
+        return if (index != -1 && !isNull(index)) getString(index) else null
     }
 }

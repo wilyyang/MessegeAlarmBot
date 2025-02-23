@@ -1,7 +1,5 @@
 package com.messege.alarmbot.kakao
 
-import com.messege.alarmbot.util.log.Logger
-import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.util.Base64
 import javax.crypto.Cipher
@@ -9,6 +7,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 object KakaoDecrypt {
+    val keyCache = mutableMapOf<String, ByteArray>()
 
     private fun incept(n: Int): String {
         val dict1 = listOf(
@@ -35,7 +34,6 @@ object KakaoDecrypt {
     }
 
     private fun genSalt(userId: Long, encType: Int): ByteArray {
-        // TODO 1
         if (userId <= 0) return ByteArray(16)
 
         val prefixes = arrayOf(
@@ -45,31 +43,28 @@ object KakaoDecrypt {
             incept(830819), "veil"
         )
 
-        var saltStr = try {
+        val saltStr = try {
             (prefixes[encType] + userId.toString()).take(16)
         } catch (e: IndexOutOfBoundsException) {
             throw IllegalArgumentException("Unsupported encoding type $encType")
         }
-
-        val saltBytes = saltStr.toByteArray(Charsets.UTF_8)
-        val paddedSalt = ByteArray(16) { 0 }
-        System.arraycopy(saltBytes, 0, paddedSalt, 0, saltBytes.size.coerceAtMost(16))
-        return paddedSalt
+        val saltBytes = saltStr.padEnd(16, '\u0000').toByteArray(Charsets.UTF_8)
+        return saltBytes
     }
 
-    fun pkcs16adjust(a: ByteArray, aOff: Int, b: ByteArray) {
+    private fun pkcs16adjust(a: ByteArray, aOff: Int, b: ByteArray) {
         var x = (b[b.size - 1].toInt() and 0xff) + (a[aOff + b.size - 1].toInt() and 0xff) + 1
         a[aOff + b.size - 1] = (x % 256).toByte()
         x = x shr 8
 
         for (i in b.size - 2 downTo 0) {
-            x = x + (b[i].toInt() and 0xff) + (a[aOff + i].toInt() and 0xff)
+            x += (b[i].toInt() and 0xff) + (a[aOff + i].toInt() and 0xff)
             a[aOff + i] = (x % 256).toByte()
             x = x shr 8
         }
     }
 
-    fun deriveKey(password: ByteArray, salt: ByteArray, iterations: Int, dkeySize: Int): ByteArray {
+    private fun deriveKey(password: ByteArray, salt: ByteArray, iterations: Int, dkeySize: Int): ByteArray {
         val passwordUtf16 = (password + byteArrayOf(0)).toString(Charsets.US_ASCII).toByteArray(Charsets.UTF_16BE)
 
         val hasher = MessageDigest.getInstance("SHA-1")
@@ -120,15 +115,12 @@ object KakaoDecrypt {
     }
 
     fun decrypt(userId: Long, encType: Int, b64Ciphertext: String): String {
-        val keyCache = mutableMapOf<String, ByteArray>()
-
         var key = byteArrayOf(0x16, 0x08, 0x09, 0x6f, 0x02, 0x17, 0x2b, 0x08,
             0x21, 0x21, 0x0a, 0x10, 0x03, 0x03, 0x07, 0x06)
         val iv = byteArrayOf(0x0f, 0x08, 0x01, 0x00, 0x19, 0x47, 0x25, 0xdc.toByte(),
             0x15, 0xf5.toByte(), 0x17, 0xe0.toByte(), 0xe1.toByte(), 0x15, 0x0c, 0x35)
 
         val salt = genSalt(userId, encType)
-        Logger.e("WILLY >> ${salt.decodeToString()}")
         val saltKey = salt.decodeToString()
 
         if (keyCache.containsKey(saltKey)) {
@@ -138,14 +130,13 @@ object KakaoDecrypt {
             keyCache[saltKey] = key
         }
 
-        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val cipher = Cipher.getInstance("AES/CBC/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), IvParameterSpec(iv))
 
         val ciphertext = Base64.getDecoder().decode(b64Ciphertext)
         if (ciphertext.isEmpty()) {
             return b64Ciphertext
         }
-
         val padded = cipher.doFinal(ciphertext)
         val plaintext = try {
             padded.copyOfRange(0, padded.size - padded.last().toInt())
