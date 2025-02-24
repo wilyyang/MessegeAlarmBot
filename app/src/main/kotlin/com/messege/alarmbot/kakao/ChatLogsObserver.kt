@@ -1,58 +1,26 @@
 package com.messege.alarmbot.kakao
 
-import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.os.Environment
 import com.google.gson.Gson
-import com.messege.alarmbot.util.log.Logger
+import com.messege.alarmbot.kakao.model.ChatLog
+import com.messege.alarmbot.kakao.model.ChatMetadata
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.io.File
 
-data class ChatLog(
-    val id: Long,
-    val type: Int?,
-    val chatId: Long,
-    val userId: Long?,
-    val message: String?,
-    val attachment: String?,
-    val createdAt: Long?,
-    val deletedAt: Long?,
-    val clientMessageId: Long?,
-    val prevId: Long?,
-    val referer: Int?,
-    val supplement: String?,
-    val v: ChatMetadata?
-)
+const val INIT_LOG_ID = 0L
+class ChatLogsObserver {
+    private var lastLogId: Long = INIT_LOG_ID
+    private val dbName = "KakaoTalk.db"
 
-data class ChatMetadata(
-    val notDecoded: Boolean,
-    val origin: String,
-    val c: String,
-    val modifyRevision: Int,
-    val isSingleDefaultEmoticon: Boolean,
-    val defaultEmoticonsCount: Int,
-    val isMine: Boolean,
-    val enc: Int
-)
-
-data class MessageData(
-    val time: Long,
-    val userid: Long? = null,
-    val enc : Int? = null,
-    val message: String
-)
-
-class ChatLogsObserver(private val applicationContext: Context, private val dbName: String) {
-    private var lastLogId: Int = -1
-
-    fun observeChatLogs(): Flow<MessageData> = flow {
+    fun observeChatLogs(): Flow<ChatLog> = flow {
         val dbPath = "${Environment.getExternalStorageDirectory()}/$dbName"
         val dbFile = File(dbPath)
         if (!dbFile.exists()) {
-            emit(MessageData(0L, null, null, ""))
+            emit(ChatLog(INIT_LOG_ID, null, 0L, 0L))
             return@flow
         }
 
@@ -62,7 +30,7 @@ class ChatLogsObserver(private val applicationContext: Context, private val dbNa
             val cursor: Cursor = database.rawQuery("SELECT * FROM chat_logs ORDER BY _id DESC LIMIT 1", null)
 
             if (cursor.moveToFirst()) {
-                val logId = cursor.getInt(cursor.getColumnIndexOrThrow("_id"))
+                val logId = cursor.getLong(cursor.getColumnIndexOrThrow("_id"))
 
                 if (logId != lastLogId) {
                     lastLogId = logId
@@ -72,7 +40,11 @@ class ChatLogsObserver(private val applicationContext: Context, private val dbNa
                         it.userId != null && it.v?.enc != null && it.message != null && it.createdAt != null
                     }?.run {
                         val decryptMessage = KakaoDecrypt.decrypt(userId!!,  v!!.enc, message!!)
-                        emit(MessageData(createdAt!! * 1000, userId, v.enc, decryptMessage))
+                        emit(
+                            chatLog.copy(
+                                message = decryptMessage,
+                            )
+                        )
                     }
                 }
             }
@@ -82,13 +54,11 @@ class ChatLogsObserver(private val applicationContext: Context, private val dbNa
         }
     }
 
-    fun Cursor.getChatLog(): ChatLog? {
-
+    private fun Cursor.getChatLog(): ChatLog? {
         return if (moveToFirst()) {
             val gson = Gson()
-            val vJson = getStringOrNull("v") // JSON 문자열 가져오기
+            val vJson = getStringOrNull("v")
             val chatMetadata = vJson?.let { gson.fromJson(it, ChatMetadata::class.java) }
-
             val chatLog = ChatLog(
                 id = getLong(getColumnIndexOrThrow("id")),
                 type = getIntOrNull("type"),

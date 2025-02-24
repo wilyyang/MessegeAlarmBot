@@ -67,11 +67,13 @@ class CmdProcessor(
 
     init{
         scope.launch {
-            val dbName = "KakaoTalk.db"
-            val chatLogsObserver = ChatLogsObserver(applicationContext, dbName)
+            val chatLogsObserver = ChatLogsObserver()
 
             chatLogsObserver.observeChatLogs().collect { log ->
-                println("WILLY >> ${log.time.toTimeFormat()} : userId = ${log.userid}, enc = ${log.enc} :: ${log.message}")
+                val time = log.createdAt?.let {
+                    (it * 1000).toTimeFormat()
+                }?:"NO_TIME"
+                println("WILLY >> $time : userId = ${log.userId}, enc = ${log.v?.enc} :: ${log.message}")
             }
         }
 
