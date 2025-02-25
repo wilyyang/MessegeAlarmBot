@@ -73,7 +73,7 @@ class CmdProcessor(
                 val time = log.createdAt?.let {
                     (it * 1000).toTimeFormat()
                 }?:"NO_TIME"
-
+                println("WILLY >> $time : userId = ${log.userId}, enc = ${log.v?.enc} :: ${log.message}")
             }
         }
 
