@@ -11,7 +11,7 @@ import com.messege.alarmbot.core.common.admins
 import com.messege.alarmbot.core.common.topicAdd
 import com.messege.alarmbot.core.common.topicDelete
 import com.messege.alarmbot.core.common.topicRecommend
-import com.messege.alarmbot.data.network.topic.model.TopicData
+import com.messege.alarmbot.data.database.topic.model.TopicData
 import com.messege.alarmbot.util.format.toTimeFormatDate
 import kotlinx.coroutines.channels.Channel
 
