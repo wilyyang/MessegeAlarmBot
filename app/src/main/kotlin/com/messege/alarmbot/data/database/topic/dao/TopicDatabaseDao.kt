@@ -1,7 +1,7 @@
-package com.messege.alarmbot.data.network.topic.dao
+package com.messege.alarmbot.data.database.topic.dao
 
 import androidx.room.*
-import com.messege.alarmbot.data.network.topic.model.TopicData
+import com.messege.alarmbot.data.database.topic.model.TopicData
 
 @Dao
 interface TopicDatabaseDao {

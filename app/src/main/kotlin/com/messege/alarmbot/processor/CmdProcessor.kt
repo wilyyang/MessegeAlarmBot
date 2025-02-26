@@ -14,10 +14,8 @@ import com.messege.alarmbot.contents.mafia.MafiaGameContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.GAME_KEY
 import com.messege.alarmbot.core.common.HOST_KEY
-import com.messege.alarmbot.data.database.message.dao.MessageDatabaseDao
-import com.messege.alarmbot.data.database.message.model.MessageData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
-import com.messege.alarmbot.data.network.topic.dao.TopicDatabaseDao
+import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.util.format.toTimeFormat
 import com.messege.alarmbot.util.log.Logger
@@ -33,7 +31,6 @@ import kotlinx.coroutines.launch
 class CmdProcessor(
     private val applicationContext: Context,
     private val userDatabaseDao: UserDatabaseDao,
-    private val messageDatabaseDao: MessageDatabaseDao,
     private val topicDatabaseDao: TopicDatabaseDao
 ) {
 
@@ -105,17 +102,6 @@ class CmdProcessor(
             Logger.d("[deliver.host] userName : ${user.name} / text : $text")
             hostOpenChatRoomAction = action
         }
-
-        messageDatabaseDao.insertMessage(
-            MessageData(
-                postTime = postTime,
-                message = text,
-                userName = "${user.name}",
-                userKey = "$${user.key}",
-                roomName = chatRoomKey.roomName,
-                roomKey = chatRoomKey.roomKey
-            )
-        )
 
         for(content in contents) content.request(postTime = postTime, chatRoomKey = chatRoomKey, user = user, text = text)
     }

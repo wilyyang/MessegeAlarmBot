@@ -1,4 +1,4 @@
-package com.messege.alarmbot.data.network.topic.model
+package com.messege.alarmbot.data.database.topic.model
 
 import androidx.annotation.Keep
 import androidx.room.Entity

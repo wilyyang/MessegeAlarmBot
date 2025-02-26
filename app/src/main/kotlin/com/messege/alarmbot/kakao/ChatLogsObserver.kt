@@ -42,7 +42,7 @@ data class ColumnIndex(
 class ChatLogsObserver : CoroutineScope {
     private var lastCreateAt: Long = INIT_CREATED_AT
     private val dbName = "KakaoTalk.db"
-    private val dbPath = "${Environment.getExternalStorageDirectory()}/$dbName"
+    private val dbPath = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)}/ChatBot/kakao/$dbName"
     private val dbWalPath = "$dbPath-wal"
     private val dbFile = File(dbPath)
     private val database: SQLiteDatabase by lazy {

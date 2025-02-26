@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.PowerManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -68,6 +69,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+        /**
+         * Database 외부 저장소 접근 권한
+         */
+        if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+            startActivity(intent)
+
+            finish()
+            return
+        }
+
         /**
          * 화면 꺼짐 방지
          */
