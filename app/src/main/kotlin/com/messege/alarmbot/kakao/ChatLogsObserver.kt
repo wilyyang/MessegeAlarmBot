@@ -20,7 +20,8 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.CoroutineContext
 
-const val INIT_LOG_ID = 0L
+const val INIT_CREATED_AT = 0L
+const val MESSAGE_LENGTH_LIMIT = 1200
 
 data class ColumnIndex(
     val id: Int,
@@ -39,7 +40,7 @@ data class ColumnIndex(
 )
 
 class ChatLogsObserver : CoroutineScope {
-    private var lastLogId: Long = INIT_LOG_ID
+    private var lastCreateAt: Long = INIT_CREATED_AT
     private val dbName = "KakaoTalk.db"
     private val dbPath = "${Environment.getExternalStorageDirectory()}/$dbName"
     private val dbWalPath = "$dbPath-wal"
@@ -86,10 +87,10 @@ class ChatLogsObserver : CoroutineScope {
     fun observeChatLogs(): Flow<ChatLog> = channelFlow  {
         if (!isObserving.compareAndSet(false, true)) return@channelFlow
         if (!dbFile.exists()) {
-            send(ChatLog(INIT_LOG_ID, null, 0L, 0L))
+            send(ChatLog(INIT_CREATED_AT, null, 0L, 0L))
             return@channelFlow
         }
-        lastLogId = getLatestLogId()
+        lastCreateAt = getLatestLogCreateAt()
 
         val observer = object : FileObserver(dbWalPath, MODIFY) {
             override fun onEvent(event: Int, path: String?) {
@@ -110,36 +111,40 @@ class ChatLogsObserver : CoroutineScope {
         awaitClose { observer.stopWatching() }
     }
 
-    private fun getLatestLogId() : Long {
+    private fun getLatestLogCreateAt() : Long {
         return database.rawQuery(
-            "SELECT _id FROM chat_logs ORDER BY _id DESC LIMIT 1",
+            "SELECT created_at FROM chat_logs ORDER BY created_at DESC LIMIT 1",
             null
         )?.use { cursor ->
             if (cursor.moveToFirst()) {
-                cursor.getLong(cursor.getColumnIndexOrThrow("_id"))
+                cursor.getLong(cursor.getColumnIndexOrThrow("created_at"))
             } else {
-                INIT_LOG_ID
+                INIT_CREATED_AT
             }
-        } ?: INIT_LOG_ID
+        } ?: INIT_CREATED_AT
     }
 
 
     private fun fetchNewLogs(): List<ChatLog>? {
         return database.rawQuery(
-            "SELECT * FROM chat_logs WHERE _id > ? ORDER BY _id ASC",
-            arrayOf(lastLogId.toString())
+            "SELECT * FROM chat_logs WHERE created_at > ? ORDER BY created_at ASC",
+            arrayOf(lastCreateAt.toString())
         )?.use { cursor ->
             val logs = mutableListOf<ChatLog>()
 
             while (cursor.moveToNext()) {
                 val chatLog = cursor.getChatLog()
                 chatLog.takeIf {
-                    it.userId != null && it.v?.enc != null && it.message != null && it.createdAt != null
+                    it.type != null && it.createdAt != null && it.v?.enc != null && it.userId != null
+                            && it.message != null && it.message.length < MESSAGE_LENGTH_LIMIT
                 }?.run {
                     val decryptMessage = KakaoDecrypt.decrypt(userId!!, v!!.enc, message!!)
-                    logs.add(copy(message = decryptMessage))
-                    //TODO CREATE_AT으로 변경
-                    lastLogId = this.id
+                    val decryptAttachment = if(!attachment.isNullOrBlank() && attachment != "{}"){
+                        KakaoDecrypt.decrypt(userId, v.enc, attachment)
+                    } else ""
+
+                    logs.add(copy(message = decryptMessage, attachment = decryptAttachment))
+                    lastCreateAt = this.createdAt!!
                 }
             }
             logs
