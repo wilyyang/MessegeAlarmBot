@@ -17,6 +17,7 @@ import com.messege.alarmbot.core.common.HOST_KEY
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
+import com.messege.alarmbot.kakao.ChatMembersObserver
 import com.messege.alarmbot.util.format.toTimeFormat
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +71,15 @@ class CmdProcessor(
                 val time = log.createdAt?.let {
                     (it * 1000).toTimeFormat()
                 }?:"NO_TIME"
-                println("WILLY >> $log")
+                Logger.e("WILLY >> $log")
+            }
+        }
+
+        scope.launch {
+            val chatMembersObserver = ChatMembersObserver()
+
+            chatMembersObserver.observeChatMembers().collect { members ->
+                Logger.e("WILLY >> $members")
             }
         }
 
