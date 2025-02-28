@@ -4,12 +4,14 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.os.Environment
 import android.os.FileObserver
+import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.DECRYPT_MEMBER_KEY
 import com.messege.alarmbot.kakao.model.ChatMember
-import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -17,6 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 
 data class MemberColumnIndex(
@@ -65,6 +68,9 @@ class ChatMembersObserver : CoroutineScope {
         get() = Dispatchers.IO + job
     private val mutex = Mutex()
 
+    private val latestJob = AtomicReference<Job?>(null)
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     /**
      * Complete
      */
@@ -75,16 +81,20 @@ class ChatMembersObserver : CoroutineScope {
             return@channelFlow
         }
 
-
-        updateAllMembers()
+        val initMembers = getGroupMembers(ChatRoomType.GroupRoom1)
+        send(initMembers)
         val observer = object : FileObserver(dbWalPath, MODIFY) {
             override fun onEvent(event: Int, path: String?) {
                 if (event == MODIFY) {
-                    launch (Dispatchers.IO) {
+                    latestJob.get()?.cancel()
+                    val job = scope.launch (Dispatchers.IO) {
+                        delay(100)
                         mutex.withLock {
-
+                            val members = getGroupMembers(ChatRoomType.GroupRoom1)
+                            send(members)
                         }
                     }
+                    latestJob.set(job)
                 }
             }
         }
@@ -94,27 +104,21 @@ class ChatMembersObserver : CoroutineScope {
         awaitClose { observer.stopWatching() }
     }
 
-    private fun updateMember() {
-        // open_chat_member 테이블의 수정된 member의 id 를 가져옴 (log든 머든 방법을 가리지 않고)
-        // open_chat_member 에서 member의 id 값에 해당하는 멤버 가져오기
-    }
-
-    private fun updateAllMembers() {
+    private fun getGroupMembers(roomType : ChatRoomType): List<ChatMember> {
+        val members = mutableListOf<ChatMember>()
         database.rawQuery(
-            "SELECT * FROM open_chat_member",
+            "SELECT * FROM open_chat_member WHERE involved_chat_id = ${roomType.roomKey}",
             null
         )?.use { cursor ->
             while (cursor.moveToNext()) {
                 val mem = cursor.getChatMember()
-
                 val decryptMem = mem.copy(
-                    nickName = KakaoDecrypt.decrypt(userId = 421448547, encType = mem.enc, b64Ciphertext = mem.nickName)
+                    nickName = KakaoDecrypt.decrypt(userId = DECRYPT_MEMBER_KEY, encType = mem.enc, b64Ciphertext = mem.nickName)
                 )
-
-                Logger.e("$decryptMem")
-                // TODO
+                members.add(decryptMem)
             }
         }
+        return members
     }
 
     private fun Cursor.getChatMember(): ChatMember {

@@ -68,10 +68,7 @@ class CmdProcessor(
             val chatLogsObserver = ChatLogsObserver()
 
             chatLogsObserver.observeChatLogs().collect { log ->
-                val time = log.createdAt?.let {
-                    (it * 1000).toTimeFormat()
-                }?:"NO_TIME"
-                Logger.e("WILLY >> $log")
+                Logger.i("[chat_log] $log")
             }
         }
 
@@ -79,7 +76,8 @@ class CmdProcessor(
             val chatMembersObserver = ChatMembersObserver()
 
             chatMembersObserver.observeChatMembers().collect { members ->
-                Logger.e("WILLY >> $members")
+                members.map { "${it.type} ${it.chatId} ${it.userId} ${it.privilege} ${it.nickName}" }.joinToString { ", " }
+                Logger.i("[chat_member] $members")
             }
         }
 

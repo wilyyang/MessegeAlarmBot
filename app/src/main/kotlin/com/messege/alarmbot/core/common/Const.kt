@@ -1,5 +1,7 @@
 package com.messege.alarmbot.core.common
 
+const val DECRYPT_MEMBER_KEY = 421448547L
+
 const val KAKAO_PACKAGE_NAME = "com.kakao.talk"
 const val REPLY_ACTION_INDEX = 1
 
