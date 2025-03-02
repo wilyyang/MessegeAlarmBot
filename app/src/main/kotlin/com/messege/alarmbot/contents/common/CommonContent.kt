@@ -7,6 +7,7 @@ import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.processor.model.AdminRoomTextResponse
 import com.messege.alarmbot.processor.model.Command
+import com.messege.alarmbot.processor.model.Group1RoomTextResponse
 import kotlinx.coroutines.channels.Channel
 
 class CommonContent(
@@ -21,7 +22,9 @@ class CommonContent(
             val isSuperAdmin = user?.isSuperAdmin ?: false
             val isAdmin = isSuperAdmin || user?.isAdmin ?: false
 
-            if(message.text.startsWith(".조회") && isAdmin){
+            if(message.text == ".?"){
+                commandChannel.send(Group1RoomTextResponse(COMMAND_HELP))
+            }else if(message.text.startsWith(".조회") && isAdmin){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
                     val targetMember = memberDatabaseDao.getMember(targetId).getOrNull(0)
