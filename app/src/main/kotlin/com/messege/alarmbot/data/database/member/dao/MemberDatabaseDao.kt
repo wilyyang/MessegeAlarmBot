@@ -26,6 +26,9 @@ interface MemberDatabaseDao {
     @Query("SELECT * FROM MemberData WHERE userId = :userId")
     suspend fun getMember(userId: Long) : List<MemberData>
 
+    @Query("SELECT latestName FROM MemberData WHERE userId = :userId")
+    suspend fun getMemberName(userId: Long) : List<String>
+
     @Query("UPDATE MemberData SET profileType = :profileType WHERE userId = :userId")
     suspend fun updateProfileType(userId: Long, profileType: Int)
 

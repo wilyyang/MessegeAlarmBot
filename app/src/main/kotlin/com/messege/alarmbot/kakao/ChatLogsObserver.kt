@@ -5,8 +5,10 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.Environment
 import android.os.FileObserver
 import com.google.gson.Gson
+import com.messege.alarmbot.contents.Message
 import com.messege.alarmbot.kakao.model.ChatLog
 import com.messege.alarmbot.kakao.model.ChatMetadata
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,7 +37,9 @@ data class ColumnIndex(
     val v : Int
 )
 
-class ChatLogsObserver : CoroutineScope {
+class ChatLogsObserver(
+    val getName : suspend (Long) -> String
+) : CoroutineScope {
     private var lastCreateAt: Long = INIT_CREATED_AT
     private val dbName = "KakaoTalk.db"
     private val dbPath = "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)}/ChatBot/kakao/$dbName"
@@ -76,10 +80,10 @@ class ChatLogsObserver : CoroutineScope {
         get() = Dispatchers.IO + job
     private val mutex = Mutex()
 
-    fun observeChatLogs(): Flow<ChatLog> = channelFlow  {
+    fun observeChatLogs(): Flow<Message> = channelFlow  {
         if (!isObserving.compareAndSet(false, true)) return@channelFlow
         if (!dbFile.exists()) {
-            send(ChatLog(INIT_CREATED_AT, null, 0L, 0L))
+            send(Message.None())
             return@channelFlow
         }
         lastCreateAt = getLatestLogCreateAt()
@@ -90,7 +94,27 @@ class ChatLogsObserver : CoroutineScope {
                     launch (Dispatchers.IO) {
                         mutex.withLock {
                             fetchNewLogs()?.let { logs ->
-                                logs.forEach { send(it) }
+                                logs.forEach {
+                                    val message = it.toMessage(
+                                        getName = getName,
+                                        getLogText = { logId ->
+                                            database.rawQuery(
+                                                "SELECT * FROM chat_logs WHERE id=$logId",
+                                                null
+                                            )?.use { cursor ->
+                                                if (cursor.moveToFirst()) {
+                                                    val chatLog = cursor.getChatLog()
+                                                    if(chatLog.userId != null && chatLog.v != null && chatLog.message != null){
+                                                        KakaoDecrypt.decrypt(chatLog.userId, chatLog.v.enc, chatLog.message)
+                                                    }else ""
+                                                } else {
+                                                    ""
+                                                }
+                                            }?:""
+                                        }
+                                    )
+                                    send(message)
+                                }
                             }
                         }
                     }
@@ -133,7 +157,7 @@ class ChatLogsObserver : CoroutineScope {
                     val decryptMessage = KakaoDecrypt.decrypt(userId!!, v!!.enc, message!!)
                     val decryptAttachment = if(!attachment.isNullOrBlank() && attachment != "{}"){
                         KakaoDecrypt.decrypt(userId, v.enc, attachment)
-                    } else ""
+                    } else null
 
                     logs.add(copy(message = decryptMessage, attachment = decryptAttachment))
                     lastCreateAt = this.createdAt!!

@@ -73,10 +73,14 @@ class CmdProcessor(
 
     init{
         scope.launch {
-            val chatLogsObserver = ChatLogsObserver()
+            val chatLogsObserver = ChatLogsObserver(
+                getName = {
+                    memberDatabaseDao.getMemberName(it).getOrNull(0)?:""
+                }
+            )
 
-            chatLogsObserver.observeChatLogs().collect { log ->
-                Logger.i("[chat_log] $log")
+            chatLogsObserver.observeChatLogs().collect { message ->
+                Logger.i("[chat_log] $message")
             }
         }
 
