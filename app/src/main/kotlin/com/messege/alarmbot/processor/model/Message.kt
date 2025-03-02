@@ -1,4 +1,4 @@
-package com.messege.alarmbot.contents
+package com.messege.alarmbot.processor.model
 
 import com.messege.alarmbot.core.common.ChatRoomType
 

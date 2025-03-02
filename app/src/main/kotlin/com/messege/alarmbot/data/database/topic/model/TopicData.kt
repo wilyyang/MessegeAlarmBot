@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 @Keep
 data class TopicData(
     val updateTime: Long,
-    val userKey: String,
+    val userKey: Long,
     val userName: String,
     val topic: String
 ) {

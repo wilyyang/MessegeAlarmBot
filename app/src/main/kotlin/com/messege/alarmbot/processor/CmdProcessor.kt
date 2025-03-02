@@ -8,24 +8,30 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import com.messege.alarmbot.contents.*
+import com.messege.alarmbot.contents.common.CommonContent
 import com.messege.alarmbot.core.common.ChatRoomKey
-import com.messege.alarmbot.core.common.TARGET_KEY
-import com.messege.alarmbot.contents.mafia.MafiaGameContent
-import com.messege.alarmbot.contents.topic.TopicContent
-import com.messege.alarmbot.core.common.GAME_KEY
-import com.messege.alarmbot.core.common.HOST_KEY
+import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
 import com.messege.alarmbot.core.common.inNotTalkType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.data.database.member.model.ChatProfileData
+import com.messege.alarmbot.data.database.member.model.DeleteTalkData
+import com.messege.alarmbot.data.database.member.model.EnterData
+import com.messege.alarmbot.data.database.member.model.KickData
 import com.messege.alarmbot.data.database.member.model.MemberData
 import com.messege.alarmbot.data.database.member.model.NicknameData
-import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.kakao.ChatMembersObserver
 import com.messege.alarmbot.kakao.model.ChatMember
+import com.messege.alarmbot.processor.model.AdminRoomTextResponse
+import com.messege.alarmbot.processor.model.Command
+import com.messege.alarmbot.processor.model.Group1RoomTextResponse
+import com.messege.alarmbot.processor.model.Group2RoomTextResponse
+import com.messege.alarmbot.processor.model.IndividualRoomTextResponse
+import com.messege.alarmbot.processor.model.Message
+import com.messege.alarmbot.processor.model.None
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,52 +45,29 @@ import kotlinx.coroutines.launch
 class CmdProcessor(
     private val applicationContext: Context,
     private val memberDatabaseDao: MemberDatabaseDao,
-    private val userDatabaseDao: UserDatabaseDao,
     private val topicDatabaseDao: TopicDatabaseDao
 ) {
-
-    private var mainOpenChatRoomAction : Notification.Action? = null
-    private var gameOpenChatRoomAction : Notification.Action? = null
-    private var hostOpenChatRoomAction : Notification.Action? = null
+    private var groupRoom1OpenChatRoomAction : Notification.Action? = null
+    private var groupRoom2OpenChatRoomAction : Notification.Action? = null
+    private var adminOpenChatRoomAction : Notification.Action? = null
     private val userChatRoomMap = mutableMapOf<ChatRoomKey, Notification.Action>()
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val commandChannel : Channel<Command> = Channel()
     private val channelFlow = commandChannel.receiveAsFlow().shareIn(scope = scope, started = WhileSubscribed())
 
+    private val commonContent : CommonContent = CommonContent(
+        commandChannel = commandChannel,
+        memberDatabaseDao = memberDatabaseDao
+    )
+
     private var contents: Array<BaseContent> = arrayOf(
-        CommonContent(
-            commandChannel = commandChannel,
-            insertUser = userDatabaseDao::insertUser,
-            getLatestUserName = userDatabaseDao::getLatestUserName,
-            getUserNameList = userDatabaseDao::getUserNames
-        ),
-        TopicContent(
-            commandChannel = commandChannel,
-            getLatestUserName = userDatabaseDao::getLatestUserName,
-            insertTopic = topicDatabaseDao::insertTopic,
-            recommendTopic = topicDatabaseDao::getRandomTopic,
-            selectTopic = topicDatabaseDao::getSelectTopic,
-            deleteTopic = topicDatabaseDao::deleteTopic
-        ),
-         QuestionGameContent(commandChannel),
-         MafiaGameContent(commandChannel, scope)
+        commonContent
     )
 
     init{
         scope.launch {
-            val chatLogsObserver = ChatLogsObserver(
-                getName = {
-                    memberDatabaseDao.getMemberName(it).getOrNull(0)?:""
-                }
-            )
-
-            chatLogsObserver.observeChatLogs().collect { message ->
-                Logger.i("[chat_log] $message")
-            }
-        }
-
-        scope.launch {
+            // Member Update
             val chatMembersObserver = ChatMembersObserver()
 
             chatMembersObserver.observeChatMembers().collect { members ->
@@ -93,6 +76,8 @@ class CmdProcessor(
                     savedMap[talkMember.userId]?.let { savedMember ->
                         if(talkMember.nickName != savedMember.latestName){
                             useCaseUpdateMemberNickName(talkMember.userId, talkMember.nickName)
+                            val allNames = memberDatabaseDao.getNicknameDataAll(talkMember.userId).joinToString(",") { it.nickName }
+                            handleCommand(AdminRoomTextResponse("닉네임 변경 : $allNames"))
                         }
 
                         val isTalkAdmin = talkMember.privilege == -1
@@ -101,11 +86,57 @@ class CmdProcessor(
                         }
 
                         if(talkMember.type != savedMember.profileType){
-                            useCaseUpdateMemberProfileType(talkMember.userId, talkMember.type, savedMember.profileType)
+                            useCaseUpdateMemberProfileType(talkMember.userId, talkMember.type, savedMember.profileType){
+                                handleCommand(AdminRoomTextResponse("1:1 톡 가능 프로필로 변경됨 (${talkMember.nickName})"))
+                            }
                         }
 
                     }?:also {
                         useCaseInsertNewMember(talkMember)
+                    }
+                }
+            }
+        }
+
+        scope.launch {
+            // Message Receive
+            val chatLogsObserver = ChatLogsObserver(
+                getName = {
+                    memberDatabaseDao.getMemberName(it).getOrNull(0)?:""
+                }
+            )
+
+            chatLogsObserver.observeChatLogs().collect { message ->
+
+                // Member Database Update
+                when(message){
+                    is Message.Event.DeleteMessage -> {
+                        Logger.d("[message.delete][${message.type.roomKey}] ${message.userName} ${message.deleteMessage}")
+                        memberDatabaseDao.insertDeleteTalkData(DeleteTalkData(message.userId, message.time, message.deleteMessage))
+                        memberDatabaseDao.incrementDeleteTalkCount(message.userId)
+                        handleCommand(AdminRoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
+                    }
+                    is Message.Event.ManageEvent.EnterEvent -> {
+                        Logger.d("[message.enter][${message.type.roomKey}] ${message.userName}")
+                        memberDatabaseDao.insertEnterData(EnterData(message.targetId, message.time))
+                        memberDatabaseDao.incrementEnterCount(message.targetId)
+                    }
+                    is Message.Event.ManageEvent.KickEvent -> {
+                        Logger.d("[message.kick][${message.type.roomKey}] ${message.userName}")
+                        memberDatabaseDao.insertKickData(KickData(message.targetId, message.time))
+                        memberDatabaseDao.incrementEnterCount(message.targetId)
+                    }
+                    is Message.Talk -> {
+                        Logger.d("[message.talk][${message.type.roomKey}] ${message.userName} ${message.text}")
+                        memberDatabaseDao.incrementTalkCount(message.userId)
+                    }
+                    else -> {}
+                }
+
+                // Send Message
+                if(message is Message.Talk){
+                    contents.forEach { content ->
+                        content.request(message)
                     }
                 }
             }
@@ -118,29 +149,21 @@ class CmdProcessor(
         }
     }
 
-    suspend fun deliverNotification(postTime : Long, chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
+    fun deliverNotification(chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
         if(!chatRoomKey.isGroupConversation){
-            Logger.w("[deliver.user] key : $chatRoomKey")
-            Logger.w("[deliver.user] userName : ${user.name} / text : $text")
             userChatRoomMap[chatRoomKey] = action
         }
-        if(chatRoomKey == TARGET_KEY){
-            Logger.d("[deliver.main] key : $chatRoomKey")
-            Logger.d("[deliver.main] userName : ${user.name} / text : $text")
-            mainOpenChatRoomAction = action
-        }
-        if(chatRoomKey == GAME_KEY){
-            Logger.d("[deliver.game] key : $chatRoomKey")
-            Logger.d("[deliver.game] userName : ${user.name} / text : $text")
-            gameOpenChatRoomAction = action
-        }
-        if(chatRoomKey == HOST_KEY){
-            Logger.d("[deliver.host] key : $chatRoomKey")
-            Logger.d("[deliver.host] userName : ${user.name} / text : $text")
-            hostOpenChatRoomAction = action
+        if(chatRoomKey.roomKey.toLong() == ChatRoomType.GroupRoom1.roomKey){
+            groupRoom1OpenChatRoomAction = action
         }
 
-        for(content in contents) content.request(postTime = postTime, chatRoomKey = chatRoomKey, user = user, text = text)
+        if(chatRoomKey.roomKey.toLong() == ChatRoomType.GroupRoom2.roomKey){
+            groupRoom2OpenChatRoomAction = action
+        }
+
+        if(chatRoomKey.roomKey.toLong() == ChatRoomType.AdminRoom.roomKey){
+            adminOpenChatRoomAction = action
+        }
     }
 
     private fun handleCommand(command: Command){
@@ -148,22 +171,22 @@ class CmdProcessor(
             Logger.v("[command] $command")
         }
         when(command){
-            is MainChatTextResponse -> {
-                mainOpenChatRoomAction?.let { action ->
+            is Group1RoomTextResponse -> {
+                groupRoom1OpenChatRoomAction?.let { action ->
                     sendActionText(applicationContext, action, command.text)
                 }
             }
-            is GameChatTextResponse -> {
-                gameOpenChatRoomAction?.let { action ->
+            is Group2RoomTextResponse -> {
+                groupRoom2OpenChatRoomAction?.let { action ->
                     sendActionText(applicationContext, action, command.text)
                 }
             }
-            is HostChatTextResponse -> {
-                hostOpenChatRoomAction?.let { action ->
+            is AdminRoomTextResponse -> {
+                adminOpenChatRoomAction?.let { action ->
                     sendActionText(applicationContext, action, command.text)
                 }
             }
-            is UserTextResponse -> {
+            is IndividualRoomTextResponse -> {
                 userChatRoomMap[command.userKey]?.let { action ->
                     sendActionText(applicationContext, action, command.text)
                 }
@@ -245,7 +268,7 @@ class CmdProcessor(
         memberDatabaseDao.updateAdmin(userId, isAdmin)
     }
 
-    private suspend fun useCaseUpdateMemberProfileType(userId: Long, profileType: Int, saveProfileType: Int){
+    private suspend fun useCaseUpdateMemberProfileType(userId: Long, profileType: Int, saveProfileType: Int, alarmTalkProfile: () -> Unit){
         if(profileType != TEMP_PROFILE_TYPE){
             memberDatabaseDao.updateProfileType(userId, profileType)
             val isCurrentChatAvailable = !inNotTalkType(profileType)
@@ -254,6 +277,7 @@ class CmdProcessor(
                 memberDatabaseDao.insertChatProfileData(ChatProfileData(userId, System.currentTimeMillis(), isCurrentChatAvailable))
                 if(isCurrentChatAvailable){
                     memberDatabaseDao.incrementChatProfile(userId)
+                    alarmTalkProfile()
                 }
             }
         }

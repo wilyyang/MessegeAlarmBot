@@ -25,7 +25,7 @@ class Timer(private val scope: CoroutineScope) {
 
         timerJob = scope.launch {
             val startTime = System.currentTimeMillis()
-            Logger.i("[game.timer] : start ($totalSeconds s)")
+            Logger.i("[timer] : start ($totalSeconds s)")
             while (_remainingTimeFlow.value > 0) {
                 val elapsed = (System.currentTimeMillis() - startTime) / 1000
                 _remainingTimeFlow.value = (totalSeconds - elapsed).toInt()
@@ -33,7 +33,7 @@ class Timer(private val scope: CoroutineScope) {
                 delay(1000)
             }
             if (!isStopped && !onCompleteCalled) {
-                Logger.i("[game.timer] : end ($totalSeconds s)")
+                Logger.i("[timer] : end ($totalSeconds s)")
                 timeWork.onComplete()
                 onCompleteCalled = true
             }
@@ -44,7 +44,7 @@ class Timer(private val scope: CoroutineScope) {
         if (timerJob?.isActive == true) {
             isStopped = true
             timerJob?.cancel()
-            Logger.i("[game.timer] : stopped")
+            Logger.i("[timer] : stopped")
             if (!onCompleteCalled) {
                 onCompleteCalled = true
             }

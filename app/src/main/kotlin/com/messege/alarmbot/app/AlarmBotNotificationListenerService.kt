@@ -72,7 +72,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
                 val action = notification?.actions?.get(REPLY_ACTION_INDEX)
                 if (user != null && key != null && action != null) {
                     serviceScope.launch {
-                        cmdProcessor.deliverNotification(postTime = postTime, chatRoomKey = key, user = user, action = action, text = text)
+                        cmdProcessor.deliverNotification(chatRoomKey = key, user = user, action = action, text = text)
                     }
                 }
             }

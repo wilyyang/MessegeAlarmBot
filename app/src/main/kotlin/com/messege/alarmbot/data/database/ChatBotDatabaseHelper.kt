@@ -10,8 +10,6 @@ import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
-import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
-import com.messege.alarmbot.data.database.user.model.UserNameData
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
@@ -31,13 +29,11 @@ import java.io.File
         DislikeData::class,
         PartyChangeData::class,
 
-        UserNameData::class,
         TopicData::class
     ]
 )
 abstract class ChatBotDatabaseHelper : RoomDatabase() {
     abstract fun memberDatabaseDao() : MemberDatabaseDao
-    abstract fun userDatabaseDao() : UserDatabaseDao
     abstract fun topicDatabaseDao() : TopicDatabaseDao
 
     companion object {

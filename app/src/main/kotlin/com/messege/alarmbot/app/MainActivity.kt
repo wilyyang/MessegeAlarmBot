@@ -17,21 +17,12 @@ import android.provider.Settings
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import com.messege.alarmbot.core.common.GAME_KEY
-import com.messege.alarmbot.core.common.GAME_SUB_KEY
-import com.messege.alarmbot.core.common.TARGET_KEY
 import com.messege.alarmbot.core.presentation.compose.theme.AlarmBotTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -46,25 +37,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AlarmBotTheme {
-                var isMainGame by remember {
-                    mutableStateOf(GAME_KEY == TARGET_KEY)
-                }
                 Box(modifier = Modifier.fillMaxSize()) {
                     Column(modifier = Modifier.align(Alignment.Center)){
                         Text(text = "Message Alarm Bot", style = MaterialTheme.typography.titleLarge)
 
                         Spacer(modifier = Modifier.height(30.dp))
-
-                        Button(onClick = {
-                            if(GAME_KEY == TARGET_KEY){
-                                GAME_KEY = GAME_SUB_KEY
-                            }else{
-                                GAME_KEY = TARGET_KEY
-                            }
-                            isMainGame = GAME_KEY == TARGET_KEY
-                        }) {
-                            Text(text = "Game Channel is 제노방 : $isMainGame")
-                        }
                     }
                 }
             }

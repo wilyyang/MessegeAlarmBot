@@ -1,9 +1,14 @@
 package com.messege.alarmbot.kakao.model
 
 import com.google.gson.Gson
-import com.messege.alarmbot.contents.*
-import com.messege.alarmbot.contents.Message
+import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.processor.model.EVENT_APPOINT_MANAGER_CODE
+import com.messege.alarmbot.processor.model.EVENT_DELETE_MESSAGE_CODE
+import com.messege.alarmbot.processor.model.EVENT_ENTER_CODE
+import com.messege.alarmbot.processor.model.EVENT_KICK_CODE
+import com.messege.alarmbot.processor.model.EVENT_OUT_CODE
+import com.messege.alarmbot.processor.model.EVENT_RELEASE_MANAGER_CODE
 
 data class MessageEvent(
     val feedType: Int,

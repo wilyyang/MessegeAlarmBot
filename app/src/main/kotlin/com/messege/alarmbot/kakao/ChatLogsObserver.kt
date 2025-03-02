@@ -5,10 +5,9 @@ import android.database.sqlite.SQLiteDatabase
 import android.os.Environment
 import android.os.FileObserver
 import com.google.gson.Gson
-import com.messege.alarmbot.contents.Message
+import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.kakao.model.ChatLog
 import com.messege.alarmbot.kakao.model.ChatMetadata
-import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
