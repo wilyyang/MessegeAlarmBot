@@ -32,10 +32,6 @@ data class ColumnIndex(
     val attachment : Int,
     val createdAt : Int,
     val deletedAt : Int,
-    val clientMessageId : Int,
-    val prevId : Int,
-    val referer : Int,
-    val supplement : Int,
     val v : Int
 )
 
@@ -68,10 +64,6 @@ class ChatLogsObserver : CoroutineScope {
                 attachment = getCheckedColumnIndex("attachment"),
                 createdAt = getCheckedColumnIndex("created_at"),
                 deletedAt = getCheckedColumnIndex("deleted_at"),
-                clientMessageId = getCheckedColumnIndex("client_message_id"),
-                prevId = getCheckedColumnIndex("prev_id"),
-                referer = getCheckedColumnIndex("referer"),
-                supplement = getCheckedColumnIndex("supplement"),
                 v = getCheckedColumnIndex("v")
             )
         }
@@ -164,10 +156,6 @@ class ChatLogsObserver : CoroutineScope {
             attachment = getString(columnIndex.attachment),
             createdAt = getLong(columnIndex.createdAt),
             deletedAt = getLong(columnIndex.deletedAt),
-            clientMessageId = getLong(columnIndex.clientMessageId),
-            prevId = getLong(columnIndex.prevId),
-            referer = getInt(columnIndex.referer),
-            supplement = getString(columnIndex.supplement),
             v = chatMetadata
         )
     }
