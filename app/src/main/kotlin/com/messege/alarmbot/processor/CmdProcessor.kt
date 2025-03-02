@@ -11,6 +11,8 @@ import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.contents.common.CommonContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.SUPER_ADMIN_AUTOJU
+import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
 import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
 import com.messege.alarmbot.core.common.inNotTalkType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
@@ -80,11 +82,6 @@ class CmdProcessor(
                             handleCommand(AdminRoomTextResponse("닉네임 변경 : $allNames"))
                         }
 
-                        val isTalkAdmin = talkMember.privilege == -1
-                        if(isTalkAdmin != savedMember.isAdmin){
-                            useCaseUpdateMemberAdmin(talkMember.userId, isTalkAdmin)
-                        }
-
                         if(talkMember.type != savedMember.profileType){
                             useCaseUpdateMemberProfileType(talkMember.userId, talkMember.type, savedMember.profileType){
                                 handleCommand(AdminRoomTextResponse("1:1 톡 가능 프로필로 변경됨 (${talkMember.nickName})"))
@@ -116,15 +113,25 @@ class CmdProcessor(
                         memberDatabaseDao.incrementDeleteTalkCount(message.userId)
                         handleCommand(AdminRoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
                     }
+                    is Message.Event.ManageEvent.AppointManagerEvent -> {
+                        Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, appointment")
+                        memberDatabaseDao.insertAdminLogData(AdminLogData(message.targetId, message.time, true))
+                        memberDatabaseDao.updateAdmin(message.targetId, true)
+                    }
+                    is Message.Event.ManageEvent.ReleaseManagerEvent -> {
+                        Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, release")
+                        memberDatabaseDao.insertAdminLogData(AdminLogData(message.targetId, message.time, false))
+                        memberDatabaseDao.updateAdmin(message.targetId, false)
+                    }
                     is Message.Event.ManageEvent.EnterEvent -> {
-                        Logger.d("[message.enter][${message.type.roomKey}] ${message.userName}")
+                        Logger.d("[message.enter][${message.type.roomKey}] ${message.targetName}")
                         memberDatabaseDao.insertEnterData(EnterData(message.targetId, message.time))
                         memberDatabaseDao.incrementEnterCount(message.targetId)
                     }
                     is Message.Event.ManageEvent.KickEvent -> {
-                        Logger.d("[message.kick][${message.type.roomKey}] ${message.userName}")
+                        Logger.d("[message.kick][${message.type.roomKey}] ${message.targetName}")
                         memberDatabaseDao.insertKickData(KickData(message.targetId, message.time))
-                        memberDatabaseDao.incrementEnterCount(message.targetId)
+                        memberDatabaseDao.incrementKickCount(message.targetId)
                     }
                     is Message.Talk -> {
                         Logger.d("[message.talk][${message.type.roomKey}] ${message.userName} ${message.text}")
@@ -204,16 +211,6 @@ class CmdProcessor(
             )
         )
 
-        if (talkMember.privilege == -1) {
-            memberDatabaseDao.insertAdminLogData(
-                AdminLogData(
-                    userId = talkMember.userId,
-                    changeAt = System.currentTimeMillis(),
-                    isAdmin = true
-                )
-            )
-        }
-
         val isTalkAvailable = !inNotTalkType(talkMember.type)
         if (isTalkAvailable){
             memberDatabaseDao.insertChatProfileData(
@@ -231,7 +228,8 @@ class CmdProcessor(
                 createAt = System.currentTimeMillis(),
                 profileType = talkMember.type,
                 latestName = talkMember.nickName,
-                isAdmin = talkMember.privilege == -1,
+                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME || talkMember.userId == SUPER_ADMIN_AUTOJU,
+                isAdmin = false,
                 chatProfileCount = if(isTalkAvailable) 1 else 0,
                 talkCount = 0,
                 deleteTalkCount = 0,

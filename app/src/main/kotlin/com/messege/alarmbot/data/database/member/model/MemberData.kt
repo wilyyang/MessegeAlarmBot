@@ -11,6 +11,7 @@ data class MemberData(
     val createAt: Long,
     val profileType: Int,
     val latestName: String,
+    val isSuperAdmin: Boolean,
     val isAdmin: Boolean,
     val chatProfileCount: Long,
     val talkCount: Long,
