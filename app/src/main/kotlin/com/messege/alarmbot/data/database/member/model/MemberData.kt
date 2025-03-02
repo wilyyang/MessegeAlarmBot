@@ -9,8 +9,10 @@ import androidx.room.PrimaryKey
 data class MemberData(
     val userId: Long,
     val createAt: Long,
+    val profileType: Int,
     val latestName: String,
     val isAdmin: Boolean,
+    val chatProfileCount: Long,
     val talkCount: Long,
     val deleteTalkCount: Long,
     val enterCount: Long,
@@ -40,6 +42,16 @@ data class AdminLogData(
     val userId: Long,
     val changeAt: Long,
     val isAdmin: Boolean
+) {
+    @PrimaryKey(autoGenerate = true) var idx: Long = 0
+}
+
+@Entity(tableName = "ChatProfileData")
+@Keep
+data class ChatProfileData(
+    val userId: Long,
+    val changeAt: Long,
+    val isAvailable: Boolean
 ) {
     @PrimaryKey(autoGenerate = true) var idx: Long = 0
 }

@@ -6,6 +6,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
+import com.messege.alarmbot.data.database.member.model.*
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
@@ -17,11 +19,24 @@ import java.io.File
     version = 1,
     exportSchema = true,
     entities = [
+        MemberData::class,
+        NicknameData::class,
+        AdminLogData::class,
+        ChatProfileData::class,
+        DeleteTalkData::class,
+        EnterData::class,
+        KickData::class,
+        SanctionData::class,
+        LikeData::class,
+        DislikeData::class,
+        PartyChangeData::class,
+
         UserNameData::class,
         TopicData::class
     ]
 )
 abstract class ChatBotDatabaseHelper : RoomDatabase() {
+    abstract fun memberDatabaseDao() : MemberDatabaseDao
     abstract fun userDatabaseDao() : UserDatabaseDao
     abstract fun topicDatabaseDao() : TopicDatabaseDao
 

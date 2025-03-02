@@ -14,11 +14,18 @@ import com.messege.alarmbot.contents.mafia.MafiaGameContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.GAME_KEY
 import com.messege.alarmbot.core.common.HOST_KEY
+import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
+import com.messege.alarmbot.core.common.inNotTalkType
+import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
+import com.messege.alarmbot.data.database.member.model.AdminLogData
+import com.messege.alarmbot.data.database.member.model.ChatProfileData
+import com.messege.alarmbot.data.database.member.model.MemberData
+import com.messege.alarmbot.data.database.member.model.NicknameData
 import com.messege.alarmbot.data.database.user.dao.UserDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.kakao.ChatMembersObserver
-import com.messege.alarmbot.util.format.toTimeFormat
+import com.messege.alarmbot.kakao.model.ChatMember
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +38,7 @@ import kotlinx.coroutines.launch
 
 class CmdProcessor(
     private val applicationContext: Context,
+    private val memberDatabaseDao: MemberDatabaseDao,
     private val userDatabaseDao: UserDatabaseDao,
     private val topicDatabaseDao: TopicDatabaseDao
 ) {
@@ -76,8 +84,26 @@ class CmdProcessor(
             val chatMembersObserver = ChatMembersObserver()
 
             chatMembersObserver.observeChatMembers().collect { members ->
-                members.map { "${it.type} ${it.chatId} ${it.userId} ${it.privilege} ${it.nickName}" }.joinToString { ", " }
-                Logger.i("[chat_member] $members")
+                val savedMap = memberDatabaseDao.getMembersAll().associateBy { it.userId }
+                members.forEach { talkMember ->
+                    savedMap[talkMember.userId]?.let { savedMember ->
+                        if(talkMember.nickName != savedMember.latestName){
+                            useCaseUpdateMemberNickName(talkMember.userId, talkMember.nickName)
+                        }
+
+                        val isTalkAdmin = talkMember.privilege == -1
+                        if(isTalkAdmin != savedMember.isAdmin){
+                            useCaseUpdateMemberAdmin(talkMember.userId, isTalkAdmin)
+                        }
+
+                        if(talkMember.type != savedMember.profileType){
+                            useCaseUpdateMemberProfileType(talkMember.userId, talkMember.type, savedMember.profileType)
+                        }
+
+                    }?:also {
+                        useCaseInsertNewMember(talkMember)
+                    }
+                }
             }
         }
 
@@ -139,6 +165,93 @@ class CmdProcessor(
                 }
             }
             else -> {}
+        }
+    }
+
+    private suspend fun useCaseInsertNewMember(talkMember: ChatMember){
+        memberDatabaseDao.insertNickNameData(
+            NicknameData(
+                userId = talkMember.userId,
+                changeAt = System.currentTimeMillis(),
+                nickName = talkMember.nickName
+            )
+        )
+
+        if (talkMember.privilege == -1) {
+            memberDatabaseDao.insertAdminLogData(
+                AdminLogData(
+                    userId = talkMember.userId,
+                    changeAt = System.currentTimeMillis(),
+                    isAdmin = true
+                )
+            )
+        }
+
+        val isTalkAvailable = !inNotTalkType(talkMember.type)
+        if (isTalkAvailable){
+            memberDatabaseDao.insertChatProfileData(
+                ChatProfileData(
+                    userId = talkMember.userId,
+                    changeAt = System.currentTimeMillis(),
+                    isAvailable = true
+                )
+            )
+        }
+
+        memberDatabaseDao.insertMember(
+            MemberData(
+                userId = talkMember.userId,
+                createAt = System.currentTimeMillis(),
+                profileType = talkMember.type,
+                latestName = talkMember.nickName,
+                isAdmin = talkMember.privilege == -1,
+                chatProfileCount = if(isTalkAvailable) 1 else 0,
+                talkCount = 0,
+                deleteTalkCount = 0,
+                enterCount = 1,
+                kickCount = 0,
+                sanctionCount = 0,
+                likes = 0,
+                dislikes = 0,
+                partyId = 0,
+                isPartyLeader = false
+            )
+        )
+    }
+
+    private suspend fun useCaseUpdateMemberNickName(userId: Long, newNickName: String){
+        memberDatabaseDao.insertNickNameData(
+            NicknameData(
+                userId = userId,
+                changeAt = System.currentTimeMillis(),
+                nickName = newNickName
+            )
+        )
+        memberDatabaseDao.updateLatestName(userId, newNickName)
+    }
+
+    private suspend fun useCaseUpdateMemberAdmin(userId: Long, isAdmin: Boolean){
+        memberDatabaseDao.insertAdminLogData(
+            AdminLogData(
+                userId = userId,
+                changeAt = System.currentTimeMillis(),
+                isAdmin = isAdmin
+            )
+        )
+        memberDatabaseDao.updateAdmin(userId, isAdmin)
+    }
+
+    private suspend fun useCaseUpdateMemberProfileType(userId: Long, profileType: Int, saveProfileType: Int){
+        if(profileType != TEMP_PROFILE_TYPE){
+            memberDatabaseDao.updateProfileType(userId, profileType)
+            val isCurrentChatAvailable = !inNotTalkType(profileType)
+            val isSavedChatAvailable = !inNotTalkType(saveProfileType)
+            if(isCurrentChatAvailable != isSavedChatAvailable){
+                memberDatabaseDao.insertChatProfileData(ChatProfileData(userId, System.currentTimeMillis(), isCurrentChatAvailable))
+                if(isCurrentChatAvailable){
+                    memberDatabaseDao.incrementChatProfile(userId)
+                }
+            }
         }
     }
 }
