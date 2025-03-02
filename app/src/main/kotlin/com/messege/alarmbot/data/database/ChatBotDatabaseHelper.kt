@@ -10,11 +10,12 @@ import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
+import com.messege.alarmbot.data.database.topic.model.TopicReplyData
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
 @Database(
-    version = 1,
+    version = 2,
     exportSchema = true,
     entities = [
         MemberData::class,
@@ -29,7 +30,8 @@ import java.io.File
         DislikeData::class,
         PartyChangeData::class,
 
-        TopicData::class
+        TopicData::class,
+        TopicReplyData::class
     ]
 )
 abstract class ChatBotDatabaseHelper : RoomDatabase() {

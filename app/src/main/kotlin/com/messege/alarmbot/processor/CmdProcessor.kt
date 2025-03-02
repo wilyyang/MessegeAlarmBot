@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.contents.common.CommonContent
+import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.SUPER_ADMIN_AUTOJU
@@ -64,7 +65,12 @@ class CmdProcessor(
     )
 
     private var contents: Array<BaseContent> = arrayOf(
-        commonContent
+        commonContent,
+        TopicContent(
+            commandChannel = commandChannel,
+            topicDatabaseDao = topicDatabaseDao,
+            memberDatabaseDao = memberDatabaseDao
+        )
     )
 
     init{

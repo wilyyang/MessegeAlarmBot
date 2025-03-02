@@ -14,3 +14,15 @@ data class TopicData(
 ) {
     @PrimaryKey(autoGenerate = true) var idx: Long = 0
 }
+
+@Entity(tableName = "TopicReplyData")
+@Keep
+data class TopicReplyData(
+    val topicKey: Long,
+    val updateTime: Long,
+    val userKey: Long,
+    val userName: String,
+    val reply: String
+) {
+    @PrimaryKey(autoGenerate = true) var idx: Long = 0
+}

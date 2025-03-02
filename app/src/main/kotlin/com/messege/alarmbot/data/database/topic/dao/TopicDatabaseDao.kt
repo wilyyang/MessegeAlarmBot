@@ -2,6 +2,7 @@ package com.messege.alarmbot.data.database.topic.dao
 
 import androidx.room.*
 import com.messege.alarmbot.data.database.topic.model.TopicData
+import com.messege.alarmbot.data.database.topic.model.TopicReplyData
 
 @Dao
 interface TopicDatabaseDao {
@@ -17,4 +18,17 @@ interface TopicDatabaseDao {
 
     @Query("DELETE FROM TopicData WHERE idx = :idx")
     suspend fun deleteTopic(idx: Long): Int
+
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertReplyTopic(reply: TopicReplyData): Long
+
+    @Query("SELECT * FROM TopicReplyData WHERE topicKey = :topicKey")
+    suspend fun getSelectReplyList(topicKey: Long): List<TopicReplyData>
+
+    @Query("DELETE FROM TopicReplyData WHERE topicKey = :topicKey")
+    suspend fun deleteReplyLists(topicKey: Long): Int
+
+    @Query("DELETE FROM TopicReplyData WHERE idx = :idx")
+    suspend fun deleteReplyTopic(idx: Long): Int
 }
