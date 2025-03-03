@@ -17,13 +17,7 @@ import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
 import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
 import com.messege.alarmbot.core.common.inNotTalkType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
-import com.messege.alarmbot.data.database.member.model.AdminLogData
-import com.messege.alarmbot.data.database.member.model.ChatProfileData
-import com.messege.alarmbot.data.database.member.model.DeleteTalkData
-import com.messege.alarmbot.data.database.member.model.EnterData
-import com.messege.alarmbot.data.database.member.model.KickData
-import com.messege.alarmbot.data.database.member.model.MemberData
-import com.messege.alarmbot.data.database.member.model.NicknameData
+import com.messege.alarmbot.data.database.member.model.*
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.kakao.ChatMembersObserver
@@ -134,12 +128,24 @@ class CmdProcessor(
                         memberDatabaseDao.insertEnterData(EnterData(message.targetId, message.time))
                         memberDatabaseDao.incrementEnterCount(message.targetId)
                         val allNames = memberDatabaseDao.getNicknameDataAll(message.targetId).joinToString(",") { it.nickName }
-                        handleCommand(AdminRoomTextResponse("유저가 입장함 : $allNames (${message.userName})"))
+                        handleCommand(AdminRoomTextResponse("유저가 입장함 : $allNames (${message.targetName})"))
                     }
                     is Message.Event.ManageEvent.KickEvent -> {
                         Logger.d("[message.kick][${message.type.roomKey}] ${message.targetName}")
                         memberDatabaseDao.insertKickData(KickData(message.targetId, message.time))
                         memberDatabaseDao.incrementKickCount(message.targetId)
+
+                        memberDatabaseDao.getMember(message.targetId).getOrNull(0)?.let { member ->
+                            val kickPoint = if(member.sanctionCount > 4) 4 else member.sanctionCount
+                            memberDatabaseDao.updateMemberSanctionCount(member.userId, member.sanctionCount - kickPoint)
+                            memberDatabaseDao.insertSanctionData(
+                                SanctionData(
+                                    userId = member.userId, eventAt = message.time,
+                                    giverId = message.userId, reason = "강퇴당함",
+                                    sanctionCount = -kickPoint
+                                )
+                            )
+                        }
                     }
                     is Message.Talk -> {
                         Logger.d("[message.talk][${message.type.roomKey}] ${message.userName} ${message.text}")

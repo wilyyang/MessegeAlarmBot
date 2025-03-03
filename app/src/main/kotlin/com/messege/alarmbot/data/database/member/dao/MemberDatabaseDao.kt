@@ -4,13 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.messege.alarmbot.data.database.member.model.AdminLogData
-import com.messege.alarmbot.data.database.member.model.ChatProfileData
-import com.messege.alarmbot.data.database.member.model.DeleteTalkData
-import com.messege.alarmbot.data.database.member.model.EnterData
-import com.messege.alarmbot.data.database.member.model.KickData
-import com.messege.alarmbot.data.database.member.model.MemberData
-import com.messege.alarmbot.data.database.member.model.NicknameData
+import com.messege.alarmbot.data.database.member.model.*
 
 @Dao
 interface MemberDatabaseDao {
@@ -94,4 +88,14 @@ interface MemberDatabaseDao {
 
     @Query("SELECT * FROM KickData WHERE userId = :userId ORDER BY kickAt DESC")
     suspend fun getKickDataAll(userId: Long) : List<KickData>
+
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSanctionData(sanctionData: SanctionData)
+
+    @Query("SELECT * FROM SanctionData WHERE userId = :userId ORDER BY eventAt DESC")
+    suspend fun getSanctionDataAll(userId: Long) : List<SanctionData>
+
+    @Query("UPDATE MemberData SET sanctionCount = :sanctionCount WHERE userId = :userId")
+    suspend fun updateMemberSanctionCount(userId: Long, sanctionCount: Long)
 }

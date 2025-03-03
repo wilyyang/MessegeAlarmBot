@@ -90,7 +90,9 @@ data class KickData(
 data class SanctionData(
     val userId: Long,
     val eventAt: Long,
-    val isSanction: Boolean
+    val giverId: Long,
+    val reason: String,
+    val sanctionCount: Long
 ) {
     @PrimaryKey(autoGenerate = true) var idx: Long = 0
 }
