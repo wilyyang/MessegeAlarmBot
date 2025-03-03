@@ -133,6 +133,8 @@ class CmdProcessor(
                         Logger.d("[message.enter][${message.type.roomKey}] ${message.targetName}")
                         memberDatabaseDao.insertEnterData(EnterData(message.targetId, message.time))
                         memberDatabaseDao.incrementEnterCount(message.targetId)
+                        val allNames = memberDatabaseDao.getNicknameDataAll(message.targetId).joinToString(",") { it.nickName }
+                        handleCommand(AdminRoomTextResponse("유저가 입장함 : $allNames (${message.userName})"))
                     }
                     is Message.Event.ManageEvent.KickEvent -> {
                         Logger.d("[message.kick][${message.type.roomKey}] ${message.targetName}")

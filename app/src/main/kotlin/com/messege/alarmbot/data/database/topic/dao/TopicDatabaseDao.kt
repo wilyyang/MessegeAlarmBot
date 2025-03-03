@@ -31,4 +31,15 @@ interface TopicDatabaseDao {
 
     @Query("DELETE FROM TopicReplyData WHERE idx = :idx")
     suspend fun deleteReplyTopic(idx: Long): Int
+
+    @Query("""
+    DELETE FROM TopicReplyData 
+    WHERE idx = (
+        SELECT idx FROM TopicReplyData 
+        WHERE topicKey = :topicKey 
+        ORDER BY updateTime ASC 
+        LIMIT 1 OFFSET :orderNumber
+    )
+    """)
+    suspend fun deleteReplyTopicOrderNumber(topicKey: Long, orderNumber: Int): Int
 }

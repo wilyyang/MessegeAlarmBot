@@ -3,7 +3,6 @@ package com.messege.alarmbot.contents.topic
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
-import com.messege.alarmbot.data.database.member.model.MemberData
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
 import com.messege.alarmbot.data.database.topic.model.TopicReplyData
@@ -11,6 +10,7 @@ import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.util.format.toTimeFormatDate
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.channels.Channel
 
 class TopicContent(
@@ -65,16 +65,30 @@ class TopicContent(
                     }
 
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE") && isAdmin -> {
-                        val number = message.text.substringAfter(" ", missingDelimiterValue = "").toIntOrNull()
-                        val responseText = if (number == null) {
+                        val replyNumber = message.text.substringAfter("-", "").toIntOrNull()
+                        val topicNumber = if (replyNumber == null) {
+                            message.text.substringAfter(" ", "").toIntOrNull()
+                        } else {
+                            message.text.substringAfter(" ", "").substringBefore("-",  "").toIntOrNull()
+                        }
+                        val responseText = if (topicNumber == null) {
                             "삭제할 주제 넘버를 지정해주세요."
                         } else {
-                            val deleteNumber = topicDatabaseDao.deleteTopic(number.toLong())
-                            topicDatabaseDao.deleteReplyLists(number.toLong())
-                            if(deleteNumber > 0){
-                                "$number 번 주제가 삭제되었습니다."
-                            }else {
-                                "삭제할 주제가 없어요."
+                            if(replyNumber == null){
+                                val deleteNumber = topicDatabaseDao.deleteTopic(topicNumber.toLong())
+                                topicDatabaseDao.deleteReplyLists(topicNumber.toLong())
+                                if(deleteNumber > 0){
+                                    "$topicNumber 번 주제가 삭제되었습니다."
+                                }else {
+                                    "삭제할 주제가 없어요."
+                                }
+                            }else{
+                                val deleteResult = topicDatabaseDao.deleteReplyTopicOrderNumber(topicNumber.toLong(), replyNumber - 1)
+                                if(deleteResult > 0){
+                                    "$topicNumber 주제의 $replyNumber 번 답글이 삭제되었습니다."
+                                }else {
+                                    "삭제할 답글이 없어요."
+                                }
                             }
                         }
                         commandChannel.send(Group1RoomTextResponse(text = responseText))
