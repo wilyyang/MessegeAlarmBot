@@ -1,10 +1,10 @@
 package com.messege.alarmbot.contents.common
 
-enum class SanctionType(val prefix : String, val count : Int, val isRemission : Boolean = false){
-    Sanction(".제재", 1),
-    Warning(".경고", 2),
-    Remission(".감면", -1, true),
-    Kick(".강퇴", -4, true)
+enum class SanctionType(val prefix : String, val title : String, val count : Int, val isRemission : Boolean = false){
+    Sanction(".제재 ", "제재", 1),
+    Warning(".경고 ",  "경고", 2),
+    Remission(".감면 ", "감면", -1, true),
+    Kick(".강퇴 ", "강퇴", -4, true)
 }
 
 data class SanctionWrapper(

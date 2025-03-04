@@ -87,7 +87,7 @@ class CommonContent(
                                     sanctionCount = sanction.sanctionCount.toLong()
                                 )
                             )
-                            val responseText = "${targetMember.latestName} 님이 ${sanctionType.prefix}로 " +
+                            val responseText = "${targetMember.latestName} 님이 ${sanctionType.title}로 " +
                                 "제재 $result 회 상태 입니다."
                             commandChannel.send(AdminRoomTextResponse(responseText))
                         }
