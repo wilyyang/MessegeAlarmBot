@@ -150,7 +150,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
 
         val initialDelay = nextRun.timeInMillis - now.timeInMillis
 
-        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(1, TimeUnit.HOURS)
+        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(15, TimeUnit.MINUTES)
             .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)  // 다음 정각까지 기다림
             .build()
 

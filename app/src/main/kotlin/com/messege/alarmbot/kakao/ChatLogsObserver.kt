@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.kakao.model.ChatLog
 import com.messege.alarmbot.kakao.model.ChatMetadata
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -153,12 +154,16 @@ class ChatLogsObserver(
                     it.type != null && it.createdAt != null && it.v?.enc != null && it.userId != null
                             && it.message != null && it.message.length < MESSAGE_LENGTH_LIMIT
                 }?.run {
-                    val decryptMessage = KakaoDecrypt.decrypt(userId!!, v!!.enc, message!!)
-                    val decryptAttachment = if(!attachment.isNullOrBlank() && attachment != "{}"){
-                        KakaoDecrypt.decrypt(userId, v.enc, attachment)
-                    } else null
+                    try {
+                        val decryptMessage = KakaoDecrypt.decrypt(userId!!, v!!.enc, message!!)
+                        val decryptAttachment = if(!attachment.isNullOrBlank() && attachment != "{}"){
+                            KakaoDecrypt.decrypt(userId, v.enc, attachment)
+                        } else null
 
-                    logs.add(copy(message = decryptMessage, attachment = decryptAttachment))
+                        logs.add(copy(message = decryptMessage, attachment = decryptAttachment))
+                    }catch (e : Exception){
+                        Logger.e("[error] decrypt error : ${e.message}")
+                    }
                     lastCreateAt = this.createdAt!!
                 }
             }
