@@ -24,6 +24,8 @@ import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.processor.CmdProcessor
 import com.messege.alarmbot.processor.CmdProcessorEntryPoint
 import com.messege.alarmbot.processor.model.ResetMemberPoint
+import com.messege.alarmbot.util.format.toTimeFormat
+import com.messege.alarmbot.util.log.Logger
 import com.messege.alarmbot.work.member.MemberPointResetWorker
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
@@ -149,8 +151,9 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         }
 
         val initialDelay = nextRun.timeInMillis - now.timeInMillis
+        Logger.e("[time] ${(initialDelay/1000)/60}m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
 
-        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(15, TimeUnit.MINUTES)
+        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(1, TimeUnit.HOURS)
             .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)  // 다음 정각까지 기다림
             .build()
 
