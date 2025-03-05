@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.contents.common.CommonContent
+import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
@@ -30,6 +31,7 @@ import com.messege.alarmbot.processor.model.IndividualRoomTextResponse
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.processor.model.None
 import com.messege.alarmbot.processor.model.ResetMemberPoint
+import com.messege.alarmbot.processor.usecase.UseCasePoint
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +56,8 @@ class CmdProcessor(
     private val commandChannel : Channel<Command> = Channel()
     private val channelFlow = commandChannel.receiveAsFlow().shareIn(scope = scope, started = WhileSubscribed())
 
+    private val useCasePoint = UseCasePoint(memberDatabaseDao = memberDatabaseDao)
+
     private val commonContent : CommonContent = CommonContent(
         commandChannel = commandChannel,
         memberDatabaseDao = memberDatabaseDao
@@ -61,6 +65,11 @@ class CmdProcessor(
 
     private var contents: Array<BaseContent> = arrayOf(
         commonContent,
+        PointContent(
+            commandChannel = commandChannel,
+            memberDatabaseDao = memberDatabaseDao,
+            useCasePoint = useCasePoint
+        ),
         TopicContent(
             commandChannel = commandChannel,
             topicDatabaseDao = topicDatabaseDao,
@@ -226,7 +235,7 @@ class CmdProcessor(
                 scope.launch {
                     memberDatabaseDao.getMember(0L)
                     adminOpenChatRoomAction?.let { action ->
-                        sendActionText(applicationContext, action, "TEST : 정각 알림 이벤트 확인용")
+                        sendActionText(applicationContext, action, "TEST : 30, 60분마다 발생")
                     }
                 }
             }

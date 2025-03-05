@@ -150,11 +150,11 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
             }
         }
 
-        val initialDelay = nextRun.timeInMillis - now.timeInMillis
-        Logger.e("[time] ${(initialDelay/1000)/60}m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
+        val initialMinuteDelay = ((nextRun.timeInMillis - now.timeInMillis) / 1000 ) / 60
+        Logger.e("[time] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
 
-        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(1, TimeUnit.HOURS)
-            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)  // 다음 정각까지 기다림
+        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(30, TimeUnit.MINUTES)
+            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)  // 다음 30분까지 기다림
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
