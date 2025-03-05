@@ -5,21 +5,32 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Person
 import android.app.Service
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Parcelable
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.text.SpannableString
 import androidx.core.app.NotificationCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.messege.alarmbot.core.common.KAKAO_PACKAGE_NAME
 import com.messege.alarmbot.core.common.REPLY_ACTION_INDEX
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.processor.CmdProcessor
 import com.messege.alarmbot.processor.CmdProcessorEntryPoint
+import com.messege.alarmbot.processor.model.ResetMemberPoint
+import com.messege.alarmbot.work.member.MemberPointResetWorker
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 const val NOTIFICATION_ID : String = "com.messege.alarmbot.NotificationGroup"
 const val NOTIFICATION_TITLE : String = "AlarmBot"
@@ -28,6 +39,16 @@ const val SERVICE_ID : Int = 18541
 class AlarmBotNotificationListenerService : NotificationListenerService() {
     private lateinit var cmdProcessor: CmdProcessor
     private val serviceScope = CoroutineScope(Dispatchers.Default)
+
+    private val resetReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            cmdProcessor.sendCommand(ResetMemberPoint)
+        }
+    }
+
+    companion object {
+        const val ACTION_RESET_POINTS = "com.messege.alarmbot.RESET_POINTS"
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -49,10 +70,18 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
 
         notificationManager.createNotificationChannel(notificationChannel)
         startForeground(SERVICE_ID, notification)
+
+        // BroadcastReceiver 등록
+        val filter = IntentFilter(ACTION_RESET_POINTS)
+        registerReceiver(resetReceiver, filter, RECEIVER_NOT_EXPORTED)
+
+        // Worker 실행
+        scheduleMemberPointResetWork()
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        unregisterReceiver(resetReceiver)
         stopForeground(Service.STOP_FOREGROUND_REMOVE)
     }
 
@@ -101,5 +130,34 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         } else{
             null
         }
+    }
+
+    /**
+     * Worker 실행 함수
+     */
+    private fun scheduleMemberPointResetWork() {
+        val now = Calendar.getInstance()
+        val nextRun = Calendar.getInstance().apply {
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            // 현재 시간이 이미 0분을 지난 경우, 다음 시간으로 설정
+            if (before(now)) {
+                add(Calendar.HOUR_OF_DAY, 1)
+            }
+        }
+
+        val initialDelay = nextRun.timeInMillis - now.timeInMillis
+
+        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(1, TimeUnit.HOURS)
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)  // 다음 정각까지 기다림
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "MemberPointResetWorker",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
     }
 }

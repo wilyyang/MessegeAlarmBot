@@ -21,6 +21,11 @@ data class MemberData(
     val sanctionCount: Long,
     val likes: Long,
     val dislikes: Long,
+    val likesWeekly: Long,
+    val dislikesWeekly: Long,
+    val giftPoints: Long,
+    val resetPoints: Long,
+    val rank: String,
     val partyId: Long,
     val isPartyLeader: Boolean
 ) {

@@ -29,6 +29,7 @@ import com.messege.alarmbot.processor.model.Group2RoomTextResponse
 import com.messege.alarmbot.processor.model.IndividualRoomTextResponse
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.processor.model.None
+import com.messege.alarmbot.processor.model.ResetMemberPoint
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -187,6 +188,12 @@ class CmdProcessor(
         }
     }
 
+    fun sendCommand(command: Command){
+        scope.launch {
+            commandChannel.send(command)
+        }
+    }
+
     private fun handleCommand(command: Command){
         if(command !is None) {
             Logger.v("[command] $command")
@@ -210,6 +217,17 @@ class CmdProcessor(
             is IndividualRoomTextResponse -> {
                 userChatRoomMap[command.userKey]?.let { action ->
                     sendActionText(applicationContext, action, command.text)
+                }
+            }
+            is ResetMemberPoint -> {
+                /**
+                 * Test
+                 */
+                scope.launch {
+                    memberDatabaseDao.getMember(0L)
+                    adminOpenChatRoomAction?.let { action ->
+                        sendActionText(applicationContext, action, "TEST : 정각 알림 이벤트 확인용")
+                    }
                 }
             }
             else -> {}
@@ -252,6 +270,11 @@ class CmdProcessor(
                 sanctionCount = 0,
                 likes = 0,
                 dislikes = 0,
+                likesWeekly = 0,
+                dislikesWeekly = 0,
+                giftPoints = 10,
+                resetPoints = 10,
+                rank = "Unemployed",
                 partyId = 0,
                 isPartyLeader = false
             )
@@ -267,17 +290,6 @@ class CmdProcessor(
             )
         )
         memberDatabaseDao.updateLatestName(userId, newNickName)
-    }
-
-    private suspend fun useCaseUpdateMemberAdmin(userId: Long, isAdmin: Boolean){
-        memberDatabaseDao.insertAdminLogData(
-            AdminLogData(
-                userId = userId,
-                changeAt = System.currentTimeMillis(),
-                isAdmin = isAdmin
-            )
-        )
-        memberDatabaseDao.updateAdmin(userId, isAdmin)
     }
 
     private suspend fun useCaseUpdateMemberProfileType(userId: Long, profileType: Int, saveProfileType: Int, alarmTalkProfile: () -> Unit){

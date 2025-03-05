@@ -1,8 +1,8 @@
 [versions]
 # block version
-compileSdk = "34"
+compileSdk = "35"
 minSdk = "33"
-targetSdk = "34"
+targetSdk = "35"
 kotlinCompilerExtensionVersion = "1.5.14"
 
 # plugin version
@@ -29,6 +29,7 @@ datastore = "1.1.1"
 retrofit = "2.9.0"
 okhttp3 = "4.9.0"
 room = "2.6.1"
+work = "2.10.0"
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }
@@ -74,6 +75,9 @@ okhttp3 = { group = "com.squareup.okhttp3", name = "logging-interceptor", versio
 room = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
+# work-manager
+work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 
 [bundles]
 compose = ["compose-ui", "compose-ui-tooling", "compose-ui-util", "compose-foundation", "compose-activity", "compose-drawablepainter"]

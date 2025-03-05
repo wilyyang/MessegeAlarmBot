@@ -15,7 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
 @Database(
-    version = 3,
+    version = 4,
     exportSchema = true,
     entities = [
         MemberData::class,
@@ -53,6 +53,7 @@ abstract class ChatBotDatabaseHelper : RoomDatabase() {
                 )
                 .addCallback(CallbackDatabaseChatbot(scope))
                 .addMigrations(MIGRATION_2_3)
+                .addMigrations(MIGRATION_3_4)
                 .build()
 
                 instance = databaseHelper

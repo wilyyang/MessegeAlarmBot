@@ -98,4 +98,43 @@ interface MemberDatabaseDao {
 
     @Query("UPDATE MemberData SET sanctionCount = :sanctionCount WHERE userId = :userId")
     suspend fun updateMemberSanctionCount(userId: Long, sanctionCount: Long)
+
+
+    // Like, Dislike Data
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLikeData(likeData: LikeData)
+
+    @Query("UPDATE MemberData SET likes = likes + :point, likesWeekly = likesWeekly + :point WHERE userId = :userId")
+    suspend fun increaseLikes(userId: Long, point: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDislikeData(dislikeData: DislikeData)
+
+    @Query("UPDATE MemberData SET dislikes = dislikes + :point, dislikesWeekly = dislikesWeekly + :point WHERE userId = :userId")
+    suspend fun increaseDislikes(userId: Long, point: Long)
+
+    @Query("UPDATE MemberData SET likesWeekly = 0, dislikesWeekly = 0")
+    suspend fun resetAllMembersWeeklyLikesAndDislikes()
+
+    @Query("SELECT * FROM MemberData ORDER BY likes DESC LIMIT 10")
+    suspend fun getTop10MembersByLikes(): List<MemberData>
+
+    @Query("SELECT * FROM MemberData ORDER BY dislikes DESC LIMIT 10")
+    suspend fun getTop10MembersByDislikes(): List<MemberData>
+
+    @Query("SELECT * FROM MemberData ORDER BY likesWeekly DESC LIMIT 10")
+    suspend fun getTop10MembersByLikesWeekly(): List<MemberData>
+
+    @Query("SELECT * FROM MemberData ORDER BY dislikesWeekly DESC LIMIT 10")
+    suspend fun getTop10MembersByDislikesWeekly(): List<MemberData>
+
+    // Rank Data
+    @Query("UPDATE MemberData SET giftPoints = resetPoints")
+    suspend fun resetAllMembersGiftPoints()
+
+    @Query("UPDATE MemberData SET giftPoints = :giftPoints WHERE userId = :userId")
+    suspend fun updateMemberGiftPoints(userId: Long, giftPoints: Long)
+
+    @Query("UPDATE MemberData SET rank = :rank, resetPoints = :resetPoints WHERE userId = :userId")
+    suspend fun updateMemberRank(userId: Long, rank: String, resetPoints: Long)
 }

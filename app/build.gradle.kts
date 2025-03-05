@@ -75,4 +75,6 @@ dependencies {
     implementation(libs.bundles.network)
     implementation(libs.bundles.room)
     kapt(libs.room.compiler)
+
+    implementation(libs.work.runtime)
 }

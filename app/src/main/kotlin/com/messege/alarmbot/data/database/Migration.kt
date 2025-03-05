@@ -21,3 +21,13 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         """.trimIndent())
     }
 }
+
+val MIGRATION_3_4 = object : Migration(3,4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE MemberData ADD COLUMN likesWeekly INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE MemberData ADD COLUMN dislikesWeekly INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE MemberData ADD COLUMN giftPoints INTEGER NOT NULL DEFAULT 10")
+        db.execSQL("ALTER TABLE MemberData ADD COLUMN resetPoints INTEGER NOT NULL DEFAULT 10")
+        db.execSQL("ALTER TABLE MemberData ADD COLUMN rank TEXT NOT NULL DEFAULT 'Unemployed'")
+    }
+}
