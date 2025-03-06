@@ -48,7 +48,7 @@ class CommonContent(
                         "주간 좋아요 : ${targetMember.likesWeekly}\n" +
                         "주간 싫어요 : ${targetMember.dislikesWeekly}"
 
-                        if (rank.tier >= 4) {
+                        if (isSuperAdmin) {
                             profileInfo +=
                                 "\n\n톡 횟수 : ${targetMember.talkCount}\n" +
                                     "입장 횟수 : ${targetMember.enterCount}\n" +
@@ -60,7 +60,7 @@ class CommonContent(
                         }
 
 
-                        if(isAdmin){
+                        if(isSuperAdmin){
                             commandChannel.send(AdminRoomTextResponse(profileInfo))
                         }else{
                             commandChannel.send(Group1RoomTextResponse(profileInfo))
