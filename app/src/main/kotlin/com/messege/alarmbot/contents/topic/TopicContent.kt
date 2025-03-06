@@ -2,6 +2,7 @@ package com.messege.alarmbot.contents.topic
 
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
@@ -25,10 +26,16 @@ class TopicContent(
             val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
             val isSuperAdmin = user?.isSuperAdmin ?: false
             val isAdmin = isSuperAdmin || user?.isAdmin ?: false
+            val rank = if(user != null) Rank.getRankByName(user.rank) else Rank.Unemployed
 
             if(message is Message.Talk){
                 when {
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_ADD ") -> {
+                        if(rank.tier < 2){
+                            commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
+                            return
+                        }
+
                         val updateTime = System.currentTimeMillis()
                         val topicText = message.text.substringAfter(" ", missingDelimiterValue = "")
 
@@ -42,6 +49,11 @@ class TopicContent(
                     }
 
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_RECOMMEND") -> {
+                        if(rank.tier < 1){
+                            commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
+                            return
+                        }
+
                         val number = message.text.substringAfter(" ", missingDelimiterValue = "").toIntOrNull()
                         val topic = if (number == null) {
                             topicDatabaseDao.getRandomTopic()
@@ -64,7 +76,12 @@ class TopicContent(
                         commandChannel.send(Group1RoomTextResponse(text = recommendTopicText))
                     }
 
-                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE ") && isAdmin -> {
+                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE ") -> {
+                        if(rank.tier < 3){
+                            commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
+                            return
+                        }
+
                         val replyNumber = message.text.substringAfter("-", "").toIntOrNull()
                         val topicNumber = if (replyNumber == null) {
                             message.text.substringAfter(" ", "").toIntOrNull()
@@ -95,6 +112,11 @@ class TopicContent(
                     }
 
                     message.replyMessage?.startsWith(TOPIC_PREFIX) == true -> {
+                        if(rank.tier < 1){
+                            commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
+                            return
+                        }
+
                         val topicKey = message.replyMessage.substring(TOPIC_PREFIX.length, message.replyMessage.indexOf('.')).toLongOrNull()
                         if(topicKey != null){
                             topicDatabaseDao.insertReplyTopic(TopicReplyData(

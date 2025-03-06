@@ -13,6 +13,7 @@ import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.core.common.SUPER_ADMIN_AUTOJU
 import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
 import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
@@ -126,13 +127,27 @@ class CmdProcessor(
                     }
                     is Message.Event.ManageEvent.AppointManagerEvent -> {
                         Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, appointment")
-                        memberDatabaseDao.insertAdminLogData(AdminLogData(message.targetId, message.time, true))
-                        memberDatabaseDao.updateAdmin(message.targetId, true)
+
+                        val target = memberDatabaseDao.getMember(message.targetId).getOrNull(0)
+                        if(target != null){
+                            memberDatabaseDao.insertAdminLogData(AdminLogData(target.userId, message.time, true))
+                            memberDatabaseDao.updateAdmin(target.userId, true)
+
+                            memberDatabaseDao.updateMemberRank(target.userId, Rank.Minister.name, Rank.Minister.resetPoints)
+                        }
                     }
                     is Message.Event.ManageEvent.ReleaseManagerEvent -> {
                         Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, release")
-                        memberDatabaseDao.insertAdminLogData(AdminLogData(message.targetId, message.time, false))
-                        memberDatabaseDao.updateAdmin(message.targetId, false)
+
+                        val target = memberDatabaseDao.getMember(message.targetId).getOrNull(0)
+                        if(target != null){
+                            memberDatabaseDao.insertAdminLogData(AdminLogData(target.userId, message.time, false))
+                            memberDatabaseDao.updateAdmin(target.userId, false)
+
+                            val point = target.likes - target.dislikes
+                            val newRank = Rank.getRankByPoint(point)
+                            memberDatabaseDao.updateMemberRank(target.userId, newRank.name, newRank.resetPoints)
+                        }
                     }
                     is Message.Event.ManageEvent.EnterEvent -> {
                         Logger.d("[message.enter][${message.type.roomKey}] ${message.targetName}")
@@ -305,7 +320,7 @@ class CmdProcessor(
                 dislikesWeekly = 0,
                 giftPoints = 10,
                 resetPoints = 10,
-                rank = "Unemployed",
+                rank = Rank.Unemployed.name,
                 partyId = 0,
                 isPartyLeader = false
             )

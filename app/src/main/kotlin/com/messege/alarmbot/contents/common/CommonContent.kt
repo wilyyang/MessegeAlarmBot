@@ -3,6 +3,7 @@ package com.messege.alarmbot.contents.common
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.data.database.member.model.SanctionData
@@ -23,6 +24,7 @@ class CommonContent(
             val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
             val isSuperAdmin = user?.isSuperAdmin ?: false
             val isAdmin = isSuperAdmin || user?.isAdmin ?: false
+            val rank = if(user != null) Rank.getRankByName(user.rank) else Rank.Unemployed
 
             if(message.text == ".?"){
                 commandChannel.send(Group1RoomTextResponse(COMMAND_HELP))
@@ -35,13 +37,14 @@ class CommonContent(
                         var profileInfo = "닉네임 : ${targetMember.latestName} " +
                             "${if(targetMember.isSuperAdmin)"[슈퍼관리자]" else if(targetMember.isAdmin) "[관리자]" else ""}\n\n" +
 
+                        "직업 : ${Rank.getRankByName(targetMember.rank).korName}\n" +
                         "포인트 : ${targetMember.giftPoints}\n" +
                         "좋아요 : ${targetMember.likes}\n" +
                         "싫어요 : ${targetMember.dislikes}\n" +
                         "주간 좋아요 : ${targetMember.likesWeekly}\n" +
                         "주간 싫어요 : ${targetMember.dislikesWeekly}"
 
-                        if (isAdmin) {
+                        if (rank.tier >= 4) {
                             profileInfo +=
                                 "\n\n톡 횟수 : ${targetMember.talkCount}\n" +
                                     "입장 횟수 : ${targetMember.enterCount}\n" +
@@ -111,14 +114,27 @@ class CommonContent(
             }else if(message.text.startsWith(".임명") && isSuperAdmin){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
-                    memberDatabaseDao.insertAdminLogData(AdminLogData(targetId, message.time, true))
-                    memberDatabaseDao.updateAdmin(targetId, true)
+                    val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
+                    if(target != null){
+                        memberDatabaseDao.insertAdminLogData(AdminLogData(targetId, message.time, true))
+                        memberDatabaseDao.updateAdmin(targetId, true)
+                        memberDatabaseDao.updateMemberRank(target.userId, Rank.Minister.name, Rank.Minister.resetPoints)
+                        commandChannel.send(Group1RoomTextResponse("${target.latestName}님이 부방으로 임명되었습니다."))
+                    }
                 }
             }else if(message.text.startsWith(".해제") && isSuperAdmin){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
-                    memberDatabaseDao.insertAdminLogData(AdminLogData(targetId, message.time, false))
-                    memberDatabaseDao.updateAdmin(targetId, false)
+                    val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
+                    if(target != null){
+                        memberDatabaseDao.insertAdminLogData(AdminLogData(targetId, message.time, false))
+                        memberDatabaseDao.updateAdmin(targetId, false)
+
+                        val point = target.likes - target.dislikes
+                        val newRank = Rank.getRankByPoint(point)
+                        memberDatabaseDao.updateMemberRank(target.userId, newRank.name, newRank.resetPoints)
+                        commandChannel.send(Group1RoomTextResponse("${target.latestName}님이 부방에서 해제되었습니다."))
+                    }
                 }
             }
         }

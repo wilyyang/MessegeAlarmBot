@@ -77,9 +77,12 @@ class PointContent (
                                 }
 
                                 if(target != null){
+                                    val newRank = useCasePoint.updateMemberRank(target)
+
                                     val responseText = "${user.latestName}님이 ${target.latestName}님에게 " +
                                             "$isLikeText +${point}! " +
-                                            "(${target.latestName}의 현재 $isLikeText : ${target.likes})"
+                                            "(${target.latestName}의 현재 $isLikeText : ${target.likes})" +
+                                            if(target.rank != newRank.name) "\n계급이 변경되었습니다. (${target.rank} -> ${newRank.korName})" else ""
                                     commandChannel.send(Group1RoomTextResponse(responseText))
                                 }else{
                                     val responseText = "${user.latestName}님의 증정 포인트가 없거나 대상이 없습니다. (현재 포인트 : ${user.giftPoints})"

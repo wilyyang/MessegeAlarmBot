@@ -1,5 +1,6 @@
 package com.messege.alarmbot.processor.usecase
 
+import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.MemberData
 import kotlinx.coroutines.CoroutineDispatcher
@@ -62,5 +63,16 @@ class UseCasePoint(
                 null
             }
         }
+    }
+
+    suspend fun updateMemberRank(member: MemberData) : Rank {
+        val point = member.likes - member.dislikes
+
+        val newRank = Rank.getRankByPoint(point)
+
+        if(member.rank != newRank.name){
+            memberDatabaseDao.updateMemberRank(member.userId, newRank.name, newRank.resetPoints)
+        }
+        return newRank
     }
 }

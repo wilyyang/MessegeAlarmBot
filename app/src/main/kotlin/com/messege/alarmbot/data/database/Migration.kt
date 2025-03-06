@@ -2,6 +2,7 @@ package com.messege.alarmbot.data.database
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.messege.alarmbot.core.common.Rank
 
 val MIGRATION_2_3 = object : Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -28,6 +29,6 @@ val MIGRATION_3_4 = object : Migration(3,4) {
         db.execSQL("ALTER TABLE MemberData ADD COLUMN dislikesWeekly INTEGER NOT NULL DEFAULT 0")
         db.execSQL("ALTER TABLE MemberData ADD COLUMN giftPoints INTEGER NOT NULL DEFAULT 10")
         db.execSQL("ALTER TABLE MemberData ADD COLUMN resetPoints INTEGER NOT NULL DEFAULT 10")
-        db.execSQL("ALTER TABLE MemberData ADD COLUMN rank TEXT NOT NULL DEFAULT 'Unemployed'")
+        db.execSQL("ALTER TABLE MemberData ADD COLUMN rank TEXT NOT NULL DEFAULT '${Rank.Unemployed.name}'")
     }
 }
