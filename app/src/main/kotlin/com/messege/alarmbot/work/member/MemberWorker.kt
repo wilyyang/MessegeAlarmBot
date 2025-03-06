@@ -16,3 +16,13 @@ class MemberPointResetWorker(context: Context, params: WorkerParameters) : Worke
         return Result.success()
     }
 }
+
+class MemberLikeWeeklyRankingWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
+
+    override fun doWork(): Result {
+        Logger.e("[worker] MemberLikeWeeklyRankingWorker work")
+        val intent = Intent(AlarmBotNotificationListenerService.ACTION_LIKE_WEEKLY_RANKING)
+        applicationContext.sendBroadcast(intent)
+        return Result.success()
+    }
+}

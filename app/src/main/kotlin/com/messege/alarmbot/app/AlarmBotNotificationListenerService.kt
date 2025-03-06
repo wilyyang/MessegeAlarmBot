@@ -23,9 +23,11 @@ import com.messege.alarmbot.core.common.REPLY_ACTION_INDEX
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.processor.CmdProcessor
 import com.messege.alarmbot.processor.CmdProcessorEntryPoint
+import com.messege.alarmbot.processor.model.LikeWeeklyRanking
 import com.messege.alarmbot.processor.model.ResetMemberPoint
 import com.messege.alarmbot.util.format.toTimeFormat
 import com.messege.alarmbot.util.log.Logger
+import com.messege.alarmbot.work.member.MemberLikeWeeklyRankingWorker
 import com.messege.alarmbot.work.member.MemberPointResetWorker
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
@@ -48,8 +50,15 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private val rankingReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            cmdProcessor.sendCommand(LikeWeeklyRanking)
+        }
+    }
+
     companion object {
         const val ACTION_RESET_POINTS = "com.messege.alarmbot.RESET_POINTS"
+        const val ACTION_LIKE_WEEKLY_RANKING = "com.messege.alarmbot.LIKE_WEEKLY_RANKING"
     }
 
     override fun onCreate() {
@@ -74,16 +83,20 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         startForeground(SERVICE_ID, notification)
 
         // BroadcastReceiver 등록
-        val filter = IntentFilter(ACTION_RESET_POINTS)
-        registerReceiver(resetReceiver, filter, RECEIVER_NOT_EXPORTED)
+        val resetFilter = IntentFilter(ACTION_RESET_POINTS)
+        registerReceiver(resetReceiver, resetFilter, RECEIVER_NOT_EXPORTED)
+        val rankingFilter = IntentFilter(ACTION_LIKE_WEEKLY_RANKING)
+        registerReceiver(rankingReceiver, rankingFilter, RECEIVER_NOT_EXPORTED)
 
         // Worker 실행
         scheduleMemberPointResetWork()
+        scheduleMemberLikeWeeklyRankingWork()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(resetReceiver)
+        unregisterReceiver(rankingReceiver)
         stopForeground(Service.STOP_FOREGROUND_REMOVE)
     }
 
@@ -151,7 +164,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         }
 
         val initialMinuteDelay = ((nextRun.timeInMillis - now.timeInMillis) / 1000 ) / 60
-        Logger.e("[time] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
+        Logger.e("[time.reset] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
 
         val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(30, TimeUnit.MINUTES)
             .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)  // 다음 30분까지 기다림
@@ -159,6 +172,33 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "MemberPointResetWorker",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
+    }
+
+    private fun scheduleMemberLikeWeeklyRankingWork() {
+        val now = Calendar.getInstance()
+        val nextRun = Calendar.getInstance().apply {
+            set(Calendar.MINUTE, 15)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            // 현재 시간이 이미 0분을 지난 경우, 다음 시간으로 설정
+            if (before(now)) {
+                add(Calendar.HOUR_OF_DAY, 1)
+            }
+        }
+
+        val initialMinuteDelay = ((nextRun.timeInMillis - now.timeInMillis) / 1000 ) / 60
+        Logger.e("[time.rank] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
+
+        val workRequest = PeriodicWorkRequestBuilder<MemberLikeWeeklyRankingWorker>(60, TimeUnit.MINUTES)
+            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)  // 다음 60분까지 기다림
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "MemberLikeWeeklyRankingWorker",
             ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
