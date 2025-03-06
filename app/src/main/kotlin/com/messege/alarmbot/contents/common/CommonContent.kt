@@ -28,6 +28,10 @@ class CommonContent(
 
             if(message.text == ".?"){
                 commandChannel.send(Group1RoomTextResponse(COMMAND_HELP))
+            }else if(message.text == ".? 관리자"){
+                commandChannel.send(Group1RoomTextResponse(ADMIN_COMMAND_HELP))
+            }else if(message.text == ".? 직업"){
+                commandChannel.send(Group1RoomTextResponse(rankHelp()))
             }else if(message.text.startsWith(".조회")){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){

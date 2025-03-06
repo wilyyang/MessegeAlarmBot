@@ -31,7 +31,7 @@ class TopicContent(
             if(message is Message.Talk){
                 when {
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_ADD ") -> {
-                        if(rank.tier < 2){
+                        if(rank.tier < 0){
                             commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
                             return
                         }
@@ -49,7 +49,7 @@ class TopicContent(
                     }
 
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_RECOMMEND") -> {
-                        if(rank.tier < 1){
+                        if(rank.tier < 0){
                             commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
                             return
                         }
@@ -77,7 +77,7 @@ class TopicContent(
                     }
 
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE ") -> {
-                        if(rank.tier < 3){
+                        if(rank.tier < 0){
                             commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
                             return
                         }
@@ -112,7 +112,7 @@ class TopicContent(
                     }
 
                     message.replyMessage?.startsWith(TOPIC_PREFIX) == true -> {
-                        if(rank.tier < 1){
+                        if(rank.tier < 0){
                             commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
                             return
                         }

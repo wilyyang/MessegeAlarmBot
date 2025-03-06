@@ -137,4 +137,15 @@ interface MemberDatabaseDao {
 
     @Query("UPDATE MemberData SET rank = :rank, resetPoints = :resetPoints WHERE userId = :userId")
     suspend fun updateMemberRank(userId: Long, rank: String, resetPoints: Long)
+
+
+    // Only Reset
+    @Query("UPDATE MemberData SET likes = 0, dislikes = 0, likesWeekly = 0, dislikesWeekly = 0")
+    suspend fun resetAllMembersLikesAndDislikesToZero()
+
+    @Query("UPDATE MemberData SET rank = 'Minister' WHERE isAdmin = true")
+    suspend fun updateMemberRankAdmin()
+
+    @Query("UPDATE MemberData SET rank = 'President' WHERE isSuperAdmin = true")
+    suspend fun updateMemberRankSuperAdmin()
 }

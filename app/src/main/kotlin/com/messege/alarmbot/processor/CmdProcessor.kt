@@ -320,7 +320,11 @@ class CmdProcessor(
                 dislikesWeekly = 0,
                 giftPoints = 10,
                 resetPoints = 10,
-                rank = Rank.Unemployed.name,
+                rank = if (talkMember.userId == SUPER_ADMIN_ME || talkMember.userId == SUPER_ADMIN_AUTOJU) {
+                    Rank.President.name
+                } else {
+                    Rank.Unemployed.name
+                },
                 partyId = 0,
                 isPartyLeader = false
             )
