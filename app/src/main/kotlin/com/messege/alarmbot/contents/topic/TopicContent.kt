@@ -28,7 +28,7 @@ class TopicContent(
 
             if(message is Message.Talk){
                 when {
-                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_ADD") -> {
+                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_ADD ") -> {
                         val updateTime = System.currentTimeMillis()
                         val topicText = message.text.substringAfter(" ", missingDelimiterValue = "")
 
@@ -64,7 +64,7 @@ class TopicContent(
                         commandChannel.send(Group1RoomTextResponse(text = recommendTopicText))
                     }
 
-                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE") && isAdmin -> {
+                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE ") && isAdmin -> {
                         val replyNumber = message.text.substringAfter("-", "").toIntOrNull()
                         val topicNumber = if (replyNumber == null) {
                             message.text.substringAfter(" ", "").toIntOrNull()

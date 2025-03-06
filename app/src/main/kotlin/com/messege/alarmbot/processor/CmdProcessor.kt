@@ -231,13 +231,7 @@ class CmdProcessor(
             }
             is ResetMemberPoint -> {
                 scope.launch {
-                    //useCasePoint.resetAllMembersGiftPoints()
-                    /**
-                     * Test
-                     */
-                    adminOpenChatRoomAction?.let { action ->
-                        sendActionText(applicationContext, action, "TEST : 30, 60분마다 발생")
-                    }
+                    useCasePoint.resetAllMembersGiftPoints()
                 }
             }
 
@@ -245,7 +239,7 @@ class CmdProcessor(
                 scope.launch {
                     val (likes, dislikes) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
 
-                    var responseText = "* 한주간 좋아요를 받은 랭킹 입니다! *\n\n"
+                    var responseText = "* 한주간 랭킹 입니다! *\n\n"
                     responseText += "[주간 좋아요! 랭킹]\n"
                     responseText += likes.mapIndexed { index, it ->
                         if(it.likes > 0){
@@ -260,8 +254,7 @@ class CmdProcessor(
                         }else ""
                     }.joinToString("")
 
-                    // TODO TEST 중
-                    //useCasePoint.resetAllMembersWeeklyLikesAndDislikes()
+                    useCasePoint.resetAllMembersWeeklyLikesAndDislikes()
 
                     adminOpenChatRoomAction?.let { action ->
                         sendActionText(applicationContext, action, responseText)

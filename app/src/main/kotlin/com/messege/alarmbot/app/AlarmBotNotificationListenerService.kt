@@ -153,21 +153,22 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     private fun scheduleMemberPointResetWork() {
         val now = Calendar.getInstance()
         val nextRun = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 6)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
 
-            // 현재 시간이 이미 0분을 지난 경우, 다음 시간으로 설정
             if (before(now)) {
-                add(Calendar.HOUR_OF_DAY, 1)
+                add(Calendar.DAY_OF_YEAR, 1)
             }
         }
 
-        val initialMinuteDelay = ((nextRun.timeInMillis - now.timeInMillis) / 1000 ) / 60
+        val initialMinuteDelay = (nextRun.timeInMillis - now.timeInMillis) / 1000 / 60 + 1
+
         Logger.e("[time.reset] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
 
-        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(30, TimeUnit.MINUTES)
-            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)  // 다음 30분까지 기다림
+        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(24, TimeUnit.HOURS)
+            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
@@ -180,21 +181,23 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     private fun scheduleMemberLikeWeeklyRankingWork() {
         val now = Calendar.getInstance()
         val nextRun = Calendar.getInstance().apply {
-            set(Calendar.MINUTE, 15)
+            set(Calendar.DAY_OF_WEEK, Calendar.FRIDAY)
+            set(Calendar.HOUR_OF_DAY, 20)
+            set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
 
-            // 현재 시간이 이미 0분을 지난 경우, 다음 시간으로 설정
             if (before(now)) {
-                add(Calendar.HOUR_OF_DAY, 1)
+                add(Calendar.WEEK_OF_YEAR, 1)
             }
         }
 
-        val initialMinuteDelay = ((nextRun.timeInMillis - now.timeInMillis) / 1000 ) / 60
+        val initialMinuteDelay = (nextRun.timeInMillis - now.timeInMillis) / 1000 / 60 + 1
+
         Logger.e("[time.rank] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
 
-        val workRequest = PeriodicWorkRequestBuilder<MemberLikeWeeklyRankingWorker>(60, TimeUnit.MINUTES)
-            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)  // 다음 60분까지 기다림
+        val workRequest = PeriodicWorkRequestBuilder<MemberLikeWeeklyRankingWorker>(7, TimeUnit.DAYS)
+            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
