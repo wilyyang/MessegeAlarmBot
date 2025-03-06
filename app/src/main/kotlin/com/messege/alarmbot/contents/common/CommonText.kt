@@ -35,7 +35,7 @@ const val ADMIN_COMMAND_HELP = "관리자 명령어 모음\n\n" +
     ".해제 @모순 : 수동으로 부방 해제\n"
 
 fun rankHelp() = "<직업>\n\n" + "필요 포인트 = 좋아요 - 싫어요\n\n" +
-    Rank.entries.sortedBy { it.rank }.joinToString("\n") {
-        "[${it.tier}]" + (if(it.isSuperAdmin) "[방장]" else if(it.isAdmin) "[부방장]" else "") +
-            "${it.korName}: 데일리 포인트(${it.resetPoints})/필요 포인트(${it.requirePoint})"
+    Rank.entries.sortedBy { it.rank }.joinToString("\n\n") {
+        "[${it.tier}] " + (if(it.isSuperAdmin) "[방장]" else if(it.isAdmin) "[부방장]" else "") +
+            " ${it.korName} : \n- 데일리 포인트 (${it.resetPoints})\n- 필요 포인트 (${it.requirePoint})"
     }
