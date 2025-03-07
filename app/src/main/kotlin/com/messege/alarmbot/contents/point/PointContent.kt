@@ -2,6 +2,7 @@ package com.messege.alarmbot.contents.point
 
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
@@ -66,6 +67,11 @@ class PointContent (
                         val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
                         val targetId = message.mentionIds.getOrNull(0)
                         if(user != null && targetId != null){
+                            if(user.userId == targetId){
+                                commandChannel.send(Group1RoomTextResponse("자기 자신에게 좋아요나 싫어요를 할 수 없습니다."))
+                                return
+                            }
+
                             val point = parseLikeCommand(message.text)
                             if(point != null){
                                 val isLike = message.text.startsWith(".좋아 ")
@@ -82,7 +88,7 @@ class PointContent (
                                     val responseText = "${user.latestName}님이 ${target.latestName}님에게 " +
                                             "$isLikeText +${point}! " +
                                             "(${target.latestName}의 현재 $isLikeText : ${target.likes})" +
-                                            if(target.rank != newRank.name) "\n계급이 변경되었습니다. (${target.rank} -> ${newRank.korName})" else ""
+                                            if(target.rank != newRank.name) "\n계급이 변경되었습니다. (${Rank.getRankByName(target.rank).korName} -> ${newRank.korName})" else ""
                                     commandChannel.send(Group1RoomTextResponse(responseText))
                                 }else{
                                     val responseText = "${user.latestName}님의 증정 포인트가 없거나 대상이 없습니다. (현재 포인트 : ${user.giftPoints})"

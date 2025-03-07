@@ -66,8 +66,12 @@ class UseCasePoint(
     }
 
     suspend fun updateMemberRank(member: MemberData) : Rank {
-        val point = member.likes - member.dislikes
+        val currentRank = Rank.getRankByName(member.rank)
+        if(currentRank.tier > 4){
+            return currentRank
+        }
 
+        val point = member.likes - member.dislikes
         val newRank = Rank.getRankByPoint(point)
 
         if(member.rank != newRank.name){

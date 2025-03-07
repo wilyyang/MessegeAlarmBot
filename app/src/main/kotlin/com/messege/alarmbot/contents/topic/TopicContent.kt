@@ -77,7 +77,7 @@ class TopicContent(
                     }
 
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE ") -> {
-                        if(rank.tier < 0){
+                        if(rank.tier < 4){
                             commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
                             return
                         }

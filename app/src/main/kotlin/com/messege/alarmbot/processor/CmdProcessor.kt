@@ -123,7 +123,7 @@ class CmdProcessor(
                         Logger.d("[message.delete][${message.type.roomKey}] ${message.userName} ${message.deleteMessage}")
                         memberDatabaseDao.insertDeleteTalkData(DeleteTalkData(message.userId, message.time, message.deleteMessage))
                         memberDatabaseDao.incrementDeleteTalkCount(message.userId)
-                        handleCommand(AdminRoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
+                        handleCommand(Group2RoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
                     }
                     is Message.Event.ManageEvent.AppointManagerEvent -> {
                         Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, appointment")

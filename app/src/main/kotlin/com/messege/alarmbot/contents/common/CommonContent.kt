@@ -10,6 +10,7 @@ import com.messege.alarmbot.data.database.member.model.SanctionData
 import com.messege.alarmbot.processor.model.AdminRoomTextResponse
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
+import com.messege.alarmbot.processor.model.Group2RoomTextResponse
 import com.messege.alarmbot.util.format.toTimeFormatDate
 import kotlinx.coroutines.channels.Channel
 
@@ -79,7 +80,7 @@ class CommonContent(
                             val giverName = memberDatabaseDao.getMemberName(sanction.giverId)
                             sanctionText += "$sanctionDate $giverName : ${sanction.sanctionCount} (${sanction.reason})\n"
                         }
-                        commandChannel.send(AdminRoomTextResponse(sanctionText))
+                        commandChannel.send(Group2RoomTextResponse(sanctionText))
                     }
                 }
             }else if((message.text.startsWith(SanctionType.Sanction.prefix) ||
@@ -111,7 +112,7 @@ class CommonContent(
                             )
                             val responseText = "${targetMember.latestName} 님이 ${sanctionType.title}로 " +
                                 "제재 $result 회 상태 입니다."
-                            commandChannel.send(AdminRoomTextResponse(responseText))
+                            commandChannel.send(Group1RoomTextResponse(responseText))
                         }
                     }
                 }
