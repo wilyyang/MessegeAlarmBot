@@ -87,7 +87,7 @@ class PointContent (
 
                                     val responseText = "${user.latestName}님이 ${target.latestName}님에게 " +
                                             "$isLikeText +${point}! " +
-                                            "(${target.latestName}의 현재 $isLikeText : ${target.likes})" +
+                                            "(${target.latestName}의 현재 $isLikeText : ${if(isLike) target.likes else target.dislikes})" +
                                             if(target.rank != newRank.name) "\n계급이 변경되었습니다. (${Rank.getRankByName(target.rank).korName} -> ${newRank.korName})" else ""
                                     commandChannel.send(Group1RoomTextResponse(responseText))
                                 }else{
