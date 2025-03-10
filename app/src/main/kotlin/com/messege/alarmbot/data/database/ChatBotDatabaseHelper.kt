@@ -8,6 +8,9 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
+import com.messege.alarmbot.data.database.party.model.PartyData
+import com.messege.alarmbot.data.database.party.model.PartyLog
+import com.messege.alarmbot.data.database.party.model.PartyRule
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
 import com.messege.alarmbot.data.database.topic.model.TopicReplyData
@@ -15,7 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.io.File
 
 @Database(
-    version = 4,
+    version = 5,
     exportSchema = true,
     entities = [
         MemberData::class,
@@ -31,7 +34,11 @@ import java.io.File
         PartyChangeData::class,
 
         TopicData::class,
-        TopicReplyData::class
+        TopicReplyData::class,
+
+        PartyData::class,
+        PartyRule::class,
+        PartyLog::class,
     ]
 )
 abstract class ChatBotDatabaseHelper : RoomDatabase() {
@@ -54,6 +61,7 @@ abstract class ChatBotDatabaseHelper : RoomDatabase() {
                 .addCallback(CallbackDatabaseChatbot(scope))
                 .addMigrations(MIGRATION_2_3)
                 .addMigrations(MIGRATION_3_4)
+                .addMigrations(MIGRATION_4_5)
                 .build()
 
                 instance = databaseHelper

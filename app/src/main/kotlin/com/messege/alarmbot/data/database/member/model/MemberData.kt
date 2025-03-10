@@ -3,6 +3,7 @@ package com.messege.alarmbot.data.database.member.model
 import androidx.annotation.Keep
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.messege.alarmbot.core.common.PartyMemberState
 
 @Entity(tableName = "MemberData")
 @Keep
@@ -26,8 +27,11 @@ data class MemberData(
     val giftPoints: Long,
     val resetPoints: Long,
     val rank: String,
+
     val partyId: Long,
-    val isPartyLeader: Boolean
+    val partyState: PartyMemberState,
+    val joinTime: Long,
+    val partyResetPoints: Long
 ) {
     @PrimaryKey(autoGenerate = true) var idx: Long = 0
 }
