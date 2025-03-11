@@ -138,6 +138,32 @@ interface MemberDatabaseDao {
     @Query("UPDATE MemberData SET rank = :rank, resetPoints = :resetPoints WHERE userId = :userId")
     suspend fun updateMemberRank(userId: Long, rank: String, resetPoints: Long)
 
+    // Party Query
+    @Query("SELECT * FROM MemberData WHERE partyId = :partyId AND partyState = 'PartyMember' ORDER BY joinTime ASC")
+    suspend fun getPartyMembers(partyId : Long) : List<MemberData>
+
+    @Query("SELECT * FROM MemberData WHERE partyId = :partyId AND partyState = 'Applicant' ORDER BY joinTime ASC")
+    suspend fun getPartyApplicants(partyId : Long) : List<MemberData>
+
+
+    @Query("UPDATE MemberData SET partyId = 0, partyState = 'None', joinTime = -1, partyResetPoints = 0 WHERE userId = :userId")
+    suspend fun updatePartyStateNone(userId: Long)
+
+    @Query("UPDATE MemberData SET partyId = :partyId, partyState = 'Applicant', joinTime = :joinTime WHERE userId = :userId")
+    suspend fun updatePartyStateApplicant(userId: Long, partyId: Long, joinTime: Long)
+
+    @Query("UPDATE MemberData SET partyId = :partyId, partyState = 'PartyMember', joinTime = :joinTime, partyResetPoints = :partyResetPoints WHERE userId = :userId")
+    suspend fun updatePartyStateMember(userId: Long, partyId: Long, joinTime: Long, partyResetPoints: Long)
+
+    @Query("UPDATE MemberData SET partyId = :partyId, partyState = 'PartyLeader', partyResetPoints = :partyResetPoints WHERE userId = :userId")
+    suspend fun updatePartyStateLeader(userId: Long, partyId: Long, partyResetPoints: Long)
+
+
+    @Query("UPDATE MemberData SET partyResetPoints = :partyResetPoints WHERE partyId = :partyId AND partyState = 'PartyMember'")
+    suspend fun updatePartyMemberPoints(partyId: Long, partyResetPoints: Long)
+
+    @Query("UPDATE MemberData SET partyId = 0, partyState = 'None', joinTime = -1, partyResetPoints = 0 WHERE partyId = :partyId")
+    suspend fun resetPartyMemberByDissolution(partyId: Long)
 
     // Only Reset
     @Query("UPDATE MemberData SET likes = 0, dislikes = 0, likesWeekly = 0, dislikesWeekly = 0")
