@@ -24,7 +24,7 @@ sealed class PartyCreateResult {
 
 sealed class PartyDissolveResult {
     data object DissolveFail : PartyDissolveResult()
-    data object DissolveSuccess : PartyDissolveResult()
+    data class DissolveSuccess(val party: PartyData) : PartyDissolveResult()
 }
 
 data class PartyInfo(
@@ -46,6 +46,16 @@ sealed class PartyDescriptionResult {
 sealed class PartyRuleResult {
     data object PartyRuleFail : PartyRuleResult()
     data class PartyRuleSuccess(val partyName: String) : PartyRuleResult()
+}
+
+sealed class DelegateLeaderResult {
+    data object DelegateLeaderFail : DelegateLeaderResult()
+    data class DelegateLeaderSuccess(val newLeader: MemberData) : DelegateLeaderResult()
+}
+
+sealed class PartyEvent {
+    data object Fail : PartyEvent()
+    data class Success(val party: PartyData) : PartyEvent()
 }
 
 
@@ -97,18 +107,24 @@ class UseCaseParty(
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
-                partyDatabaseDao.updatePartyState(member.partyId, PartyState.Dissolution.name)
-                memberDatabaseDao.resetPartyMemberByDissolution(member.partyId)
-                partyDatabaseDao.deleteAllPartyRules(member.partyId)
+                val party = partyDatabaseDao.getParty(member.partyId)
 
-                partyDatabaseDao.insertPartyLog(PartyLog(
-                    time = time,
-                    partyId = member.partyId,
-                    memberId = member.userId,
-                    logType = PartyLogType.Dissolution
-                ))
+                if(party != null){
+                    partyDatabaseDao.updatePartyState(member.partyId, PartyState.Dissolution.name)
+                    memberDatabaseDao.resetPartyMemberByDissolution(member.partyId)
+                    partyDatabaseDao.deleteAllPartyRules(member.partyId)
 
-                PartyDissolveResult.DissolveSuccess
+                    partyDatabaseDao.insertPartyLog(PartyLog(
+                        time = time,
+                        partyId = member.partyId,
+                        memberId = member.userId,
+                        logType = PartyLogType.Dissolution
+                    ))
+
+                    PartyDissolveResult.DissolveSuccess(party)
+                }else{
+                    PartyDissolveResult.DissolveFail
+                }
             }else {
                 PartyDissolveResult.DissolveFail
             }
@@ -217,6 +233,95 @@ class UseCaseParty(
                 partyDatabaseDao.getPartyRules(party.idx)
             }else{
                 null
+            }
+        }
+    }
+
+
+    // 위임 (리더 변경)
+    suspend fun delegateLeader(member : MemberData, newLeaderId: Long) : DelegateLeaderResult {
+        return withContext(dispatcher) {
+            if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getParty(member.partyId)
+                val newLeader = memberDatabaseDao.getMember(newLeaderId).getOrNull(0)
+
+                if(party != null && newLeader != null){
+                    partyDatabaseDao.updatePartyLeader(party.idx, newLeader.userId)
+                    memberDatabaseDao.updatePartyStateMember(member.userId, party.idx, time, party.partyPoints)
+                    memberDatabaseDao.updatePartyStateLeader(newLeader.userId, party.idx, 5 + party.partyPoints)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = member.partyId,
+                            memberId = member.userId,
+                            logType = PartyLogType.Delegation
+                        )
+                    )
+
+                    DelegateLeaderResult.DelegateLeaderSuccess(newLeader)
+                }else{
+                    DelegateLeaderResult.DelegateLeaderFail
+                }
+            }else {
+                DelegateLeaderResult.DelegateLeaderFail
+            }
+        }
+    }
+
+    // 가입 신청
+    suspend fun requestToJoinParty(member : MemberData, partyName: String) : PartyEvent{
+        return withContext(dispatcher) {
+            if (member.partyId == 0L && member.partyState == PartyMemberState.None) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getPartyByName(partyName)
+                if(party != null){
+                    memberDatabaseDao.updatePartyStateApplicant(member.userId, party.idx, time)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = member.partyId,
+                            memberId = member.userId,
+                            logType = PartyLogType.Application
+                        )
+                    )
+
+                    PartyEvent.Success(party)
+                }else{
+                    PartyEvent.Fail
+                }
+            } else {
+                PartyEvent.Fail
+            }
+        }
+    }
+
+    // 가입 신청 취소
+    suspend fun cancelJoinRequest(member : MemberData) : PartyEvent{
+        return withContext(dispatcher) {
+            if (member.partyId != 0L && member.partyState == PartyMemberState.Applicant) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getParty(member.partyId)
+                if(party != null){
+                    memberDatabaseDao.updatePartyStateNone(member.userId)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = member.partyId,
+                            memberId = member.userId,
+                            logType = PartyLogType.Cancellation
+                        )
+                    )
+
+                    PartyEvent.Success(party)
+                }else{
+                    PartyEvent.Fail
+                }
+            } else {
+                PartyEvent.Fail
             }
         }
     }
