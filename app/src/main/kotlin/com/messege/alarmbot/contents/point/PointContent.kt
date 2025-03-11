@@ -43,19 +43,19 @@ class PointContent (
                 }
 
                 ".랭킹 주간" -> {
-                    val (likes, dislikes) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
+                    val (likesWeekly, dislikesWeekly) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
 
                     var responseText = "[주간 좋아요! 랭킹]\n"
-                    responseText += likes.mapIndexed { index, it ->
-                        if(it.likes > 0){
-                            "${index + 1}. ${it.latestName} : ${it.likes}\n"
+                    responseText += likesWeekly.mapIndexed { index, it ->
+                        if(it.likesWeekly > 0){
+                            "${index + 1}. ${it.latestName} : ${it.likesWeekly}\n"
                         }else ""
                     }.joinToString("")
 
                     responseText += "\n\n[주간 싫어요! 랭킹]\n"
-                    responseText += dislikes.mapIndexed { index, it ->
-                        if(it.dislikes > 0){
-                            "${index + 1}. ${it.latestName} : ${it.dislikes}\n"
+                    responseText += dislikesWeekly.mapIndexed { index, it ->
+                        if(it.dislikesWeekly > 0){
+                            "${index + 1}. ${it.latestName} : ${it.dislikesWeekly}\n"
                         }else ""
                     }.joinToString("")
 

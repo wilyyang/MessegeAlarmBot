@@ -26,7 +26,8 @@ enum class Rank(open val rank : Int, open val korName: String, open val tier: In
     PrimeMinister(rank = 13, korName = "여당대표", tier = 5, resetPoints = 60, requirePoint = 0),
 
     Minister(rank = 14, korName = "장관", tier = 6, resetPoints = 50, requirePoint = 0, isAdmin = true),
-    President(rank = 15, korName = "대통령", tier = 6, resetPoints = 60, requirePoint = 0, isAdmin = true, isSuperAdmin = true);
+    Engineer(rank = 15, korName = "과기부장관", tier = 6, resetPoints = 50, requirePoint = 0, isAdmin = true, isSuperAdmin = true),
+    President(rank = 16, korName = "대통령", tier = 6, resetPoints = 60, requirePoint = 0, isAdmin = true, isSuperAdmin = true);
 
     companion object {
         fun getRankByPoint(point: Long): Rank {

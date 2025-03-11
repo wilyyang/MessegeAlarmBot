@@ -250,31 +250,35 @@ class CmdProcessor(
             is ResetMemberPoint -> {
                 scope.launch {
                     useCasePoint.resetAllMembersGiftPoints()
+
+                    groupRoom1OpenChatRoomAction?.let { action ->
+                        sendActionText(applicationContext, action, "데일리 포인트가 지급되었습니다!")
+                    }
                 }
             }
 
             is LikeWeeklyRanking -> {
                 scope.launch {
-                    val (likes, dislikes) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
+                    val (likesWeekly, dislikesWeekly) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
 
                     var responseText = "* 한주간 랭킹 입니다! *\n\n"
                     responseText += "[주간 좋아요! 랭킹]\n"
-                    responseText += likes.mapIndexed { index, it ->
-                        if(it.likes > 0){
-                            "${index + 1}. ${it.latestName} : ${it.likes}\n"
+                    responseText += likesWeekly.mapIndexed { index, it ->
+                        if(it.likesWeekly > 0){
+                            "${index + 1}. ${it.latestName} : ${it.likesWeekly}\n"
                         }else ""
                     }.joinToString("")
 
                     responseText += "\n\n[주간 싫어요! 랭킹]\n"
-                    responseText += dislikes.mapIndexed { index, it ->
-                        if(it.dislikes > 0){
-                            "${index + 1}. ${it.latestName} : ${it.dislikes}\n"
+                    responseText += dislikesWeekly.mapIndexed { index, it ->
+                        if(it.dislikesWeekly > 0){
+                            "${index + 1}. ${it.latestName} : ${it.dislikesWeekly}\n"
                         }else ""
                     }.joinToString("")
 
                     useCasePoint.resetAllMembersWeeklyLikesAndDislikes()
 
-                    adminOpenChatRoomAction?.let { action ->
+                    groupRoom1OpenChatRoomAction?.let { action ->
                         sendActionText(applicationContext, action, responseText)
                     }
                 }
