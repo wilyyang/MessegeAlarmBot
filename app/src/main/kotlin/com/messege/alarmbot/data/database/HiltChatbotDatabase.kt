@@ -2,6 +2,7 @@ package com.messege.alarmbot.data.database
 
 import android.content.Context
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
+import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import dagger.Module
 import dagger.Provides
@@ -29,4 +30,8 @@ class HiltChatbotDatabase {
     @Singleton
     @Provides
     fun provideTopicDatabaseDao(databaseHelper : ChatBotDatabaseHelper) : TopicDatabaseDao = databaseHelper.topicDatabaseDao()
+
+    @Singleton
+    @Provides
+    fun providePartyDatabaseDao(databaseHelper : ChatBotDatabaseHelper) : PartyDatabaseDao = databaseHelper.partyDatabaseDao()
 }

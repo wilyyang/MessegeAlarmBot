@@ -13,6 +13,7 @@ import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.core.common.SUPER_ADMIN_AUTOJU
 import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
@@ -20,6 +21,7 @@ import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
 import com.messege.alarmbot.core.common.inNotTalkType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
+import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.kakao.ChatMembersObserver
@@ -47,7 +49,8 @@ import kotlinx.coroutines.launch
 class CmdProcessor(
     private val applicationContext: Context,
     private val memberDatabaseDao: MemberDatabaseDao,
-    private val topicDatabaseDao: TopicDatabaseDao
+    private val topicDatabaseDao: TopicDatabaseDao,
+    private val partyDatabaseDao: PartyDatabaseDao
 ) {
     private var groupRoom1OpenChatRoomAction : Notification.Action? = null
     private var groupRoom2OpenChatRoomAction : Notification.Action? = null
@@ -326,7 +329,9 @@ class CmdProcessor(
                     Rank.Unemployed.name
                 },
                 partyId = 0,
-                isPartyLeader = false
+                partyState = PartyMemberState.None,
+                joinTime = -1L,
+                partyResetPoints = 0L
             )
         )
     }

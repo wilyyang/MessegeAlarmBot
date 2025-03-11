@@ -8,6 +8,7 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
+import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
 import com.messege.alarmbot.data.database.party.model.PartyData
 import com.messege.alarmbot.data.database.party.model.PartyLog
 import com.messege.alarmbot.data.database.party.model.PartyRule
@@ -44,6 +45,8 @@ import java.io.File
 abstract class ChatBotDatabaseHelper : RoomDatabase() {
     abstract fun memberDatabaseDao() : MemberDatabaseDao
     abstract fun topicDatabaseDao() : TopicDatabaseDao
+    abstract fun partyDatabaseDao() : PartyDatabaseDao
+
 
     companion object {
 

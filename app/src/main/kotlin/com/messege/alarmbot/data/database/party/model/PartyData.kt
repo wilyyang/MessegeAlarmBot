@@ -25,6 +25,7 @@ data class PartyData(
 @Keep
 data class PartyRule(
     val time: Long,
+    val partyId: Long,
     val memberId: Long,
     val rule: String
 ) {
@@ -35,6 +36,7 @@ data class PartyRule(
 @Keep
 data class PartyLog(
     val time: Long,
+    val partyId: Long,
     val memberId: Long,
     val logType: PartyLogType
 ) {

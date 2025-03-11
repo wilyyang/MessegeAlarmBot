@@ -62,9 +62,9 @@ val MIGRATION_4_5 = object : Migration(4,5) {
                 resetPoints INTEGER NOT NULL,
                 rank TEXT NOT NULL,
                 partyId INTEGER NOT NULL,
-                partyState TEXT NOT NULL DEFAULT 'None',  -- 추가된 컬럼 (초기값 설정)
-                joinTime INTEGER NOT NULL DEFAULT -1,  -- 추가된 컬럼 (초기값 설정)
-                partyResetPoints INTEGER NOT NULL DEFAULT 0  -- 추가된 컬럼 (초기값 설정)
+                partyState TEXT NOT NULL DEFAULT 'None',
+                joinTime INTEGER NOT NULL DEFAULT -1,
+                partyResetPoints INTEGER NOT NULL DEFAULT 0
             )
         """)
 
@@ -80,11 +80,47 @@ val MIGRATION_4_5 = object : Migration(4,5) {
                 idx, userId, createAt, profileType, latestName, isSuperAdmin, isAdmin, chatProfileCount,
                 talkCount, deleteTalkCount, enterCount, kickCount, sanctionCount, likes, dislikes,
                 likesWeekly, dislikesWeekly, giftPoints, resetPoints, rank, partyId,
-                'None', -1, 0 -- 새로 추가된 값
+                'None', -1, 0
             FROM MemberData_old
         """)
 
         // 4. 기존 테이블 삭제
         db.execSQL("DROP TABLE MemberData_old")
+
+        // 5. 새로운 PartyData 테이블 추가
+        db.execSQL("""
+            CREATE TABLE PartyData (
+                idx INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                foundingTime INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                partyPoints INTEGER NOT NULL,
+                leaderId INTEGER NOT NULL,
+                partyState TEXT NOT NULL DEFAULT 'None',
+                memberCount INTEGER NOT NULL DEFAULT 0,
+                description TEXT NOT NULL DEFAULT ''
+            )
+        """)
+
+        // 6. 새로운 PartyRule 테이블 추가
+        db.execSQL("""
+            CREATE TABLE PartyRule (
+                idx INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                time INTEGER NOT NULL,
+                partyId INTEGER NOT NULL,
+                memberId INTEGER NOT NULL,
+                rule TEXT NOT NULL
+            )
+        """)
+
+        // 7. 새로운 PartyLog 테이블 추가
+        db.execSQL("""
+            CREATE TABLE PartyLog (
+                idx INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                time INTEGER NOT NULL,
+                partyId INTEGER NOT NULL,
+                memberId INTEGER NOT NULL,
+                logType TEXT NOT NULL
+            )
+        """)
     }
 }
