@@ -35,6 +35,7 @@ import com.messege.alarmbot.processor.model.LikeWeeklyRanking
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.processor.model.None
 import com.messege.alarmbot.processor.model.ResetMemberPoint
+import com.messege.alarmbot.processor.usecase.UseCaseParty
 import com.messege.alarmbot.processor.usecase.UseCasePoint
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
@@ -62,6 +63,7 @@ class CmdProcessor(
     private val channelFlow = commandChannel.receiveAsFlow().shareIn(scope = scope, started = WhileSubscribed())
 
     private val useCasePoint = UseCasePoint(memberDatabaseDao = memberDatabaseDao)
+    private val useCaseParty = UseCaseParty(partyDatabaseDao = partyDatabaseDao, memberDatabaseDao = memberDatabaseDao)
 
     private val commonContent : CommonContent = CommonContent(
         commandChannel = commandChannel,
