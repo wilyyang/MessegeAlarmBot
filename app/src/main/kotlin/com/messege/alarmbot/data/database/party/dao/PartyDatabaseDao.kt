@@ -13,7 +13,7 @@ interface PartyDatabaseDao {
 
     // PartyData
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertParty(party: PartyData)
+    suspend fun insertParty(party: PartyData) : Long
 
     @Query("SELECT * FROM PartyData WHERE idx = :partyId LIMIT 1")
     suspend fun getParty(partyId : Long): PartyData?
