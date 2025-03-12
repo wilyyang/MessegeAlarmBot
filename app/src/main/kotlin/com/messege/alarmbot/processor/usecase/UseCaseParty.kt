@@ -58,6 +58,10 @@ sealed class PartyEvent {
     data class Success(val party: PartyData) : PartyEvent()
 }
 
+sealed class PartyMemberEvent {
+    data object Fail : PartyMemberEvent()
+    data class Success(val party: PartyData, val applicant : MemberData) : PartyMemberEvent()
+}
 
 class UseCaseParty(
     private val dispatcher : CoroutineDispatcher = Dispatchers.IO,
@@ -271,7 +275,7 @@ class UseCaseParty(
     }
 
     // 가입 신청
-    suspend fun requestToJoinParty(member : MemberData, partyName: String) : PartyEvent{
+    suspend fun requestToJoinParty(member : MemberData, partyName: String) : PartyMemberEvent{
         return withContext(dispatcher) {
             if (member.partyId == 0L && member.partyState == PartyMemberState.None) {
                 val time = System.currentTimeMillis()
@@ -282,24 +286,24 @@ class UseCaseParty(
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
                             time = time,
-                            partyId = member.partyId,
+                            partyId = party.idx,
                             memberId = member.userId,
                             logType = PartyLogType.Application
                         )
                     )
 
-                    PartyEvent.Success(party)
+                    PartyMemberEvent.Success(party, member)
                 }else{
-                    PartyEvent.Fail
+                    PartyMemberEvent.Fail
                 }
             } else {
-                PartyEvent.Fail
+                PartyMemberEvent.Fail
             }
         }
     }
 
     // 가입 신청 취소
-    suspend fun cancelJoinRequest(member : MemberData) : PartyEvent{
+    suspend fun cancelJoinRequest(member : MemberData) : PartyMemberEvent{
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.Applicant) {
                 val time = System.currentTimeMillis()
@@ -316,12 +320,166 @@ class UseCaseParty(
                         )
                     )
 
-                    PartyEvent.Success(party)
+                    PartyMemberEvent.Success(party, member)
                 }else{
-                    PartyEvent.Fail
+                    PartyMemberEvent.Fail
                 }
             } else {
-                PartyEvent.Fail
+                PartyMemberEvent.Fail
+            }
+        }
+    }
+
+    // 가입 승인
+    suspend fun approveMemberRequest(member : MemberData, applicantId : Long) : PartyMemberEvent{
+        return withContext(dispatcher) {
+            if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getParty(member.partyId)
+                val applicant = memberDatabaseDao.getMember(applicantId).getOrNull(0)
+
+                if (party != null && applicant != null &&
+                    applicant.partyState == PartyMemberState.Applicant && applicant.partyId == party.idx
+                ) {
+
+                    val newMemberCount = party.memberCount + 1
+                    val newPartyPoints = 5L + newMemberCount
+                    partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
+                    partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateMember(applicant.userId, party.idx, time, newPartyPoints)
+                    memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = party.idx,
+                            memberId = applicant.userId,
+                            logType = PartyLogType.Approval
+                        )
+                    )
+
+                    PartyMemberEvent.Success(party, applicant)
+                }else{
+                    PartyMemberEvent.Fail
+                }
+            } else {
+                PartyMemberEvent.Fail
+            }
+        }
+    }
+
+    // 가입 거절
+    suspend fun rejectMemberRequest(member : MemberData, applicantId : Long) : PartyMemberEvent{
+        return withContext(dispatcher) {
+            if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getParty(member.partyId)
+                val applicant = memberDatabaseDao.getMember(applicantId).getOrNull(0)
+
+                if (party != null && applicant != null &&
+                    applicant.partyState == PartyMemberState.Applicant && applicant.partyId == party.idx
+                ) {
+                    memberDatabaseDao.updatePartyStateNone(applicant.userId)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = party.idx,
+                            memberId = applicant.userId,
+                            logType = PartyLogType.Rejection
+                        )
+                    )
+
+                    PartyMemberEvent.Success(party, applicant)
+                }else{
+                    PartyMemberEvent.Fail
+                }
+            } else {
+                PartyMemberEvent.Fail
+            }
+        }
+    }
+
+    // 탈당
+    suspend fun leaveParty(member : MemberData) : PartyMemberEvent{
+        return withContext(dispatcher) {
+            if (member.partyId != 0L && member.partyState == PartyMemberState.PartyMember) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getParty(member.partyId)
+
+                if (party != null) {
+                    val newMemberCount = party.memberCount - 1
+                    val newPartyPoints = 5L + newMemberCount
+                    partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
+                    partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateNone(member.userId)
+                    memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = party.idx,
+                            memberId = member.userId,
+                            logType = PartyLogType.Withdrawal
+                        )
+                    )
+
+                    PartyMemberEvent.Success(party, member)
+                }else{
+                    PartyMemberEvent.Fail
+                }
+            } else {
+                PartyMemberEvent.Fail
+            }
+        }
+    }
+
+
+    // 제명
+    suspend fun expelMember(member : MemberData, targetId : Long) : PartyMemberEvent{
+        return withContext(dispatcher) {
+            if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
+                val time = System.currentTimeMillis()
+                val party = partyDatabaseDao.getParty(member.partyId)
+                val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
+
+                if (party != null && target != null &&
+                    target.partyState == PartyMemberState.PartyMember && target.partyId == party.idx
+                ) {
+                    val newMemberCount = party.memberCount - 1
+                    val newPartyPoints = 5L + newMemberCount
+                    partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
+                    partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateNone(target.userId)
+                    memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
+
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = party.idx,
+                            memberId = member.userId,
+                            logType = PartyLogType.Expulsion
+                        )
+                    )
+
+                    PartyMemberEvent.Success(party, member)
+                } else {
+                    PartyMemberEvent.Fail
+                }
+            } else {
+                PartyMemberEvent.Fail
+            }
+        }
+    }
+
+    // 가입 신청 목록 조회
+    suspend fun getJoinRequests(partyName: String): List<MemberData>?{
+        return withContext(dispatcher) {
+            val party = partyDatabaseDao.getPartyByName(partyName)
+            if(party != null){
+                memberDatabaseDao.getPartyMembers(party.idx)
+            }else{
+                null
             }
         }
     }
