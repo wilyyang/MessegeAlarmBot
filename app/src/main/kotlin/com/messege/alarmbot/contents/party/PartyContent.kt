@@ -114,7 +114,7 @@ class PartyContent (
 
                             val response = when(result){
                                 is PartyRenameResult.RenameSuccess -> {
-                                    "정당명이 변경되었습니다. (${result.originName} -> ${result.originName})"
+                                    "정당명이 변경되었습니다. (${result.originName} -> ${result.newName})"
                                 }
                                 is PartyRenameResult.RenameFail -> {
                                     "정당 이름을 변경할 수 없습니다. 당대표만 가능합니다."
@@ -317,7 +317,7 @@ class PartyContent (
                     }
 
                     // Party Request
-                    message.text == ".${PartyKeyword.PARTY_JOIN_REQUEST} " -> {
+                    message.text.startsWith(".${PartyKeyword.PARTY_JOIN_REQUEST} ") -> {
                         val args = message.text.split(" ", limit = 2)
                         if (args.size > 1) {
                             val partyName = args[1]
@@ -326,10 +326,10 @@ class PartyContent (
                             val response = if(result == null){
                                 "$partyName 당을 찾을 수 없습니다."
                             }else {
-                                "[$partyName 입당 신청자]\n" +
-                                    result.mapIndexed { index, it ->
-                                        "${index + 1}. ${it.latestName}"
-                                    }.joinToString("\n")
+                                val applicants = result.joinToString(", "){
+                                    it.latestName
+                                }
+                                "[$partyName 입당 신청자]\n$applicants"
                             }
                             commandChannel.send(Group1RoomTextResponse(response))
 

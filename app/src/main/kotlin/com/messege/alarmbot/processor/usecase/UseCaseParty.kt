@@ -158,7 +158,8 @@ class UseCaseParty(
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val party = partyDatabaseDao.getParty(member.partyId)
-                if (party != null) {
+                val renameParty = partyDatabaseDao.getPartyByName(newName)
+                if (party != null && renameParty == null) {
                     partyDatabaseDao.updatePartyName(party.idx, newName)
                     PartyRenameResult.RenameSuccess(party.name, newName)
                 } else {
@@ -221,7 +222,7 @@ class UseCaseParty(
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val party = partyDatabaseDao.getParty(member.partyId)
                 if (party != null) {
-                    partyDatabaseDao.deletePartyRuleOrderNumber(party.idx, number)
+                    partyDatabaseDao.deletePartyRuleOrderNumber(party.idx, number - 1)
                     PartyRuleResult.PartyRuleSuccess(party.name)
                 } else {
                     PartyRuleResult.PartyRuleFail
@@ -497,7 +498,7 @@ class UseCaseParty(
         return withContext(dispatcher) {
             val party = partyDatabaseDao.getPartyByName(partyName)
             if (party != null) {
-                memberDatabaseDao.getPartyMembers(party.idx)
+                memberDatabaseDao.getPartyApplicants(party.idx)
             } else {
                 null
             }
