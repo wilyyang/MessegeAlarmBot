@@ -253,8 +253,8 @@ class UseCaseParty(
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
                             time = time,
-                            partyId = member.partyId,
-                            memberId = member.userId,
+                            partyId = party.idx,
+                            memberId = target.userId,
                             logType = PartyLogType.Delegation
                         )
                     )
@@ -309,7 +309,7 @@ class UseCaseParty(
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
                             time = time,
-                            partyId = member.partyId,
+                            partyId = party.idx,
                             memberId = member.userId,
                             logType = PartyLogType.Cancellation
                         )
@@ -452,7 +452,7 @@ class UseCaseParty(
                         PartyLog(
                             time = time,
                             partyId = party.idx,
-                            memberId = member.userId,
+                            memberId = target.userId,
                             logType = PartyLogType.Expulsion
                         )
                     )
