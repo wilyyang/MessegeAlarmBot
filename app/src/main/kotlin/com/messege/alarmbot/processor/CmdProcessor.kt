@@ -68,7 +68,8 @@ class CmdProcessor(
 
     private val commonContent : CommonContent = CommonContent(
         commandChannel = commandChannel,
-        memberDatabaseDao = memberDatabaseDao
+        memberDatabaseDao = memberDatabaseDao,
+        partyDatabaseDao = partyDatabaseDao
     )
 
     private var contents: Array<BaseContent> = arrayOf(

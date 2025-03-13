@@ -3,10 +3,12 @@ package com.messege.alarmbot.contents.common
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.data.database.member.model.SanctionData
+import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
 import com.messege.alarmbot.processor.model.AdminRoomTextResponse
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
@@ -16,7 +18,8 @@ import kotlinx.coroutines.channels.Channel
 
 class CommonContent(
     override val commandChannel: Channel<Command>,
-    private val memberDatabaseDao : MemberDatabaseDao
+    private val memberDatabaseDao : MemberDatabaseDao,
+    private val partyDatabaseDao : PartyDatabaseDao
 ) : BaseContent {
     override val contentsName: String = "기본"
 
@@ -31,6 +34,8 @@ class CommonContent(
                 commandChannel.send(Group1RoomTextResponse(COMMAND_HELP))
             }else if(message.text == ".? 관리자"){
                 commandChannel.send(Group1RoomTextResponse(ADMIN_COMMAND_HELP))
+            }else if(message.text == ".? 정당"){
+                commandChannel.send(Group1RoomTextResponse(PARTY_COMMAND_HELP))
             }else if(message.text == ".? 직업"){
                 commandChannel.send(Group1RoomTextResponse(rankHelp()))
             }else if(message.text.startsWith(".조회")){
@@ -39,9 +44,11 @@ class CommonContent(
                     val targetMember = memberDatabaseDao.getMember(targetId).getOrNull(0)
                     val allNames = memberDatabaseDao.getNicknameDataAll(targetId).joinToString(",") { it.nickName }
                     if(targetMember != null){
+                        val party = partyDatabaseDao.getParty(targetMember.partyId)
                         var profileInfo = "닉네임 : ${targetMember.latestName} " +
                             "${if(targetMember.isSuperAdmin)"[슈퍼관리자]" else if(targetMember.isAdmin) "[관리자]" else ""}\n\n" +
 
+                        "당 : ${party?.name ?: "없음"} ${if(targetMember.partyState == PartyMemberState.PartyLeader) "대표" else ""}\n" +
                         "직업 : ${Rank.getRankByName(targetMember.rank).korName}\n" +
                         "포인트 : ${targetMember.giftPoints}\n" +
                         "좋아요 : ${targetMember.likes}\n" +

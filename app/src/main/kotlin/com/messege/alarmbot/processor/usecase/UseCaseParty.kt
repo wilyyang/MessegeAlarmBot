@@ -50,7 +50,7 @@ sealed class PartyRuleResult {
 
 sealed class PartyMemberEvent {
     data object Fail : PartyMemberEvent()
-    data class Success(val party: PartyData, val applicant: MemberData) : PartyMemberEvent()
+    data class Success(val party: PartyData, val target: MemberData) : PartyMemberEvent()
 }
 
 class UseCaseParty(

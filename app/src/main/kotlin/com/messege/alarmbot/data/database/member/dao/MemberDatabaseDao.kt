@@ -129,7 +129,7 @@ interface MemberDatabaseDao {
     suspend fun getTop10MembersByDislikesWeekly(): List<MemberData>
 
     // Rank Data
-    @Query("UPDATE MemberData SET giftPoints = resetPoints")
+    @Query("UPDATE MemberData SET giftPoints = resetPoints + partyResetPoints")
     suspend fun resetAllMembersGiftPoints()
 
     @Query("UPDATE MemberData SET giftPoints = :giftPoints WHERE userId = :userId")

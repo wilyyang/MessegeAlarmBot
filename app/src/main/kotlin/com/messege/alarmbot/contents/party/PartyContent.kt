@@ -9,8 +9,11 @@ import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.processor.usecase.PartyCreateResult
+import com.messege.alarmbot.processor.usecase.PartyDescriptionResult
 import com.messege.alarmbot.processor.usecase.PartyDissolveResult
 import com.messege.alarmbot.processor.usecase.PartyMemberEvent
+import com.messege.alarmbot.processor.usecase.PartyRenameResult
+import com.messege.alarmbot.processor.usecase.PartyRuleResult
 import com.messege.alarmbot.processor.usecase.UseCaseParty
 import com.messege.alarmbot.util.format.toTimeFormatDate
 import com.messege.alarmbot.util.log.Logger
@@ -38,7 +41,7 @@ class PartyContent (
                             val result = useCaseParty.createParty(member, partyName)
                             val response = when(result){
                                 is PartyCreateResult.CreateSuccess -> {
-                                    "창당에 성공했습니다!! 정당 이름은 $partyName 입니다. (help : .? 정당)"
+                                    "창당에 성공했습니다!! 정당 이름은 $partyName 입니다.\n(help : .? 정당)"
                                 }
                                 is PartyCreateResult.AlreadyPartyMember -> {
                                     "이미 정당에 가입해 있습니다. 탈당 후 창당하세요."
@@ -56,10 +59,10 @@ class PartyContent (
                         val result = useCaseParty.dissolveParty(member)
                         val response = when(result){
                             is PartyDissolveResult.DissolveSuccess -> {
-                                "${result.party.name} 정당을 해산했습니다. 모든 당원의 당적이 초기화되었습니다."
+                                "${result.party.name} 정당을 해산하였습니다. ${result.party.name} 당원의 당적이 초기화되었습니다."
                             }
                             is PartyDissolveResult.DissolveFail -> {
-                                "정당을 해산할 권리가 없습니다."
+                                "정당을 해산할 권리가 없습니다. 당대표만 가능합니다."
                             }
                         }
                         commandChannel.send(Group1RoomTextResponse(response))
@@ -70,7 +73,6 @@ class PartyContent (
                         if (args.size > 1) {
                             val partyName = args[1]
                             val result = useCaseParty.getPartyInfo(partyName)
-
 
                             val response = if(result != null){
                                 val members = result.partyMembers.joinToString(", "){
@@ -85,7 +87,7 @@ class PartyContent (
                                         "- 당원 : $members"
 
                             }else{
-                                "정당 정보가 없습니다."
+                                "$partyName 정당 정보가 없습니다."
                             }
 
                             commandChannel.send(Group1RoomTextResponse(response))
@@ -94,6 +96,12 @@ class PartyContent (
                     message.text == ".${PartyKeyword.PARTY_RANKING}" -> {
                         val result = useCaseParty.getPartyRanking()
 
+                        var response = "[정당 랭킹!]\n"
+                        response += result.mapIndexed { index, it ->
+                            "${index + 1}. ${it.name} : ${it.memberCount}명"
+                        }.joinToString("\n")
+
+                        commandChannel.send(Group1RoomTextResponse(response))
                     }
                     message.text.startsWith(".${PartyKeyword.PARTY_RENAME} ") -> {
                         val args = message.text.split(" ", limit = 2)
@@ -101,6 +109,16 @@ class PartyContent (
                             val newName = args[1]
                             val result = useCaseParty.renameParty(member, newName)
 
+                            val response = when(result){
+                                is PartyRenameResult.RenameSuccess -> {
+                                    "정당명이 변경되었습니다. (${result.originName} -> ${result.originName})"
+                                }
+                                is PartyRenameResult.RenameFail -> {
+                                    "정당 이름을 변경할 수 없습니다. 당대표만 가능합니다."
+                                }
+                            }
+
+                            commandChannel.send(Group1RoomTextResponse(response))
                         } else responseTextFormatInvalid()
                     }
                     message.text.startsWith(".${PartyKeyword.PARTY_DESCRIPTION} ") -> {
@@ -108,6 +126,17 @@ class PartyContent (
                         if (args.size > 1) {
                             val description = args[1]
                             val result = useCaseParty.updatePartyDescription(member, description)
+
+                            val response = when(result){
+                                is PartyDescriptionResult.DescriptionSuccess -> {
+                                    "${result.partyName} 당의 소개글이 수정되었습니다."
+                                }
+                                is PartyDescriptionResult.DescriptionFail -> {
+                                    "정당 소개글을 수정할 수 없습니다. 당대표만 가능합니다."
+                                }
+                            }
+
+                            commandChannel.send(Group1RoomTextResponse(response))
                         } else responseTextFormatInvalid()
                     }
 
@@ -118,6 +147,16 @@ class PartyContent (
                             val rule = args[1]
                             val result = useCaseParty.addPartyRule(member, rule)
 
+                            val response = when(result){
+                                is PartyRuleResult.PartyRuleSuccess -> {
+                                    "${result.partyName} 당의 당규칙이 추가되었습니다."
+                                }
+                                is PartyRuleResult.PartyRuleFail -> {
+                                    "당규칙을 추가할 수 없습니다. 당대표만 가능합니다."
+                                }
+                            }
+
+                            commandChannel.send(Group1RoomTextResponse(response))
 
                         } else responseTextFormatInvalid()
                     }
@@ -129,6 +168,17 @@ class PartyContent (
                                 responseTextFormatInvalid()
                             } else{
                                 val result = useCaseParty.removePartyRule(member, ruleNumber)
+
+                                val response = when(result){
+                                    is PartyRuleResult.PartyRuleSuccess -> {
+                                        "${result.partyName} 당의 $ruleNumber 번째 당규칙이 삭제되었습니다."
+                                    }
+                                    is PartyRuleResult.PartyRuleFail -> {
+                                        "당규칙을 삭제할 수 없습니다. 당대표만 가능합니다."
+                                    }
+                                }
+
+                                commandChannel.send(Group1RoomTextResponse(response))
                             }
 
                         } else responseTextFormatInvalid()
@@ -138,6 +188,16 @@ class PartyContent (
                         if (args.size > 1) {
                             val partyName = args[1]
                             val result = useCaseParty.getPartyRules(partyName)
+
+                            val response = if(result == null){
+                                "$partyName 당을 찾을 수 없습니다."
+                            }else {
+                                "[$partyName 당 규칙]\n" +
+                                result.mapIndexed { index, it ->
+                                    "${index + 1}. ${it.rule}"
+                                }.joinToString("\n")
+                            }
+                            commandChannel.send(Group1RoomTextResponse(response))
 
                         } else responseTextFormatInvalid()
                     }
@@ -151,10 +211,10 @@ class PartyContent (
                             val result = useCaseParty.delegateLeader(member, mentionId)
                             val response = when(result){
                                 is PartyMemberEvent.Success -> {
-                                    "[${PartyKeyword.PARTY_MEM_DELEGATE}] 했습니다."
+                                    "${result.party.name}의 ${member.latestName}님이 ${result.target.latestName}님께 당대표를 위임했습니다."
                                 }
                                 else -> {
-                                    "[${PartyKeyword.PARTY_MEM_DELEGATE}] 실패 했습니다."
+                                    "위임에 실패 했습니다. 당대표만 가능합니다."
                                 }
                             }
                             commandChannel.send(Group1RoomTextResponse(response))
@@ -167,10 +227,10 @@ class PartyContent (
                             val result = useCaseParty.requestToJoinParty(member, partyName)
                             val response = when(result){
                                 is PartyMemberEvent.Success -> {
-                                    "[${PartyKeyword.PARTY_MEM_JOIN}] 했습니다."
+                                    "${result.target.latestName}님이 ${result.party.name}에 입당 신청했습니다."
                                 }
                                 else -> {
-                                    "[${PartyKeyword.PARTY_MEM_JOIN}] 실패 했습니다."
+                                    "입당 신청에 실패했습니다. 신청은 당이 없는 사람만 가능합니다."
                                 }
                             }
                             commandChannel.send(Group1RoomTextResponse(response))
@@ -180,10 +240,10 @@ class PartyContent (
                         val result = useCaseParty.cancelJoinRequest(member)
                         val response = when(result){
                             is PartyMemberEvent.Success -> {
-                                "[${PartyKeyword.PARTY_MEM_CANCEL}] 했습니다."
+                                "${result.target.latestName}님이 ${result.party.name}에 입당 신청을 취소했습니다."
                             }
                             else -> {
-                                "[${PartyKeyword.PARTY_MEM_CANCEL}] 실패 했습니다."
+                                "입당 취소에 실패했습니다. 신청자가 아니면 취소할 수 없습니다."
                             }
                         }
                         commandChannel.send(Group1RoomTextResponse(response))
@@ -196,10 +256,10 @@ class PartyContent (
                             val result = useCaseParty.approveMemberRequest(member, mentionId)
                             val response = when(result){
                                 is PartyMemberEvent.Success -> {
-                                    "[${PartyKeyword.PARTY_MEM_APPROVE}] 했습니다."
+                                    "${result.party.name}에서 ${result.target.latestName}님의 입당을 승인했습니다."
                                 }
                                 else -> {
-                                    "[${PartyKeyword.PARTY_MEM_APPROVE}] 실패 했습니다."
+                                    "입당 승인에 실패했습니다. 오직 당대표만 입당 승인을 할 수 있습니다."
                                 }
                             }
                             commandChannel.send(Group1RoomTextResponse(response))
@@ -213,10 +273,10 @@ class PartyContent (
                             val result = useCaseParty.rejectMemberRequest(member, mentionId)
                             val response = when(result){
                                 is PartyMemberEvent.Success -> {
-                                    "[${PartyKeyword.PARTY_MEM_REJECT}] 했습니다."
+                                    "${result.party.name}에서 ${result.target.latestName}님의 입당을 거절했습니다."
                                 }
                                 else -> {
-                                    "[${PartyKeyword.PARTY_MEM_REJECT}] 실패 했습니다."
+                                    "입당 거절에 실패했습니다. 오직 당대표만 입당을 거절 할 수 있습니다."
                                 }
                             }
                             commandChannel.send(Group1RoomTextResponse(response))
@@ -226,10 +286,10 @@ class PartyContent (
                         val result = useCaseParty.leaveParty(member)
                         val response = when(result){
                             is PartyMemberEvent.Success -> {
-                                "[${PartyKeyword.PARTY_MEM_LEAVE}] 했습니다."
+                                "${result.target.latestName}님이 ${result.party.name}을 탈당했습니다."
                             }
                             else -> {
-                                "[${PartyKeyword.PARTY_MEM_LEAVE}] 실패 했습니다."
+                                "탈당에 실패했습니다. 당원인지 확인하세요."
                             }
                         }
                         commandChannel.send(Group1RoomTextResponse(response))
@@ -243,10 +303,10 @@ class PartyContent (
                             val result = useCaseParty.expelMember(member, mentionId)
                             val response = when(result){
                                 is PartyMemberEvent.Success -> {
-                                    "[${PartyKeyword.PARTY_MEM_EXPULSION}] 했습니다."
+                                    "${result.party.name}에서 ${result.target.latestName}님을 제명했습니다."
                                 }
                                 else -> {
-                                    "[${PartyKeyword.PARTY_MEM_EXPULSION}] 실패 했습니다."
+                                    "제명에 실패했습니다. 오직 당대표만 당원을 제명할 수 있습니다."
                                 }
                             }
                             commandChannel.send(Group1RoomTextResponse(response))
@@ -259,6 +319,16 @@ class PartyContent (
                         if (args.size > 1) {
                             val partyName = args[1]
                             val result = useCaseParty.getJoinRequests(partyName)
+
+                            val response = if(result == null){
+                                "$partyName 당을 찾을 수 없습니다."
+                            }else {
+                                "[$partyName 입당 신청자]\n" +
+                                    result.mapIndexed { index, it ->
+                                        "${index + 1}. ${it.latestName}"
+                                    }.joinToString("\n")
+                            }
+                            commandChannel.send(Group1RoomTextResponse(response))
 
                         } else responseTextFormatInvalid()
                     }
