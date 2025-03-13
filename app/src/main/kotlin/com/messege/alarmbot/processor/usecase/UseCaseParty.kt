@@ -28,9 +28,9 @@ sealed class PartyDissolveResult {
 }
 
 data class PartyInfo(
-    val partyInfo : PartyData,
-    val partyLeader : MemberData,
-    val partyMembers : List<MemberData>
+    val partyInfo: PartyData,
+    val partyLeader: MemberData,
+    val partyMembers: List<MemberData>
 )
 
 sealed class PartyRenameResult {
@@ -55,20 +55,20 @@ sealed class PartyEvent {
 
 sealed class PartyMemberEvent {
     data object Fail : PartyMemberEvent()
-    data class Success(val party: PartyData, val applicant : MemberData) : PartyMemberEvent()
+    data class Success(val party: PartyData, val applicant: MemberData) : PartyMemberEvent()
 }
 
 class UseCaseParty(
-    private val dispatcher : CoroutineDispatcher = Dispatchers.IO,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val memberDatabaseDao: MemberDatabaseDao,
     private val partyDatabaseDao: PartyDatabaseDao
 ) {
 
     // 창당
-    suspend fun createParty(member : MemberData, partyName : String) : PartyCreateResult{
+    suspend fun createParty(member: MemberData, partyName: String): PartyCreateResult {
         return withContext(dispatcher) {
-            if(member.partyId == 0L){
-                if(partyDatabaseDao.getPartyByName(partyName) == null){
+            if (member.partyId == 0L) {
+                if (partyDatabaseDao.getPartyByName(partyName) == null) {
                     val time = System.currentTimeMillis()
                     val partyId = partyDatabaseDao.insertParty(
                         PartyData(
@@ -84,54 +84,58 @@ class UseCaseParty(
 
                     memberDatabaseDao.updatePartyStateLeader(member.userId, partyId, 11L)
 
-                    partyDatabaseDao.insertPartyLog(PartyLog(
-                        time = time,
-                        partyId = partyId,
-                        memberId = member.userId,
-                        logType = PartyLogType.Founding
-                    ))
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = partyId,
+                            memberId = member.userId,
+                            logType = PartyLogType.Founding
+                        )
+                    )
                     CreateSuccess(partyId)
 
-                }else {
+                } else {
                     AlreadyPartyNameExist
                 }
-            }else {
+            } else {
                 AlreadyPartyMember
             }
         }
     }
 
     // 해산
-    suspend fun dissolveParty(member : MemberData) : PartyDissolveResult {
+    suspend fun dissolveParty(member: MemberData): PartyDissolveResult {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getParty(member.partyId)
 
-                if(party != null){
+                if (party != null) {
                     partyDatabaseDao.updatePartyState(member.partyId, PartyState.Dissolution.name)
                     memberDatabaseDao.resetPartyMemberByDissolution(member.partyId)
                     partyDatabaseDao.deleteAllPartyRules(member.partyId)
 
-                    partyDatabaseDao.insertPartyLog(PartyLog(
-                        time = time,
-                        partyId = member.partyId,
-                        memberId = member.userId,
-                        logType = PartyLogType.Dissolution
-                    ))
+                    partyDatabaseDao.insertPartyLog(
+                        PartyLog(
+                            time = time,
+                            partyId = member.partyId,
+                            memberId = member.userId,
+                            logType = PartyLogType.Dissolution
+                        )
+                    )
 
                     PartyDissolveResult.DissolveSuccess(party)
-                }else{
+                } else {
                     PartyDissolveResult.DissolveFail
                 }
-            }else {
+            } else {
                 PartyDissolveResult.DissolveFail
             }
         }
     }
 
     // 조회
-    suspend fun getPartyInfo(partyName: String): PartyInfo?{
+    suspend fun getPartyInfo(partyName: String): PartyInfo? {
         return withContext(dispatcher) {
             partyDatabaseDao.getPartyByName(partyName)?.let { party ->
                 memberDatabaseDao.getMember(party.leaderId).getOrNull(0)?.let { leader ->
@@ -151,34 +155,37 @@ class UseCaseParty(
 
 
     // 당 이름 변경
-    suspend fun renameParty(member : MemberData, newName: String) : PartyRenameResult{
+    suspend fun renameParty(member: MemberData, newName: String): PartyRenameResult {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val party = partyDatabaseDao.getParty(member.partyId)
-                if(party != null){
+                if (party != null) {
                     partyDatabaseDao.updatePartyName(party.idx, newName)
                     PartyRenameResult.RenameSuccess(party.name, newName)
-                }else{
+                } else {
                     PartyRenameResult.RenameFail
                 }
-            }else{
+            } else {
                 PartyRenameResult.RenameFail
             }
         }
     }
 
     // 당 소개 변경
-    suspend fun updatePartyDescription(member : MemberData, newDescription: String) : PartyDescriptionResult{
+    suspend fun updatePartyDescription(
+        member: MemberData,
+        newDescription: String
+    ): PartyDescriptionResult {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val party = partyDatabaseDao.getParty(member.partyId)
-                if(party != null){
+                if (party != null) {
                     partyDatabaseDao.updatePartyDescription(party.idx, newDescription)
                     PartyDescriptionResult.DescriptionSuccess(party.name)
-                }else{
+                } else {
                     PartyDescriptionResult.DescriptionFail
                 }
-            }else{
+            } else {
                 PartyDescriptionResult.DescriptionFail
             }
         }
@@ -186,39 +193,41 @@ class UseCaseParty(
 
 
     // 당규 추가
-    suspend fun addPartyRule(member : MemberData, ruleContent: String) : PartyRuleResult{
+    suspend fun addPartyRule(member: MemberData, ruleContent: String): PartyRuleResult {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val party = partyDatabaseDao.getParty(member.partyId)
-                if(party != null){
-                    partyDatabaseDao.insertPartyRule(PartyRule(
-                        partyId = party.idx,
-                        time = System.currentTimeMillis(),
-                        memberId = member.userId,
-                        rule = ruleContent
-                    ))
+                if (party != null) {
+                    partyDatabaseDao.insertPartyRule(
+                        PartyRule(
+                            partyId = party.idx,
+                            time = System.currentTimeMillis(),
+                            memberId = member.userId,
+                            rule = ruleContent
+                        )
+                    )
                     PartyRuleResult.PartyRuleSuccess(party.name)
-                }else{
+                } else {
                     PartyRuleResult.PartyRuleFail
                 }
-            }else{
+            } else {
                 PartyRuleResult.PartyRuleFail
             }
         }
     }
 
     // 당규 삭제
-    suspend fun removePartyRule(member : MemberData, number: Int) : PartyRuleResult{
+    suspend fun removePartyRule(member: MemberData, number: Int): PartyRuleResult {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val party = partyDatabaseDao.getParty(member.partyId)
-                if(party != null){
+                if (party != null) {
                     partyDatabaseDao.deletePartyRuleOrderNumber(party.idx, number)
                     PartyRuleResult.PartyRuleSuccess(party.name)
-                }else{
+                } else {
                     PartyRuleResult.PartyRuleFail
                 }
-            }else{
+            } else {
                 PartyRuleResult.PartyRuleFail
             }
         }
@@ -228,9 +237,9 @@ class UseCaseParty(
     suspend fun getPartyRules(partyName: String): List<PartyRule>? {
         return withContext(dispatcher) {
             val party = partyDatabaseDao.getPartyByName(partyName)
-            if(party != null){
+            if (party != null) {
                 partyDatabaseDao.getPartyRules(party.idx)
-            }else{
+            } else {
                 null
             }
         }
@@ -238,17 +247,26 @@ class UseCaseParty(
 
 
     // 위임 (리더 변경)
-    suspend fun delegateLeader(member : MemberData, targetId: Long) : PartyMemberEvent {
+    suspend fun delegateLeader(member: MemberData, targetId: Long): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getParty(member.partyId)
                 val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
 
-                if(party != null && target != null){
+                if (party != null && target != null) {
                     partyDatabaseDao.updatePartyLeader(party.idx, target.userId)
-                    memberDatabaseDao.updatePartyStateMember(member.userId, party.idx, time, party.partyPoints)
-                    memberDatabaseDao.updatePartyStateLeader(target.userId, party.idx, 5 + party.partyPoints)
+                    memberDatabaseDao.updatePartyStateMember(
+                        member.userId,
+                        party.idx,
+                        time,
+                        party.partyPoints
+                    )
+                    memberDatabaseDao.updatePartyStateLeader(
+                        target.userId,
+                        party.idx,
+                        5 + party.partyPoints
+                    )
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
@@ -260,22 +278,22 @@ class UseCaseParty(
                     )
 
                     PartyMemberEvent.Success(party, target)
-                }else{
+                } else {
                     PartyMemberEvent.Fail
                 }
-            }else {
+            } else {
                 PartyMemberEvent.Fail
             }
         }
     }
 
     // 가입 신청
-    suspend fun requestToJoinParty(member : MemberData, partyName: String) : PartyMemberEvent{
+    suspend fun requestToJoinParty(member: MemberData, partyName: String): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId == 0L && member.partyState == PartyMemberState.None) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getPartyByName(partyName)
-                if(party != null){
+                if (party != null) {
                     memberDatabaseDao.updatePartyStateApplicant(member.userId, party.idx, time)
 
                     partyDatabaseDao.insertPartyLog(
@@ -288,7 +306,7 @@ class UseCaseParty(
                     )
 
                     PartyMemberEvent.Success(party, member)
-                }else{
+                } else {
                     PartyMemberEvent.Fail
                 }
             } else {
@@ -298,12 +316,12 @@ class UseCaseParty(
     }
 
     // 가입 신청 취소
-    suspend fun cancelJoinRequest(member : MemberData) : PartyMemberEvent{
+    suspend fun cancelJoinRequest(member: MemberData): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.Applicant) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getParty(member.partyId)
-                if(party != null){
+                if (party != null) {
                     memberDatabaseDao.updatePartyStateNone(member.userId)
 
                     partyDatabaseDao.insertPartyLog(
@@ -316,7 +334,7 @@ class UseCaseParty(
                     )
 
                     PartyMemberEvent.Success(party, member)
-                }else{
+                } else {
                     PartyMemberEvent.Fail
                 }
             } else {
@@ -326,7 +344,7 @@ class UseCaseParty(
     }
 
     // 가입 승인
-    suspend fun approveMemberRequest(member : MemberData, targetId : Long) : PartyMemberEvent{
+    suspend fun approveMemberRequest(member: MemberData, targetId: Long): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
@@ -341,7 +359,12 @@ class UseCaseParty(
                     val newPartyPoints = 5L + newMemberCount
                     partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
                     partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
-                    memberDatabaseDao.updatePartyStateMember(target.userId, party.idx, time, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateMember(
+                        target.userId,
+                        party.idx,
+                        time,
+                        newPartyPoints
+                    )
                     memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
 
                     partyDatabaseDao.insertPartyLog(
@@ -354,7 +377,7 @@ class UseCaseParty(
                     )
 
                     PartyMemberEvent.Success(party, target)
-                }else{
+                } else {
                     PartyMemberEvent.Fail
                 }
             } else {
@@ -364,7 +387,7 @@ class UseCaseParty(
     }
 
     // 가입 거절
-    suspend fun rejectMemberRequest(member : MemberData, targetId : Long) : PartyMemberEvent{
+    suspend fun rejectMemberRequest(member: MemberData, targetId: Long): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
@@ -386,7 +409,7 @@ class UseCaseParty(
                     )
 
                     PartyMemberEvent.Success(party, target)
-                }else{
+                } else {
                     PartyMemberEvent.Fail
                 }
             } else {
@@ -396,7 +419,7 @@ class UseCaseParty(
     }
 
     // 탈당
-    suspend fun leaveParty(member : MemberData) : PartyMemberEvent{
+    suspend fun leaveParty(member: MemberData): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyMember) {
                 val time = System.currentTimeMillis()
@@ -420,7 +443,7 @@ class UseCaseParty(
                     )
 
                     PartyMemberEvent.Success(party, member)
-                }else{
+                } else {
                     PartyMemberEvent.Fail
                 }
             } else {
@@ -431,7 +454,7 @@ class UseCaseParty(
 
 
     // 제명
-    suspend fun expelMember(member : MemberData, targetId : Long) : PartyMemberEvent{
+    suspend fun expelMember(member: MemberData, targetId: Long): PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
@@ -468,12 +491,12 @@ class UseCaseParty(
     }
 
     // 가입 신청 목록 조회
-    suspend fun getJoinRequests(partyName: String): List<MemberData>?{
+    suspend fun getJoinRequests(partyName: String): List<MemberData>? {
         return withContext(dispatcher) {
             val party = partyDatabaseDao.getPartyByName(partyName)
-            if(party != null){
+            if (party != null) {
                 memberDatabaseDao.getPartyMembers(party.idx)
-            }else{
+            } else {
                 null
             }
         }
