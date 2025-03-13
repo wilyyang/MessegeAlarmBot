@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.contents.common.CommonContent
+import com.messege.alarmbot.contents.party.PartyContent
 import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.core.common.ChatRoomKey
@@ -81,6 +82,11 @@ class CmdProcessor(
             commandChannel = commandChannel,
             topicDatabaseDao = topicDatabaseDao,
             memberDatabaseDao = memberDatabaseDao
+        ),
+        PartyContent(
+            commandChannel = commandChannel,
+            memberDatabaseDao = memberDatabaseDao,
+            useCaseParty = useCaseParty
         )
     )
 
