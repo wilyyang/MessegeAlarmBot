@@ -48,11 +48,6 @@ sealed class PartyRuleResult {
     data class PartyRuleSuccess(val partyName: String) : PartyRuleResult()
 }
 
-sealed class DelegateLeaderResult {
-    data object DelegateLeaderFail : DelegateLeaderResult()
-    data class DelegateLeaderSuccess(val newLeader: MemberData) : DelegateLeaderResult()
-}
-
 sealed class PartyEvent {
     data object Fail : PartyEvent()
     data class Success(val party: PartyData) : PartyEvent()
@@ -243,17 +238,17 @@ class UseCaseParty(
 
 
     // 위임 (리더 변경)
-    suspend fun delegateLeader(member : MemberData, newLeaderId: Long) : DelegateLeaderResult {
+    suspend fun delegateLeader(member : MemberData, targetId: Long) : PartyMemberEvent {
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getParty(member.partyId)
-                val newLeader = memberDatabaseDao.getMember(newLeaderId).getOrNull(0)
+                val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
 
-                if(party != null && newLeader != null){
-                    partyDatabaseDao.updatePartyLeader(party.idx, newLeader.userId)
+                if(party != null && target != null){
+                    partyDatabaseDao.updatePartyLeader(party.idx, target.userId)
                     memberDatabaseDao.updatePartyStateMember(member.userId, party.idx, time, party.partyPoints)
-                    memberDatabaseDao.updatePartyStateLeader(newLeader.userId, party.idx, 5 + party.partyPoints)
+                    memberDatabaseDao.updatePartyStateLeader(target.userId, party.idx, 5 + party.partyPoints)
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
@@ -264,12 +259,12 @@ class UseCaseParty(
                         )
                     )
 
-                    DelegateLeaderResult.DelegateLeaderSuccess(newLeader)
+                    PartyMemberEvent.Success(party, target)
                 }else{
-                    DelegateLeaderResult.DelegateLeaderFail
+                    PartyMemberEvent.Fail
                 }
             }else {
-                DelegateLeaderResult.DelegateLeaderFail
+                PartyMemberEvent.Fail
             }
         }
     }
@@ -331,34 +326,34 @@ class UseCaseParty(
     }
 
     // 가입 승인
-    suspend fun approveMemberRequest(member : MemberData, applicantId : Long) : PartyMemberEvent{
+    suspend fun approveMemberRequest(member : MemberData, targetId : Long) : PartyMemberEvent{
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getParty(member.partyId)
-                val applicant = memberDatabaseDao.getMember(applicantId).getOrNull(0)
+                val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
 
-                if (party != null && applicant != null &&
-                    applicant.partyState == PartyMemberState.Applicant && applicant.partyId == party.idx
+                if (party != null && target != null &&
+                    target.partyState == PartyMemberState.Applicant && target.partyId == party.idx
                 ) {
 
                     val newMemberCount = party.memberCount + 1
                     val newPartyPoints = 5L + newMemberCount
                     partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
                     partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
-                    memberDatabaseDao.updatePartyStateMember(applicant.userId, party.idx, time, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateMember(target.userId, party.idx, time, newPartyPoints)
                     memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
                             time = time,
                             partyId = party.idx,
-                            memberId = applicant.userId,
+                            memberId = target.userId,
                             logType = PartyLogType.Approval
                         )
                     )
 
-                    PartyMemberEvent.Success(party, applicant)
+                    PartyMemberEvent.Success(party, target)
                 }else{
                     PartyMemberEvent.Fail
                 }
@@ -369,28 +364,28 @@ class UseCaseParty(
     }
 
     // 가입 거절
-    suspend fun rejectMemberRequest(member : MemberData, applicantId : Long) : PartyMemberEvent{
+    suspend fun rejectMemberRequest(member : MemberData, targetId : Long) : PartyMemberEvent{
         return withContext(dispatcher) {
             if (member.partyId != 0L && member.partyState == PartyMemberState.PartyLeader) {
                 val time = System.currentTimeMillis()
                 val party = partyDatabaseDao.getParty(member.partyId)
-                val applicant = memberDatabaseDao.getMember(applicantId).getOrNull(0)
+                val target = memberDatabaseDao.getMember(targetId).getOrNull(0)
 
-                if (party != null && applicant != null &&
-                    applicant.partyState == PartyMemberState.Applicant && applicant.partyId == party.idx
+                if (party != null && target != null &&
+                    target.partyState == PartyMemberState.Applicant && target.partyId == party.idx
                 ) {
-                    memberDatabaseDao.updatePartyStateNone(applicant.userId)
+                    memberDatabaseDao.updatePartyStateNone(target.userId)
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
                             time = time,
                             partyId = party.idx,
-                            memberId = applicant.userId,
+                            memberId = target.userId,
                             logType = PartyLogType.Rejection
                         )
                     )
 
-                    PartyMemberEvent.Success(party, applicant)
+                    PartyMemberEvent.Success(party, target)
                 }else{
                     PartyMemberEvent.Fail
                 }
