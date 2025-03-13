@@ -112,6 +112,7 @@ class UseCaseParty(
                     partyDatabaseDao.updatePartyState(member.partyId, PartyState.Dissolution.name)
                     memberDatabaseDao.resetPartyMemberByDissolution(member.partyId)
                     partyDatabaseDao.deleteAllPartyRules(member.partyId)
+                    partyDatabaseDao.deleteParty(party.idx)
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(

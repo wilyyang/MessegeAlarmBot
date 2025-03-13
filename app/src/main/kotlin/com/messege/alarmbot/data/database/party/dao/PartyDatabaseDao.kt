@@ -43,6 +43,8 @@ interface PartyDatabaseDao {
     @Query("UPDATE PartyData SET description = :newDescription WHERE idx = :partyId")
     suspend fun updatePartyDescription(partyId: Long, newDescription: String)
 
+    @Query("DELETE FROM PartyData WHERE idx = :partyId")
+    suspend fun deleteParty(partyId: Long)
 
     // PartyRule
     @Insert(onConflict = OnConflictStrategy.REPLACE)

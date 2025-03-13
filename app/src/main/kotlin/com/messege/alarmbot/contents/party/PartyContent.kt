@@ -29,9 +29,12 @@ class PartyContent (
     override suspend fun request(message : Message) {
         if(message.type == ChatRoomType.GroupRoom1 && message is Message.Talk) {
             val member = memberDatabaseDao.getMember(message.userId).getOrNull(0)
-            if(member == null || Rank.getRankByName(member.rank).rank < 0){
-                commandChannel.send(Group1RoomTextResponse("랭크가 낮아서 기능을 사용할 수 없습니다."))
-            }else{
+            if(member != null) {
+                if(Rank.getRankByName(member.rank).rank < 0){
+                    commandChannel.send(Group1RoomTextResponse("랭크가 낮아서 기능을 사용할 수 없습니다."))
+                    return
+                }
+
                 when{
                     // Party
                     message.text.startsWith(".${PartyKeyword.PARTY_CREATE} ") -> {
