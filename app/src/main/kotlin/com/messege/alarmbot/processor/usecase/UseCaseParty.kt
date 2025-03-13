@@ -48,11 +48,6 @@ sealed class PartyRuleResult {
     data class PartyRuleSuccess(val partyName: String) : PartyRuleResult()
 }
 
-sealed class PartyEvent {
-    data object Fail : PartyEvent()
-    data class Success(val party: PartyData) : PartyEvent()
-}
-
 sealed class PartyMemberEvent {
     data object Fail : PartyMemberEvent()
     data class Success(val party: PartyData, val applicant: MemberData) : PartyMemberEvent()
@@ -64,6 +59,9 @@ class UseCaseParty(
     private val partyDatabaseDao: PartyDatabaseDao
 ) {
 
+    /**
+     * Party
+     */
     // 창당
     suspend fun createParty(member: MemberData, partyName: String): PartyCreateResult {
         return withContext(dispatcher) {
@@ -246,6 +244,9 @@ class UseCaseParty(
     }
 
 
+    /**
+     * Member
+     */
     // 위임 (리더 변경)
     suspend fun delegateLeader(member: MemberData, targetId: Long): PartyMemberEvent {
         return withContext(dispatcher) {
@@ -480,7 +481,7 @@ class UseCaseParty(
                         )
                     )
 
-                    PartyMemberEvent.Success(party, member)
+                    PartyMemberEvent.Success(party, target)
                 } else {
                     PartyMemberEvent.Fail
                 }
