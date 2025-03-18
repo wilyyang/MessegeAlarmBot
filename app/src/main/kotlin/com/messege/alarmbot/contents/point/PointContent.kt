@@ -2,6 +2,7 @@ package com.messege.alarmbot.contents.point
 
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.processor.model.Command
@@ -24,7 +25,8 @@ class PointContent (
                 ".랭킹" -> {
                     val (likes, dislikes) = useCasePoint.getTop10MembersByLikesAndDislikes()
 
-                    var responseText = "[좋아요! 랭킹]\n"
+                    var responseText = "\uD83C\uDFC6 유저 전체 랭킹!\n$FOLDING_TEXT\n"
+                    responseText += "[좋아요! 랭킹]\n"
                     responseText += likes.mapIndexed { index, it ->
                         if(it.likes > 0){
                             "${index + 1}. ${it.latestName} : ${it.likes}\n"
@@ -45,7 +47,8 @@ class PointContent (
                 ".랭킹 주간" -> {
                     val (likesWeekly, dislikesWeekly) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
 
-                    var responseText = "[주간 좋아요! 랭킹]\n"
+                    var responseText = "\uD83C\uDFC6 유저 주간 랭킹!\n$FOLDING_TEXT\n"
+                    responseText += "[주간 좋아요! 랭킹]\n"
                     responseText += likesWeekly.mapIndexed { index, it ->
                         if(it.likesWeekly > 0){
                             "${index + 1}. ${it.latestName} : ${it.likesWeekly}\n"

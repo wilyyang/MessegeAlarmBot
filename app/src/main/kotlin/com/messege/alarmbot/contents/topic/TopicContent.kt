@@ -2,6 +2,7 @@ package com.messege.alarmbot.contents.topic
 
 import com.messege.alarmbot.contents.BaseContent
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
@@ -65,8 +66,8 @@ class TopicContent(
                             val latestName = memberDatabaseDao.getMember(it.userKey).getOrNull(0)?.latestName?:"-"
                             val response = "$TOPIC_PREFIX${it.idx}. ${it.topic} \n- ${it.updateTime.toTimeFormatDate()} $latestName"
 
-                            var replyText = ""
                             val replyList = topicDatabaseDao.getSelectReplyList(topic.idx)
+                            var replyText = if(replyList.isNotEmpty()) FOLDING_TEXT else ""
                             for(reply in replyList){
                                 val replyUserName = memberDatabaseDao.getMember(reply.userKey).getOrNull(0)?.latestName ?: reply.userName
                                 replyText += "\nㄴ ${reply.reply} - $replyUserName"

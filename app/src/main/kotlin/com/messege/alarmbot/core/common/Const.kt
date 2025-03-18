@@ -12,3 +12,5 @@ const val DECRYPT_MEMBER_KEY = 421448547L
 
 const val KAKAO_PACKAGE_NAME = "com.kakao.talk"
 const val REPLY_ACTION_INDEX = 1
+
+val FOLDING_TEXT : String = "\u200B".repeat(500)

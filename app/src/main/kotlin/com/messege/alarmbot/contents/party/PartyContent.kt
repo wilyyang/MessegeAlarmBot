@@ -1,8 +1,8 @@
 package com.messege.alarmbot.contents.party
 
 import com.messege.alarmbot.contents.BaseContent
-import com.messege.alarmbot.contents.point.PartyKeyword
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.processor.model.Command
@@ -16,7 +16,6 @@ import com.messege.alarmbot.processor.usecase.PartyRenameResult
 import com.messege.alarmbot.processor.usecase.PartyRuleResult
 import com.messege.alarmbot.processor.usecase.UseCaseParty
 import com.messege.alarmbot.util.format.toTimeFormatDate
-import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.channels.Channel
 
 class PartyContent (
@@ -30,14 +29,11 @@ class PartyContent (
         if(message.type == ChatRoomType.GroupRoom1 && message is Message.Talk) {
             val member = memberDatabaseDao.getMember(message.userId).getOrNull(0)
             if(member != null) {
-                if(Rank.getRankByName(member.rank).rank < 0){
-                    commandChannel.send(Group1RoomTextResponse("랭크가 낮아서 기능을 사용할 수 없습니다."))
-                    return
-                }
-
                 when{
                     // Party
                     message.text.startsWith(".${PartyKeyword.PARTY_CREATE} ") -> {
+                        if(!rankCheckAndResponse(member.rank)) return
+
                         val args = message.text.split(" ", limit = 2)
                         if (args.size > 1) {
                             val partyName = args[1]
@@ -85,7 +81,7 @@ class PartyContent (
                                 "[${result.partyInfo.name} 정보]\n" +
                                         "- 창당일 : ${result.partyInfo.foundingTime.toTimeFormatDate()}\n" +
                                         "- 당대표 : ${result.partyLeader.latestName}\n" +
-                                        "- 당원수 : ${result.partyInfo.memberCount}명\n" +
+                                        "- 당원수 : ${result.partyInfo.memberCount}명$FOLDING_TEXT\n" +
                                         "- 당소개 : ${result.partyInfo.description}\n" +
                                         "- 당원 : $members"
 
@@ -195,7 +191,7 @@ class PartyContent (
                             val response = if(result == null){
                                 "$partyName 당을 찾을 수 없습니다."
                             }else {
-                                "[$partyName 당 규칙]\n" +
+                                "[$partyName 당 규칙]${FOLDING_TEXT}\n" +
                                 result.mapIndexed { index, it ->
                                     "${index + 1}. ${it.rule}"
                                 }.joinToString("\n")

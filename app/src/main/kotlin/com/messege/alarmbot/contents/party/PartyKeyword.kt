@@ -1,4 +1,4 @@
-package com.messege.alarmbot.contents.point
+package com.messege.alarmbot.contents.party
 
 object PartyKeyword {
     const val PARTY_CREATE = "창당"

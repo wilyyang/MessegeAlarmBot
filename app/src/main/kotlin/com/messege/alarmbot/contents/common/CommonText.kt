@@ -1,8 +1,10 @@
 package com.messege.alarmbot.contents.common
 
+import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.core.common.Rank
 
-const val COMMAND_HELP = "명령어 모음\n\n" +
+val COMMAND_HELP = "\uD83D\uDCA1 명령어 모음\n" +
+    "${FOLDING_TEXT}\n" +
     ".? 관리자 : 관리자용 명령어 확인\n" +
     ".? 정당 : 정당용 명령어 확인\n\n" +
     ".? 직업 : 직업표 확인\n\n" +
@@ -24,7 +26,8 @@ const val COMMAND_HELP = "명령어 모음\n\n" +
     ".삭제 4-1 : 주제의 1번째 답글 삭제 (관리자만)\n" +
     "(주제글에 답글) : 해당 주제글에 답글이 추가됨\n"
 
-const val ADMIN_COMMAND_HELP = "관리자 명령어 모음\n\n" +
+val ADMIN_COMMAND_HELP = "\uD83D\uDCA1 관리자 명령어 모음\n" +
+    "${FOLDING_TEXT}\n" +
     "[관리자]\n" +
     ".제재 @빵구 : 해당 유저에게 제재 1회 부여\n" +
     ".경고 @빵구 : 해당 유저에게 제재 2회 부여\n" +
@@ -36,7 +39,8 @@ const val ADMIN_COMMAND_HELP = "관리자 명령어 모음\n\n" +
     ".임명 @모순 : 수동으로 부방 임명\n"+
     ".해제 @모순 : 수동으로 부방 해제\n"
 
-fun rankHelp() = "<직업>\n\n" +
+fun rankHelp() = "\uD83D\uDCA1 직업\n" +
+        "${FOLDING_TEXT}\n" +
         "- 필요 포인트가 오르면 직업도 올라가요!\n" +
         " * 필요 포인트 = 좋아요 - 싫어요\n" +
         "- [티어]에 따라 할 수 있는 기능이 달라져요!\n" +
@@ -48,7 +52,8 @@ fun rankHelp() = "<직업>\n\n" +
     }
 
 
-const val PARTY_COMMAND_HELP = "정당 명령어 모음\n\n" +
+val PARTY_COMMAND_HELP = "\uD83D\uDCA1 정당 명령어 모음\n" +
+    "${FOLDING_TEXT}\n" +
     "[정당]\n" +
     ".창당 {이름} : 창당 (당이 없어야 가능)\n" +
     ".해산 : 당 해산 (당대표만 가능)\n" +
