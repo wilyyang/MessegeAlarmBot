@@ -1,4 +1,4 @@
-package com.messege.alarmbot.temp.mafia
+package com.messege.alarmbot.temp
 
 enum class Side {
     Citizen, Mafia, Fool

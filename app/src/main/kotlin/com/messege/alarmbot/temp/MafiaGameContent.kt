@@ -1,13 +1,9 @@
-package com.messege.alarmbot.temp.mafia
+package com.messege.alarmbot.temp
 
 import android.app.Person
 import com.messege.alarmbot.contents.TimeWork
 import com.messege.alarmbot.contents.Timer
 import com.messege.alarmbot.core.common.*
-import com.messege.alarmbot.temp.BaseContent
-import com.messege.alarmbot.temp.Command
-import com.messege.alarmbot.temp.GameChatTextResponse
-import com.messege.alarmbot.temp.MafiaText
 import com.messege.alarmbot.temp.MafiaText.ASSIGN_JOB_POLICE
 import com.messege.alarmbot.temp.MafiaText.ASSIGN_JOB_SHAMAN
 import com.messege.alarmbot.temp.MafiaText.ASSIGN_JOB_SOLDIER
@@ -24,14 +20,25 @@ import com.messege.alarmbot.temp.MafiaText.GAME_NOT_START_MORE_PLAYER
 import com.messege.alarmbot.temp.MafiaText.KILL_RESULT_NOT
 import com.messege.alarmbot.temp.MafiaText.MAGICIAN_GET_YOUR_JOB
 import com.messege.alarmbot.temp.MafiaText.VOTE_RESULT_NOT
-import com.messege.alarmbot.temp.UserTextResponse
-import com.messege.alarmbot.temp.arrayOfMafiaMissions
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+
+interface Command
+
+object None : Command
+data class GameChatTextResponse(val text: String) : Command
+data class UserTextResponse(val userKey: ChatRoomKey, val text: String) : Command
+
+interface BaseContent{
+    val commandChannel : Channel<Command>
+    val contentsName : String
+
+    suspend fun request(postTime : Long, chatRoomKey: ChatRoomKey, user : Person, text : String)
+}
 
 val GAME_KEY = ChatRoomKey(isGroupConversation = true, roomName = "임시", roomKey = "임시")
 
