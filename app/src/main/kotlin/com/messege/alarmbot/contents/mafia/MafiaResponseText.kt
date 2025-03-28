@@ -1,4 +1,4 @@
-package com.messege.alarmbot.temp
+package com.messege.alarmbot.contents.mafia
 
 val arrayOfMafiaMissions = arrayOf(
     "➊ 헛기침 3번, 한숨1번",

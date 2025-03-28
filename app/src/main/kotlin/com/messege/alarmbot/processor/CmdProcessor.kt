@@ -12,6 +12,7 @@ import com.messege.alarmbot.contents.common.CommonContent
 import com.messege.alarmbot.contents.party.PartyContent
 import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
+import com.messege.alarmbot.contents.mafia.MafiaGameContent
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.PartyMemberState
@@ -88,6 +89,10 @@ class CmdProcessor(
             commandChannel = commandChannel,
             memberDatabaseDao = memberDatabaseDao,
             useCaseParty = useCaseParty
+        ),
+        MafiaGameContent(
+            commandChannel = commandChannel,
+            scope = scope
         )
     )
 

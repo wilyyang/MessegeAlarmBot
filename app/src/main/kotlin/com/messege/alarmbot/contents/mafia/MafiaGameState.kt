@@ -1,5 +1,4 @@
-package com.messege.alarmbot.temp
-
+package com.messege.alarmbot.contents.mafia
 
 sealed class MafiaGameState{
     abstract val korName: String
@@ -138,7 +137,7 @@ sealed class MafiaGameState{
                     override val time: Int = 0
                 }
 
-                fun toKill() : MafiaTime.Kill{
+                fun toKill() : MafiaTime.Kill {
                     survivors.forEach {
                         it.reset()
                     }
@@ -213,7 +212,7 @@ sealed class MafiaGameState{
             ) : Progress() {
                 override val time: Int = 0
 
-                fun toTalk() : CitizenTime.Talk{
+                fun toTalk() : CitizenTime.Talk {
                     survivors.forEach {
                         it.reset()
                     }
