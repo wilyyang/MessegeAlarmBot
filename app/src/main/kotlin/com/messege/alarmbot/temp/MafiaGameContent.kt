@@ -4,6 +4,9 @@ import android.app.Person
 import com.messege.alarmbot.contents.TimeWork
 import com.messege.alarmbot.contents.Timer
 import com.messege.alarmbot.core.common.*
+import com.messege.alarmbot.processor.model.Command
+import com.messege.alarmbot.processor.model.Group2RoomTextResponse
+import com.messege.alarmbot.processor.model.IndividualRoomTextResponse
 import com.messege.alarmbot.temp.MafiaText.ASSIGN_JOB_POLICE
 import com.messege.alarmbot.temp.MafiaText.ASSIGN_JOB_SHAMAN
 import com.messege.alarmbot.temp.MafiaText.ASSIGN_JOB_SOLDIER
@@ -26,12 +29,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-
-interface Command
-
-object None : Command
-data class GameChatTextResponse(val text: String) : Command
-data class UserTextResponse(val userKey: ChatRoomKey, val text: String) : Command
 
 interface BaseContent{
     val commandChannel : Channel<Command>
@@ -105,15 +102,15 @@ class MafiaGameContent(
                             state.players.add(Player.None(key = metaData.hostKey, name = metaData.hostName))
                             _timerFlow.value = TimeWork(state.time){
                                 if(state.players.size < 4){
-                                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameEndWaitTimeOut(state.players.size)))
+                                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameEndWaitTimeOut(state.players.size)))
                                     _stateFlow.value = MafiaGameState.End()
                                 }else{
-                                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameWaitTimeOutGoToCheck(state.players)))
+                                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameWaitTimeOutGoToCheck(state.players)))
                                     _stateFlow.value = state.toCheck()
                                 }
                             }
                             commandChannel.send(
-                                GameChatTextResponse(
+                                Group2RoomTextResponse(
                                     text = MafiaText.hostStartGame(
                                         hostName = metaData.hostName
                                     )
@@ -125,16 +122,16 @@ class MafiaGameContent(
                             _timerFlow.value = TimeWork(state.time){
                                 val checkedPlayers = state.players.filter { it.isCheck }
                                 if(checkedPlayers.size < 4){
-                                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameEndCheckTimeOut(state.players.size)))
+                                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameEndCheckTimeOut(state.players.size)))
                                     _stateFlow.value = MafiaGameState.End()
                                 }else{
-                                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameCheckTimeOutGoToAssign(state.players)))
+                                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameCheckTimeOutGoToAssign(state.players)))
                                     _stateFlow.value = state.toAssignJob()
                                 }
                             }
 
                             commandChannel.send(
-                                GameChatTextResponse(
+                                Group2RoomTextResponse(
                                     text = MafiaText.checkPlayer(
                                         hostName = metaData.hostName,
                                         players = state.players
@@ -148,7 +145,7 @@ class MafiaGameContent(
                                 _stateFlow.value = state.toTalk()
                             }
 
-                            commandChannel.send(GameChatTextResponse(text = GAME_ASSIGN_JOB))
+                            commandChannel.send(Group2RoomTextResponse(text = GAME_ASSIGN_JOB))
                             state.assignJob()
                             state.assignedPlayers.firstOrNull{ it is Player.Assign.Agent}?.let { agent ->
                                 agentUserRoomKey = ChatRoomKey(isGroupConversation = false, roomName = agent.name, roomKey = agent.name)
@@ -158,7 +155,7 @@ class MafiaGameContent(
                                 metaData.allPlayers.add(player)
                                 delay(2000)
                                 commandChannel.send(
-                                    UserTextResponse(
+                                    IndividualRoomTextResponse(
                                         userKey = ChatRoomKey(
                                             isGroupConversation = false,
                                             player.name,
@@ -181,7 +178,7 @@ class MafiaGameContent(
                                 )
                             }
                             delay(2000)
-                            commandChannel.send(GameChatTextResponse(text = "마피아 미션은 이중에 하나입니다\n" + metaData.missions.joinToString("\n")))
+                            commandChannel.send(Group2RoomTextResponse(text = "마피아 미션은 이중에 하나입니다\n" + metaData.missions.joinToString("\n")))
                         }
                         is MafiaGameState.Play.Progress -> {
                             progressStateHandle(state)
@@ -201,7 +198,7 @@ class MafiaGameContent(
          * 게임 규칙
          */
         if(chatRoomKey == GAME_KEY && text == "$hostKeyword${contentsName}$questionGameRule") {
-            commandChannel.send(GameChatTextResponse(text = MafiaText.GAME_RULE))
+            commandChannel.send(Group2RoomTextResponse(text = MafiaText.GAME_RULE))
             return
         }
 
@@ -209,7 +206,7 @@ class MafiaGameContent(
          * 미션 모음
          */
         if(chatRoomKey == GAME_KEY && text == "$hostKeyword$mission") {
-            commandChannel.send(GameChatTextResponse(text = arrayOfMafiaMissions.joinToString("\n")))
+            commandChannel.send(Group2RoomTextResponse(text = arrayOfMafiaMissions.joinToString("\n")))
             return
         }
 
@@ -218,7 +215,7 @@ class MafiaGameContent(
          */
         if(chatRoomKey == GAME_KEY && text == hostKeyword + contentsName) {
             if(localState is MafiaGameState.Play){
-                commandChannel.send(GameChatTextResponse(MafiaText.GAME_ALREADY_START))
+                commandChannel.send(Group2RoomTextResponse(MafiaText.GAME_ALREADY_START))
             }else{
                 startGame(host = user)
             }
@@ -232,7 +229,7 @@ class MafiaGameContent(
             val currentSeconds = timer.getRemainingTime()
             if (localState.time != 0 && currentSeconds != 0) {
                 commandChannel.send(
-                    GameChatTextResponse(
+                    Group2RoomTextResponse(
                         text = MafiaText.gameRemainingTime(
                             state = localState.korName, total = localState.time, remain = currentSeconds
                         )
@@ -247,7 +244,7 @@ class MafiaGameContent(
          */
         if(chatRoomKey == GAME_KEY && text == participateGame && localState !is MafiaGameState.Play.Wait){
             commandChannel.send(
-                GameChatTextResponse(MafiaText.GAME_WAIT_END)
+                Group2RoomTextResponse(MafiaText.GAME_WAIT_END)
             )
             return
         }
@@ -264,7 +261,7 @@ class MafiaGameContent(
                         mafias.filter { it.name != chatUser.name }.forEach { mafia ->
                             delay(1000)
                             commandChannel.send(
-                                UserTextResponse(
+                                IndividualRoomTextResponse(
                                     userKey = ChatRoomKey(isGroupConversation = false, mafia.name, mafia.name),
                                     text = MafiaText.mafiaMessage(chatUser.name, text)
                                 )
@@ -273,7 +270,7 @@ class MafiaGameContent(
                         agentUserRoomKey?.let {
                             delay(1000)
                             commandChannel.send(
-                                UserTextResponse(
+                                IndividualRoomTextResponse(
                                     userKey = it,
                                     text = MafiaText.mafiaMessage("???", text)
                                 )
@@ -292,7 +289,7 @@ class MafiaGameContent(
                             delay(1000)
 
                             commandChannel.send(
-                                UserTextResponse(
+                                IndividualRoomTextResponse(
                                     userKey = chatRoomKey,
                                     text = MafiaText.doctorMessage(chatUser.name, text)
                                 )
@@ -312,7 +309,7 @@ class MafiaGameContent(
                             delay(1000)
 
                             commandChannel.send(
-                                UserTextResponse(
+                                IndividualRoomTextResponse(
                                     userKey = chatRoomKey,
                                     text = MafiaText.bodyguardMessage(chatUser.name, text)
                                 )
@@ -330,7 +327,7 @@ class MafiaGameContent(
          */
         if(chatRoomKey == GAME_KEY && text == "$hostKeyword${contentsName}$gameEndText" && "${user.key}" == metaData.hostKey) {
             if(localState is MafiaGameState.Play){
-                commandChannel.send(GameChatTextResponse(MafiaText.GAME_END_COMMAND))
+                commandChannel.send(Group2RoomTextResponse(MafiaText.GAME_END_COMMAND))
                 _stateFlow.value = MafiaGameState.End()
             }
             return
@@ -348,7 +345,7 @@ class MafiaGameContent(
                             if(isNewUser && players.size < 8){
                                 players.add(Player.None(key = "${user.key}", name = "${user.name}"))
                                 commandChannel.send(
-                                    GameChatTextResponse(
+                                    Group2RoomTextResponse(
                                         text = MafiaText.userInviteGame(
                                             userName = "${user.name}",
                                             players = players
@@ -362,7 +359,7 @@ class MafiaGameContent(
                         }
                     }else if(text == "$hostKeyword$participateGame$gameEndText" && "${user.key}" == metaData.hostKey){
                         if(localState.players.size < 4){
-                            commandChannel.send(GameChatTextResponse(GAME_NOT_START_MORE_PLAYER))
+                            commandChannel.send(Group2RoomTextResponse(GAME_NOT_START_MORE_PLAYER))
                         }else{
                             _stateFlow.value = localState.toCheck()
                         }
@@ -378,7 +375,7 @@ class MafiaGameContent(
                                 if(!player.isCheck){
                                     player.isCheck = true
 
-                                    commandChannel.send(GameChatTextResponse(MafiaText.userCheckGame(player.name)))
+                                    commandChannel.send(Group2RoomTextResponse(MafiaText.userCheckGame(player.name)))
 
                                     val checkedSize = players.count { it.isCheck }
                                     if(checkedSize == players.size){
@@ -409,7 +406,7 @@ class MafiaGameContent(
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVote()
                 }
-                commandChannel.send(GameChatTextResponse(text = MafiaText.gameStateTalk(state.time)))
+                commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameStateTalk(state.time)))
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.Vote -> {
@@ -419,9 +416,9 @@ class MafiaGameContent(
                 }
 
                 _alarmTimerFlow.value = TimeWork(state.time - 10){
-                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameVoteCompleteSoon()))
+                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameVoteCompleteSoon()))
                 }
-                commandChannel.send(GameChatTextResponse(text = MafiaText.gameStateVote(state.time)))
+                commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameStateVote(state.time)))
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.VoteComplete -> {
@@ -442,12 +439,12 @@ class MafiaGameContent(
                     }
 
                     if(vote == null){
-                        commandChannel.send(GameChatTextResponse(VOTE_RESULT_NOT))
+                        commandChannel.send(Group2RoomTextResponse(VOTE_RESULT_NOT))
                         _stateFlow.value = state.toKill()
                     }else{
                         val votedMan = state.survivors.firstOrNull{it.name == vote.first}
                         if(votedMan == null){
-                            commandChannel.send(GameChatTextResponse(VOTE_RESULT_NOT))
+                            commandChannel.send(Group2RoomTextResponse(VOTE_RESULT_NOT))
                             _stateFlow.value = state.toKill()
                         }else{
                             _stateFlow.value = state.toDetermine(votedMan)
@@ -463,19 +460,19 @@ class MafiaGameContent(
                 if (bodyguard != null && bodyguard is Player.Assign.Bodyguard
                     && bodyguard.name != state.votedMan.name && bodyguard.guardTarget == state.votedMan.name)
                 {
-                    commandChannel.send(GameChatTextResponse(VOTE_RESULT_NOT))
+                    commandChannel.send(Group2RoomTextResponse(VOTE_RESULT_NOT))
                     _stateFlow.value = state.toKill()
                     return
                 }
 
                 state.votedMan.isSurvive = false
                 state.survivors.removeIf { it.name == state.votedMan.name }
-                commandChannel.send(GameChatTextResponse(MafiaText.voteKillUser(state.votedMan.name)))
+                commandChannel.send(Group2RoomTextResponse(MafiaText.voteKillUser(state.votedMan.name)))
                 delay(2000)
 
                 when(state.votedMan){
                     is Player.Assign.Fool -> {
-                        commandChannel.send(GameChatTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
+                        commandChannel.send(Group2RoomTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
                         _stateFlow.value = MafiaGameState.End()
                     }
 
@@ -492,7 +489,7 @@ class MafiaGameContent(
                         val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
 
                         if(mafiaCount == citizenCount){
-                            commandChannel.send(GameChatTextResponse(MafiaText.winMafia(state.votedMan.name, metaData.allPlayers)))
+                            commandChannel.send(Group2RoomTextResponse(MafiaText.winMafia(state.votedMan.name, metaData.allPlayers)))
                             _stateFlow.value = MafiaGameState.End()
                         }else{
                             _stateFlow.value = state.toKill()
@@ -502,7 +499,7 @@ class MafiaGameContent(
                     is Player.Assign.Mafia -> {
                         val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
                         if(mafiaCount == 0){
-                            commandChannel.send(GameChatTextResponse(MafiaText.winCitizen(state.votedMan.name, metaData.allPlayers)))
+                            commandChannel.send(Group2RoomTextResponse(MafiaText.winCitizen(state.votedMan.name, metaData.allPlayers)))
                             _stateFlow.value = MafiaGameState.End()
                         }else{
                             _stateFlow.value = state.toKill()
@@ -518,9 +515,9 @@ class MafiaGameContent(
                 }
 
                 _alarmTimerFlow.value = TimeWork(state.time - 10){
-                    commandChannel.send(GameChatTextResponse(text = MafiaText.gameKillCompleteSoon()))
+                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameKillCompleteSoon()))
                 }
-                commandChannel.send(GameChatTextResponse(text = MafiaText.gameStateKill(state.time)))
+                commandChannel.send(Group2RoomTextResponse(text = MafiaText.gameStateKill(state.time)))
             }
 
             is MafiaGameState.Play.Progress.MafiaTime.KillComplete -> {
@@ -540,12 +537,12 @@ class MafiaGameContent(
                     }
 
                     if(target == null){
-                        commandChannel.send(GameChatTextResponse(KILL_RESULT_NOT))
+                        commandChannel.send(Group2RoomTextResponse(KILL_RESULT_NOT))
                         _stateFlow.value = state.toInvestigateTime()
                     }else{
                         val targetedMan = state.survivors.firstOrNull{it.name == target.first}
                         if(targetedMan == null){
-                            commandChannel.send(GameChatTextResponse(KILL_RESULT_NOT))
+                            commandChannel.send(Group2RoomTextResponse(KILL_RESULT_NOT))
                             _stateFlow.value = state.toInvestigateTime()
                         }else{
                             _stateFlow.value = state.toDetermine(targetedMan)
@@ -562,14 +559,14 @@ class MafiaGameContent(
                 if(doctor != null && doctor is Player.Assign.Doctor
                     && doctor.name != state.targetedMan.name && doctor.saveTarget == state.targetedMan.name)
                 {
-                    commandChannel.send(GameChatTextResponse(KILL_RESULT_NOT))
+                    commandChannel.send(Group2RoomTextResponse(KILL_RESULT_NOT))
                     _stateFlow.value = state.toInvestigateTime()
                     return
                 }
 
                 state.targetedMan.isSurvive = false
                 state.survivors.removeIf { it.name == state.targetedMan.name }
-                commandChannel.send(GameChatTextResponse(MafiaText.mafiaKillUser(state.targetedMan.name)))
+                commandChannel.send(Group2RoomTextResponse(MafiaText.mafiaKillUser(state.targetedMan.name)))
                 delay(2000)
 
                 if(state.targetedMan is Player.Assign.Soldier){
@@ -578,7 +575,7 @@ class MafiaGameContent(
                         state.survivors.removeIf { it.name == soldierTarget.name }
 
                         commandChannel.send(
-                            GameChatTextResponse(
+                            Group2RoomTextResponse(
                                 MafiaText.soldierKilledMessage(
                                     name = soldierTarget.name,
                                     soldier = state.targetedMan.name
@@ -593,10 +590,10 @@ class MafiaGameContent(
                 val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
 
                 if(mafiaCount == 0){
-                    commandChannel.send(GameChatTextResponse(MafiaText.winCitizenWithSoldier(state.targetedMan.name, metaData.allPlayers)))
+                    commandChannel.send(Group2RoomTextResponse(MafiaText.winCitizenWithSoldier(state.targetedMan.name, metaData.allPlayers)))
                     _stateFlow.value = MafiaGameState.End()
                 }else if(mafiaCount == citizenCount){
-                    commandChannel.send(GameChatTextResponse(MafiaText.winMafia(state.targetedMan.name, metaData.allPlayers)))
+                    commandChannel.send(Group2RoomTextResponse(MafiaText.winMafia(state.targetedMan.name, metaData.allPlayers)))
                     _stateFlow.value = MafiaGameState.End()
                 }else{
                     _stateFlow.value = state.toInvestigateTime()
@@ -639,7 +636,7 @@ class MafiaGameContent(
                                 metaData.allPlayers.add(newJob)
                                 state.survivors.add(newJob)
 
-                                commandChannel.send(GameChatTextResponse(MafiaText.magicianKillMafia(targetUser.name)))
+                                commandChannel.send(Group2RoomTextResponse(MafiaText.magicianKillMafia(targetUser.name)))
                             }
                             is Player.Assign -> {
                                 metaData.allPlayers.removeIf { targetUser.name == it.name }
@@ -664,7 +661,7 @@ class MafiaGameContent(
                                 }
 
                                 commandChannel.send(
-                                    UserTextResponse(
+                                    IndividualRoomTextResponse(
                                         userKey = ChatRoomKey(isGroupConversation = false, targetUser.name, targetUser.name),
                                         text = MAGICIAN_GET_YOUR_JOB
                                     )
@@ -676,7 +673,7 @@ class MafiaGameContent(
                         delay(1000)
                         if(targetUser is Player.Assign){
                             commandChannel.send(
-                                UserTextResponse(
+                                IndividualRoomTextResponse(
                                     userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
                                     text = MafiaText.magicianHaveJob(targetUser.job.korName)
                                 )
@@ -702,7 +699,7 @@ class MafiaGameContent(
                 val isTargetSurviveAndNotUser = state.survivors.firstOrNull { it.name != userName && it.name == target} != null
                 if(isMainChat && surviveUser != null && isTargetSurviveAndNotUser){
                     surviveUser.votedName = target
-                    commandChannel.send(GameChatTextResponse(text = MafiaText.userVote(userName = userName, voteName = target)))
+                    commandChannel.send(Group2RoomTextResponse(text = MafiaText.userVote(userName = userName, voteName = target)))
 
                     val voteCount = state.survivors.count { it.votedName.isNotBlank() }
                     if(voteCount == state.survivors.size){
@@ -728,7 +725,7 @@ class MafiaGameContent(
                                 currentUser.targetedName = target
 
                                 commandChannel.send(
-                                    UserTextResponse(
+                                    IndividualRoomTextResponse(
                                         userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
                                         text = "${currentUser.name}님이 ${target}을 지목했습니다."
                                     )
@@ -742,7 +739,7 @@ class MafiaGameContent(
                                 if(targetUser != null){
                                     currentUser.isInvestigate = true
                                     commandChannel.send(
-                                        UserTextResponse(
+                                        IndividualRoomTextResponse(
                                             userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
                                             text = MafiaText.policeMessage(name = target, isMafia = targetUser is Player.Assign.Mafia)
                                         )
@@ -757,7 +754,7 @@ class MafiaGameContent(
                                 if(targetUser != null && targetUser is Player.Assign && !targetUser.isSurvive){
                                     currentUser.isPossess = true
                                     commandChannel.send(
-                                        UserTextResponse(
+                                        IndividualRoomTextResponse(
                                             userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
                                             text = MafiaText.shamanMessage(name = target, job = targetUser.job.korName)
                                         )
@@ -790,7 +787,7 @@ class MafiaGameContent(
     private suspend fun endGame() {
         timer.stop()
         agentUserRoomKey = null
-        commandChannel.send(GameChatTextResponse(text = "미션은 ${metaData.mission} 입니다."))
+        commandChannel.send(Group2RoomTextResponse(text = "미션은 ${metaData.mission} 입니다."))
         metaData = MafiaPlayMetaData()
     }
 }
