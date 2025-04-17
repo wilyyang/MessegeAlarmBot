@@ -66,6 +66,8 @@ class CmdProcessor(
     private val useCasePoint = UseCasePoint(memberDatabaseDao = memberDatabaseDao)
     private val useCaseParty = UseCaseParty(partyDatabaseDao = partyDatabaseDao, memberDatabaseDao = memberDatabaseDao)
 
+    private lateinit var chatMembersObserver : ChatMembersObserver
+
     private val commonContent : CommonContent = CommonContent(
         commandChannel = commandChannel,
         memberDatabaseDao = memberDatabaseDao,
@@ -98,7 +100,7 @@ class CmdProcessor(
     init{
         scope.launch {
             // Member Update
-            val chatMembersObserver = ChatMembersObserver()
+            chatMembersObserver = ChatMembersObserver()
 
             chatMembersObserver.observeChatMembers().collect { members ->
                 val savedMap = memberDatabaseDao.getMembersAll().associateBy { it.userId }
@@ -213,19 +215,24 @@ class CmdProcessor(
     }
 
     fun deliverNotification(chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
-        if(!chatRoomKey.isGroupConversation){
-            userChatRoomMap[chatRoomKey] = action
-        }
-        if(chatRoomKey.roomKey.toLong() == ChatRoomType.GroupRoom1.roomKey){
+        var isCheckedRoom = false
+        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.GroupRoom1.roomKey){
+            isCheckedRoom = true
             groupRoom1OpenChatRoomAction = action
         }
 
-        if(chatRoomKey.roomKey.toLong() == ChatRoomType.GroupRoom2.roomKey){
+        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.GroupRoom2.roomKey){
+            isCheckedRoom = true
             groupRoom2OpenChatRoomAction = action
         }
 
-        if(chatRoomKey.roomKey.toLong() == ChatRoomType.AdminRoom.roomKey){
+        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.AdminRoom.roomKey){
+            isCheckedRoom = true
             adminOpenChatRoomAction = action
+        }
+
+        if(!isCheckedRoom){
+            userChatRoomMap[chatRoomKey] = action
         }
     }
 

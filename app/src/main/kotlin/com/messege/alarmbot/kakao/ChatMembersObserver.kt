@@ -131,4 +131,19 @@ class ChatMembersObserver : CoroutineScope {
             enc = getInt(columnIndex.enc),
         )
     }
+
+    suspend fun getChatMember(userId: Long) : ChatMember? {
+        return database.rawQuery(
+            "SELECT * FROM open_chat_member WHERE involved_chat_id = ${ChatRoomType.GroupRoom1.roomKey} AND user_id = ${userId}",
+            null
+        ).use { cursor ->
+            if(cursor.moveToNext()){
+                val mem = cursor.getChatMember()
+                val decryptMem = mem.copy(
+                    nickName = KakaoDecrypt.decrypt(userId = DECRYPT_MEMBER_KEY, encType = mem.enc, b64Ciphertext = mem.nickName)
+                )
+                decryptMem
+            } else null
+        }
+    }
 }
