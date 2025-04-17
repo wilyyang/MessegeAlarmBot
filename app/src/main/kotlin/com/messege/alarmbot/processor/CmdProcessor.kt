@@ -17,7 +17,6 @@ import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
-import com.messege.alarmbot.core.common.SUPER_ADMIN_AUTOJU
 import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
 import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
 import com.messege.alarmbot.core.common.inNotTalkType
@@ -191,7 +190,7 @@ class CmdProcessor(
                         }
                     }
                     is Message.Talk -> {
-                        Logger.d("[message.talk][${message.type.roomKey}] ${message.userName} ${message.text}")
+                        Logger.d("[message.talk][${message.type.roomKey}][${message.userId}] ${message.userName} ${message.text}")
                         memberDatabaseDao.incrementTalkCount(message.userId)
                     }
                     else -> {}
@@ -327,7 +326,7 @@ class CmdProcessor(
                 createAt = System.currentTimeMillis(),
                 profileType = talkMember.type,
                 latestName = talkMember.nickName,
-                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME || talkMember.userId == SUPER_ADMIN_AUTOJU,
+                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME,
                 isAdmin = false,
                 chatProfileCount = if(isTalkAvailable) 1 else 0,
                 talkCount = 0,
@@ -341,7 +340,7 @@ class CmdProcessor(
                 dislikesWeekly = 0,
                 giftPoints = 10,
                 resetPoints = 10,
-                rank = if (talkMember.userId == SUPER_ADMIN_ME || talkMember.userId == SUPER_ADMIN_AUTOJU) {
+                rank = if (talkMember.userId == SUPER_ADMIN_ME) {
                     Rank.President.name
                 } else {
                     Rank.Unemployed.name

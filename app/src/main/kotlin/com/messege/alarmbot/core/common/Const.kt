@@ -1,7 +1,6 @@
 package com.messege.alarmbot.core.common
 
-const val SUPER_ADMIN_ME = 7140031484873811419L
-const val SUPER_ADMIN_AUTOJU = 6745021552256959842L
+const val SUPER_ADMIN_ME = 4854550234324234448
 const val TEMP_PROFILE_TYPE = -1
 const val NOT_TALK_PROFILE_TYPE_1 = 1
 const val NOT_TALK_PROFILE_TYPE_2 = 2

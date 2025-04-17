@@ -29,6 +29,9 @@ interface MemberDatabaseDao {
     @Query("UPDATE MemberData SET latestName = :latestName WHERE userId = :userId")
     suspend fun updateLatestName(userId: Long, latestName: String)
 
+    @Query("UPDATE MemberData SET isSuperAdmin = :isSuperAdmin WHERE userId = :userId")
+    suspend fun updateSuperAdmin(userId: Long, isSuperAdmin: Boolean)
+
     @Query("UPDATE MemberData SET isAdmin = :isAdmin WHERE userId = :userId")
     suspend fun updateAdmin(userId: Long, isAdmin: Boolean)
 

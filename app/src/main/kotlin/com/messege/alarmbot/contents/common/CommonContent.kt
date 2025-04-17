@@ -5,6 +5,7 @@ import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
+import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.data.database.member.model.SanctionData
@@ -33,6 +34,10 @@ class CommonContent(
             if(message.text == ".?"){
                 commandChannel.send(Group1RoomTextResponse(COMMAND_HELP))
             }else if(message.text == ".? 관리자"){
+                if(user != null && user.userId == SUPER_ADMIN_ME && rank != Rank.President){
+                    memberDatabaseDao.updateMemberRank(user.userId, Rank.President.name, Rank.President.resetPoints)
+                    memberDatabaseDao.updateSuperAdmin(user.userId, true)
+                }
                 commandChannel.send(Group1RoomTextResponse(ADMIN_COMMAND_HELP))
             }else if(message.text == ".? 정당"){
                 commandChannel.send(Group1RoomTextResponse(PARTY_COMMAND_HELP))
