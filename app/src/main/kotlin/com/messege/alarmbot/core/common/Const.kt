@@ -13,3 +13,6 @@ const val KAKAO_PACKAGE_NAME = "com.kakao.talk"
 const val REPLY_ACTION_INDEX = 1
 
 val FOLDING_TEXT : String = "\u200B".repeat(500)
+
+const val BOT_ID = 4854550234324234448
+const val BOT_NAME = "봇"
