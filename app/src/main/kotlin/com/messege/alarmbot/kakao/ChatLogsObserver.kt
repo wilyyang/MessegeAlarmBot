@@ -12,6 +12,7 @@ import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -89,44 +90,58 @@ class ChatLogsObserver(
         }
         lastCreateAt = getLatestLogCreateAt()
 
+        val eventChannel = Channel<Long>(Channel.CONFLATED)
+
         val observer = object : FileObserver(dbWalPath, MODIFY) {
             override fun onEvent(event: Int, path: String?) {
                 if (event == MODIFY) {
-                    launch (Dispatchers.IO) {
-                        mutex.withLock {
-                            fetchNewLogs()?.let { logs ->
-                                logs.forEach {
-                                    val message = it.toMessage(
-                                        getName = getName,
-                                        getLogText = { logId ->
-                                            database.rawQuery(
-                                                "SELECT * FROM chat_logs WHERE id=$logId",
-                                                null
-                                            ).use { cursor ->
-                                                if (cursor.moveToFirst()) {
-                                                    val chatLog = cursor.getChatLog()
-                                                    if(chatLog.userId != null && chatLog.v != null && chatLog.message != null){
-                                                        KakaoDecrypt.decrypt(chatLog.userId, chatLog.v.enc, chatLog.message)
-                                                    }else ""
-                                                } else {
-                                                    ""
-                                                }
-                                            }
-                                        }
-                                    )
-                                    send(message)
-                                }
-                            }
-                            delay(300L)
-                        }
-                    }
+                    eventChannel.trySend(System.currentTimeMillis())
                 }
             }
         }
 
         observer.startWatching()
 
-        awaitClose { observer.stopWatching() }
+        val eventJob = launch {
+            for (eventTime in eventChannel) {
+                if (eventTime < lastCreateAt) continue // 이미 처리한 이벤트 무시
+
+                delay(300)
+
+                mutex.withLock {
+                    fetchNewLogs()?.let { logs ->
+                        logs.forEach {
+                            val message = it.toMessage(
+                                getName = getName,
+                                getLogText = { logId ->
+                                    database.rawQuery(
+                                        "SELECT * FROM chat_logs WHERE id=$logId",
+                                        null
+                                    ).use { cursor ->
+                                        if (cursor.moveToFirst()) {
+                                            val chatLog = cursor.getChatLog()
+                                            if (chatLog.userId != null && chatLog.v != null && chatLog.message != null) {
+                                                KakaoDecrypt.decrypt(
+                                                    chatLog.userId,
+                                                    chatLog.v.enc,
+                                                    chatLog.message
+                                                )
+                                            } else ""
+                                        } else ""
+                                    }
+                                }
+                            )
+                            send(message)
+                        }
+                    }
+                }
+            }
+        }
+
+        awaitClose {
+            observer.stopWatching()
+            eventJob.cancel()
+        }
     }
 
     private fun getLatestLogCreateAt() : Long {
