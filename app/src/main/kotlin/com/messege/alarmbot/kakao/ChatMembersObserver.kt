@@ -10,6 +10,7 @@ import com.messege.alarmbot.kakao.model.ChatMember
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -77,31 +78,40 @@ class ChatMembersObserver : CoroutineScope {
     fun observeChatMembers(): Flow<List<ChatMember>> = channelFlow  {
         if (!isObserving.compareAndSet(false, true)) return@channelFlow
         if (!dbFile.exists()) {
-            send(listOf())
+            send(emptyList())
             return@channelFlow
         }
 
         val initMembers = getGroupMembers(ChatRoomType.GroupRoom1)
         send(initMembers)
+
+        val eventChannel = Channel<Unit>(Channel.CONFLATED)
+
         val observer = object : FileObserver(dbWalPath, MODIFY) {
             override fun onEvent(event: Int, path: String?) {
                 if (event == MODIFY) {
-                    latestJob.get()?.cancel()
-                    val job = scope.launch (Dispatchers.IO) {
-                        delay(100)
-                        mutex.withLock {
-                            val members = getGroupMembers(ChatRoomType.GroupRoom1)
-                            send(members)
-                        }
-                    }
-                    latestJob.set(job)
+                    eventChannel.trySend(Unit)
                 }
             }
         }
 
         observer.startWatching()
 
-        awaitClose { observer.stopWatching() }
+        val eventJob = launch {
+            for (event in eventChannel) {
+                delay(300)
+
+                mutex.withLock {
+                    val members = getGroupMembers(ChatRoomType.GroupRoom1)
+                    send(members)
+                }
+            }
+        }
+
+        awaitClose {
+            observer.stopWatching()
+            eventJob.cancel()
+        }
     }
 
     private fun getGroupMembers(roomType : ChatRoomType): List<ChatMember> {
