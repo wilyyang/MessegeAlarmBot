@@ -189,7 +189,7 @@ class MafiaGameContent(
     override suspend fun request(message : Message) {
         if(message is Message.Talk){
             request(
-                chatRoomKey = if(message.type is ChatRoomType.GroupRoom2){
+                chatRoomKey = if(message.type.roomKey == ChatRoomType.GroupRoom2.roomKey){
                     GAME_KEY
                 }else{
                     ChatRoomKey(

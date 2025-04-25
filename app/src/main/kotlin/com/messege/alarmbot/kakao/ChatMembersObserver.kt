@@ -147,7 +147,7 @@ class ChatMembersObserver : CoroutineScope {
 
     suspend fun getChatMember(userId: Long) : ChatMember? {
         return database.rawQuery(
-            "SELECT * FROM open_chat_member WHERE involved_chat_id = ${ChatRoomType.GroupRoom1.roomKey} AND user_id = ${userId}",
+            "SELECT * FROM open_chat_member WHERE user_id = $userId",
             null
         ).use { cursor ->
             if(cursor.moveToFirst()){

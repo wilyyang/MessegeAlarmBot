@@ -130,7 +130,9 @@ class CmdProcessor(
             // Message Receive
             val chatLogsObserver = ChatLogsObserver(
                 getName = {
-                    memberDatabaseDao.getMemberName(it).getOrNull(0)?:""
+                    memberDatabaseDao.getMemberName(it).getOrNull(0)
+                        ?:chatMembersObserver.getChatMember(it)?.nickName
+                        ?:"알수없음"
                 }
             )
 
