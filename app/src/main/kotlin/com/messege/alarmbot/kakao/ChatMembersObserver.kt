@@ -109,13 +109,16 @@ class ChatMembersObserver : CoroutineScope {
         database.rawQuery(
             "SELECT * FROM open_chat_member WHERE involved_chat_id = ${roomType.roomKey}",
             null
-        )?.use { cursor ->
-            while (cursor.moveToNext()) {
-                val mem = cursor.getChatMember()
-                val decryptMem = mem.copy(
-                    nickName = KakaoDecrypt.decrypt(userId = DECRYPT_MEMBER_KEY, encType = mem.enc, b64Ciphertext = mem.nickName)
-                )
-                members.add(decryptMem)
+        ).use { cursor ->
+
+            if(cursor.moveToFirst()){
+                do {
+                    val mem = cursor.getChatMember()
+                    val decryptMem = mem.copy(
+                        nickName = KakaoDecrypt.decrypt(userId = DECRYPT_MEMBER_KEY, encType = mem.enc, b64Ciphertext = mem.nickName)
+                    )
+                    members.add(decryptMem)
+                }while (cursor.moveToNext())
             }
         }
         return members
@@ -137,7 +140,7 @@ class ChatMembersObserver : CoroutineScope {
             "SELECT * FROM open_chat_member WHERE involved_chat_id = ${ChatRoomType.GroupRoom1.roomKey} AND user_id = ${userId}",
             null
         ).use { cursor ->
-            if(cursor.moveToNext()){
+            if(cursor.moveToFirst()){
                 val mem = cursor.getChatMember()
                 val decryptMem = mem.copy(
                     nickName = KakaoDecrypt.decrypt(userId = DECRYPT_MEMBER_KEY, encType = mem.enc, b64Ciphertext = mem.nickName)

@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
@@ -101,7 +102,7 @@ class ChatLogsObserver(
                                             database.rawQuery(
                                                 "SELECT * FROM chat_logs WHERE id=$logId",
                                                 null
-                                            )?.use { cursor ->
+                                            ).use { cursor ->
                                                 if (cursor.moveToFirst()) {
                                                     val chatLog = cursor.getChatLog()
                                                     if(chatLog.userId != null && chatLog.v != null && chatLog.message != null){
@@ -110,12 +111,13 @@ class ChatLogsObserver(
                                                 } else {
                                                     ""
                                                 }
-                                            }?:""
+                                            }
                                         }
                                     )
                                     send(message)
                                 }
                             }
+                            delay(300L)
                         }
                     }
                 }
@@ -131,13 +133,13 @@ class ChatLogsObserver(
         return database.rawQuery(
             "SELECT created_at FROM chat_logs ORDER BY created_at DESC LIMIT 1",
             null
-        )?.use { cursor ->
+        ).use { cursor ->
             if (cursor.moveToFirst()) {
                 cursor.getLong(cursor.getColumnIndexOrThrow("created_at"))
             } else {
                 INIT_CREATED_AT
             }
-        } ?: INIT_CREATED_AT
+        }
     }
 
 
@@ -145,27 +147,29 @@ class ChatLogsObserver(
         return database.rawQuery(
             "SELECT * FROM chat_logs WHERE created_at > ? ORDER BY created_at ASC",
             arrayOf(lastCreateAt.toString())
-        )?.use { cursor ->
+        ).use { cursor ->
             val logs = mutableListOf<ChatLog>()
 
-            while (cursor.moveToNext()) {
-                val chatLog = cursor.getChatLog()
-                chatLog.takeIf {
-                    it.type != null && it.createdAt != null && it.v?.enc != null && it.userId != null
-                            && it.message != null && it.message.length < MESSAGE_LENGTH_LIMIT
-                }?.run {
-                    try {
-                        val decryptMessage = KakaoDecrypt.decrypt(userId!!, v!!.enc, message!!)
-                        val decryptAttachment = if(!attachment.isNullOrBlank() && attachment != "{}"){
-                            KakaoDecrypt.decrypt(userId, v.enc, attachment)
-                        } else null
+            if(cursor.moveToFirst()){
+                do {
+                    val chatLog = cursor.getChatLog()
+                    chatLog.takeIf {
+                        it.type != null && it.createdAt != null && it.v?.enc != null && it.userId != null
+                                && it.message != null && it.message.length < MESSAGE_LENGTH_LIMIT
+                    }?.run {
+                        try {
+                            val decryptMessage = KakaoDecrypt.decrypt(userId!!, v!!.enc, message!!)
+                            val decryptAttachment = if(!attachment.isNullOrBlank() && attachment != "{}"){
+                                KakaoDecrypt.decrypt(userId, v.enc, attachment)
+                            } else null
 
-                        logs.add(copy(message = decryptMessage, attachment = decryptAttachment))
-                    }catch (e : Exception){
-                        Logger.e("[error] decrypt error : ${e.message}")
+                            logs.add(copy(message = decryptMessage, attachment = decryptAttachment))
+                        }catch (e : Exception){
+                            Logger.e("[error] decrypt error : ${e.message}")
+                        }
+                        lastCreateAt = this.createdAt!!
                     }
-                    lastCreateAt = this.createdAt!!
-                }
+                }while (cursor.moveToNext())
             }
             logs
         }
