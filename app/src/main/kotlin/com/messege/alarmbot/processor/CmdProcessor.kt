@@ -13,8 +13,6 @@ import com.messege.alarmbot.contents.party.PartyContent
 import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
-import com.messege.alarmbot.core.common.BOT_ID
-import com.messege.alarmbot.core.common.BOT_NAME
 import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.PartyMemberState
@@ -49,7 +47,6 @@ import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 
 class CmdProcessor(
     private val applicationContext: Context,
@@ -99,13 +96,6 @@ class CmdProcessor(
             scope = scope
         )
     )
-
-    /**
-     * Preview
-     */
-    private val commandQueue = mutableListOf<Command>()
-    private var pendingCommand: Command? = null
-    private val botResponseChannel = Channel<Message.Talk>(Channel.UNLIMITED)
 
     init{
         scope.launch {
@@ -203,14 +193,9 @@ class CmdProcessor(
                     }
                     is Message.Talk -> {
                         Logger.d("[message.talk][${message.type.roomKey}][${message.userId}] ${message.userName} ${message.text}")
-
-                        if (message.userId == BOT_ID && message.userName == BOT_NAME) {
-                            botResponseChannel.send(message)
-                        } else {
-                            memberDatabaseDao.incrementTalkCount(message.userId)
-                            contents.forEach { content ->
-                                content.request(message)
-                            }
+                        memberDatabaseDao.incrementTalkCount(message.userId)
+                        contents.forEach { content ->
+                            content.request(message)
                         }
                     }
                     else -> {}
@@ -220,8 +205,7 @@ class CmdProcessor(
 
         scope.launch {
             channelFlow.collect { command ->
-                commandQueue.add(command)
-                processNextCommand()
+                handleCommand(command)
             }
         }
     }
@@ -395,65 +379,6 @@ class CmdProcessor(
                     alarmTalkProfile()
                 }
             }
-        }
-    }
-
-    /**
-     * Preview
-     */
-    private fun processNextCommand() {
-        // 1) 처리중인게 있음 or 처리할게 없음
-        if (pendingCommand != null || commandQueue.isEmpty()) return
-
-        // 2) 처리할 Command 처리
-        pendingCommand = commandQueue.removeFirstOrNull()
-        if(pendingCommand != null){
-            handleCommand(pendingCommand!!)
-        }else{
-            return
-        }
-
-        // 3) 대기 루틴 (최초)
-        scope.launch {
-            val matched = withTimeoutOrNull(3000L) {
-                for (msg in botResponseChannel) {
-                    if (isMatchingResponse(pendingCommand!!, msg)) return@withTimeoutOrNull true
-                }
-                false
-            }
-
-            // 4) 응답 실패 -> 다음 커맨드
-            if (matched != true) {
-                Logger.w("봇 메시지 응답 실패: $pendingCommand")
-                pendingCommand = null
-                processNextCommand()
-            }else {
-                Logger.w("봇 메시지 응답 성공: $pendingCommand")
-                pendingCommand = null
-                processNextCommand()
-            }
-        }
-    }
-
-    private fun isMatchingResponse(command: Command, message: Message.Talk): Boolean {
-        return when (command) {
-            is Group1RoomTextResponse,
-            is ResetMemberPoint,
-            is LikeWeeklyRanking ->
-                message.type.roomKey == ChatRoomType.GroupRoom1.roomKey
-
-            is Group2RoomTextResponse ->
-                message.type.roomKey == ChatRoomType.GroupRoom2.roomKey
-
-            is AdminRoomTextResponse ->
-                message.type.roomKey == ChatRoomType.AdminRoom.roomKey
-
-            is IndividualRoomTextResponse -> {
-                val action = userChatRoomMap[command.userKey] ?: return false
-                message.type.roomKey == command.userKey.roomKey.toLongOrNull()
-            }
-
-            else -> false
         }
     }
 }
