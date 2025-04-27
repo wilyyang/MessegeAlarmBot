@@ -258,9 +258,9 @@ class CmdProcessor(
                 }
             }
             is AdminRoomTextResponse -> {
-                adminOpenChatRoomAction?.let { action ->
-                    sendActionText(applicationContext, action, command.text)
-                }
+                // adminOpenChatRoomAction?.let { action ->
+                //     sendActionText(applicationContext, action, command.text)
+                // }
             }
             is IndividualRoomTextResponse -> {
                 userChatRoomMap[command.userKey]?.let { action ->
