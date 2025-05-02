@@ -100,6 +100,12 @@ class CmdProcessor(
 
     init{
         scope.launch {
+            // reset all
+            // memberDatabaseDao.updateAllMemberRankDefault()
+            // memberDatabaseDao.updateMemberRank(userId = SUPER_ADMIN_ME, rank = Rank.President.name, resetPoints = Rank.President.resetPoints)
+            // memberDatabaseDao.resetAllMembersGiftPoints()
+            // memberDatabaseDao.resetAllMembersLikesAndDislikesToZero()
+
             // Member Update
             chatMembersObserver = ChatMembersObserver()
 
@@ -110,12 +116,12 @@ class CmdProcessor(
                         if(talkMember.nickName != savedMember.latestName){
                             useCaseUpdateMemberNickName(talkMember.userId, talkMember.nickName)
                             val allNames = memberDatabaseDao.getNicknameDataAll(talkMember.userId).joinToString(",") { it.nickName }
-                            handleCommand(AdminRoomTextResponse("닉네임 변경 : $allNames"))
+                            commandChannel.send(AdminRoomTextResponse("닉네임 변경 : $allNames"))
                         }
 
                         if(talkMember.type != savedMember.profileType){
                             useCaseUpdateMemberProfileType(talkMember.userId, talkMember.type, savedMember.profileType){
-                                handleCommand(AdminRoomTextResponse("1:1 톡 가능 프로필로 변경됨 (${talkMember.nickName})"))
+                                sendCommand(AdminRoomTextResponse("1:1 톡 가능 프로필로 변경됨 (${talkMember.nickName})"))
                             }
                         }
 
@@ -144,7 +150,7 @@ class CmdProcessor(
                         Logger.d("[message.delete][${message.type.roomKey}] ${message.userName} ${message.deleteMessage}")
                         memberDatabaseDao.insertDeleteTalkData(DeleteTalkData(message.userId, message.time, message.deleteMessage))
                         memberDatabaseDao.incrementDeleteTalkCount(message.userId)
-                        handleCommand(AdminRoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
+                        commandChannel.send(AdminRoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
                     }
                     is Message.Event.ManageEvent.AppointManagerEvent -> {
                         Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, appointment")
@@ -175,7 +181,7 @@ class CmdProcessor(
                         memberDatabaseDao.insertEnterData(EnterData(message.targetId, message.time))
                         memberDatabaseDao.incrementEnterCount(message.targetId)
                         val allNames = memberDatabaseDao.getNicknameDataAll(message.targetId).joinToString(",") { it.nickName }
-                        handleCommand(AdminRoomTextResponse("유저가 입장함 : $allNames (${message.targetName})"))
+                        commandChannel.send(AdminRoomTextResponse("유저가 입장함 : $allNames (${message.targetName})"))
                     }
                     is Message.Event.ManageEvent.KickEvent -> {
                         Logger.d("[message.kick][${message.type.roomKey}] ${message.targetName}")
@@ -209,6 +215,7 @@ class CmdProcessor(
         scope.launch {
             channelFlow.collect { command ->
                 handleCommand(command)
+                delay(500L)
             }
         }
     }
@@ -238,7 +245,6 @@ class CmdProcessor(
     fun sendCommand(command: Command){
         scope.launch {
             commandChannel.send(command)
-            delay(800)
         }
     }
 
