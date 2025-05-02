@@ -107,6 +107,17 @@ class PointContent (
 
     private fun parseLikeCommand(input: String): Long? {
         val parts = input.split(" ").filter { it.isNotBlank() }
-        return if (parts.size < 2) null else parts[1].toLongOrNull()?:10
+        return if (parts.size < 2) null else {
+            val point = parts[1].toLongOrNull()
+            if(point == null){
+                10
+            }else{
+                if(point <= 0 || point > 10000){
+                    null
+                }else{
+                    point
+                }
+            }
+        }
     }
 }

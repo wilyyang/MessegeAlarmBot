@@ -207,13 +207,6 @@ class MafiaGameContent(
 
     private suspend fun request(chatRoomKey: ChatRoomKey, userName: String, userKey : String, text : String) {
         val localState = _stateFlow.value
-        /**
-         * 게임 규칙
-         */
-        if(chatRoomKey == GAME_KEY && text == "$hostKeyword${contentsName}$questionGameRule") {
-            commandChannel.send(Group2RoomTextResponse(text = MafiaText.GAME_RULE))
-            return
-        }
 
         /**
          * 미션 모음
@@ -272,7 +265,6 @@ class MafiaGameContent(
                     is Player.Assign.Mafia -> {
                         val mafias = localState.survivors.filterIsInstance<Player.Assign.Mafia>()
                         mafias.filter { it.name != chatUser.name }.forEach { mafia ->
-                            delay(1000)
                             commandChannel.send(
                                 IndividualRoomTextResponse(
                                     userKey = ChatRoomKey(isGroupConversation = false, mafia.name, mafia.name),
@@ -281,7 +273,6 @@ class MafiaGameContent(
                             )
                         }
                         agentUserRoomKey?.let {
-                            delay(1000)
                             commandChannel.send(
                                 IndividualRoomTextResponse(
                                     userKey = it,
@@ -299,7 +290,6 @@ class MafiaGameContent(
                         val targetUser = localState.survivors.firstOrNull { it.name != chatUser.name && it.name == target}
                         if(targetUser != null){
                             chatUser.saveTarget = target
-                            delay(1000)
 
                             commandChannel.send(
                                 IndividualRoomTextResponse(
@@ -319,7 +309,6 @@ class MafiaGameContent(
                         val targetUser = localState.survivors.firstOrNull { it.name != chatUser.name && it.name == target}
                         if(targetUser != null){
                             chatUser.guardTarget = target
-                            delay(1000)
 
                             commandChannel.send(
                                 IndividualRoomTextResponse(

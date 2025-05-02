@@ -144,7 +144,7 @@ class CmdProcessor(
                         Logger.d("[message.delete][${message.type.roomKey}] ${message.userName} ${message.deleteMessage}")
                         memberDatabaseDao.insertDeleteTalkData(DeleteTalkData(message.userId, message.time, message.deleteMessage))
                         memberDatabaseDao.incrementDeleteTalkCount(message.userId)
-                        handleCommand(Group2RoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
+                        handleCommand(AdminRoomTextResponse("메시지가 삭제됨 : ${message.deleteMessage} (${message.userName})"))
                     }
                     is Message.Event.ManageEvent.AppointManagerEvent -> {
                         Logger.d("[message.manager][${message.type.roomKey}] ${message.targetName}, appointment")
@@ -238,7 +238,7 @@ class CmdProcessor(
     fun sendCommand(command: Command){
         scope.launch {
             commandChannel.send(command)
-            delay(500)
+            delay(800)
         }
     }
 
@@ -258,9 +258,9 @@ class CmdProcessor(
                 }
             }
             is AdminRoomTextResponse -> {
-                // adminOpenChatRoomAction?.let { action ->
-                //     sendActionText(applicationContext, action, command.text)
-                // }
+                 adminOpenChatRoomAction?.let { action ->
+                     sendActionText(applicationContext, action, command.text)
+                 }
             }
             is IndividualRoomTextResponse -> {
                 userChatRoomMap[command.userKey]?.let { action ->

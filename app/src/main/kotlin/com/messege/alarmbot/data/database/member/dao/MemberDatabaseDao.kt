@@ -116,6 +116,9 @@ interface MemberDatabaseDao {
     @Query("UPDATE MemberData SET dislikes = dislikes + :point, dislikesWeekly = dislikesWeekly + :point WHERE userId = :userId")
     suspend fun increaseDislikes(userId: Long, point: Long)
 
+    @Query("UPDATE MemberData SET likes = 0, dislikes = 0")
+    suspend fun resetAllMembersLikesAndDislikes()
+
     @Query("UPDATE MemberData SET likesWeekly = 0, dislikesWeekly = 0")
     suspend fun resetAllMembersWeeklyLikesAndDislikes()
 

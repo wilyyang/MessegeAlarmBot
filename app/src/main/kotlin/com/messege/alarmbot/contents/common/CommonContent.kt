@@ -43,6 +43,8 @@ class CommonContent(
                 commandChannel.send(Group1RoomTextResponse(PARTY_COMMAND_HELP))
             }else if(message.text == ".? 직업"){
                 commandChannel.send(Group1RoomTextResponse(rankHelp()))
+            }else if(message.text == ".? 마피아"){
+                commandChannel.send(Group1RoomTextResponse(MAFIA_GAME_RULE))
             }else if(message.text.startsWith(".조회")){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
