@@ -265,7 +265,10 @@ class MafiaGameContent(
                 commandChannel.send(
                     Group2RoomTextResponse(
                         text = MafiaText.gameRemainingTime(
-                            state = localState.korName, total = localState.time, remain = currentSeconds
+                            state = localState.korName, total = localState.time, remain = currentSeconds,
+                            players = if(localState is MafiaGameState.Play.Progress){
+                                localState.survivors
+                            }else null
                         )
                     )
                 )
@@ -432,6 +435,7 @@ class MafiaGameContent(
     private suspend fun progressStateHandle(state : MafiaGameState.Play.Progress){
         when(state){
             is MafiaGameState.Play.Progress.CitizenTime.Talk -> {
+                metaData.playStep += 1
                 delay(1000)
                 _timerFlow.value = TimeWork(state.time){
                     _stateFlow.value = state.toVote()
@@ -454,6 +458,7 @@ class MafiaGameContent(
             is MafiaGameState.Play.Progress.CitizenTime.VoteComplete -> {
                 delay(2000)
                 _timerFlow.value = TimeWork(state.time){}
+                _alarmTimerFlow.value = TimeWork(state.time){}
 
                 state.votedCount.let { counts ->
                     val vote = if(counts.isEmpty()){
@@ -553,6 +558,7 @@ class MafiaGameContent(
             is MafiaGameState.Play.Progress.MafiaTime.KillComplete -> {
                 delay(2000)
                 _timerFlow.value = TimeWork(state.time){}
+                _alarmTimerFlow.value = TimeWork(state.time){}
                 state.targetedCount.let { counts ->
                     val target = if(counts.isEmpty()){
                         null
@@ -647,6 +653,17 @@ class MafiaGameContent(
                 if(!isMainChat){
                     val currentUser = state.survivors.firstOrNull { it.name == userName }
                     if(currentUser is Player.Assign.Magician){
+
+                        if(metaData.playStep < 2){
+                            commandChannel.send(
+                                IndividualRoomTextResponse(
+                                    userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
+                                    text = "마술사는 2번째 날부터 직업을 뺏을 수 있습니다!"
+                                )
+                            )
+                            return
+                        }
+
                         val target = if(text.startsWith("@")){
                             text.substring(1).trim()
                         }else{

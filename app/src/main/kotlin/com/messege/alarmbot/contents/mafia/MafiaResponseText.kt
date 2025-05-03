@@ -1,5 +1,7 @@
 package com.messege.alarmbot.contents.mafia
 
+import com.messege.alarmbot.core.common.FOLDING_TEXT
+
 val arrayOfMafiaMissions = arrayOf(
     "➊ 헛기침 3번, 한숨1번",
     "➌ 상대방 말끊기 3번",
@@ -32,7 +34,7 @@ object MafiaText {
     const val ASSIGN_JOB_POLICE  = "[당신은 경찰입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 밤시간에 한명을 지목하여 마피아 여부를 확인할 수 있어요"
     const val ASSIGN_JOB_SHAMAN  = "[당신은 영매입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 밤시간에 죽은 사람을 지목하여 직업을 확인할 수 있어요"
     const val ASSIGN_JOB_SOLDIER = "[당신은 군인입니다. 마피아를 모두 찾아 죽이면 승리합니다.]\n* 마피아에게 암살당하면, 마피아 한 명을 죽입니다"
-    const val ASSIGN_JOB_MAGICIAN = "[당신은 마술사입니다. 대화시간에 선택한 직업이 됩니다.]\n* 선택 대상의 경우, 마피아는 사망, 시민 직업은 시민이 됨"
+    const val ASSIGN_JOB_MAGICIAN = "[당신은 마술사입니다. 대화시간에 선택한 직업이 됩니다.(2번째 날부터 능력 사용 가능)]\n* 선택 대상의 경우, 마피아는 사망, 시민 직업은 시민이 됨"
     const val ASSIGN_JOB_MAFIA   = "[당신은 마피아입니다. 시민보다 마피아가 많으면 승리합니다.]"
     const val ASSIGN_JOB_FOOL    = "[당신은 바보입니다. 투표시간에 지목당해 죽으면 승리합니다.]"
 
@@ -88,7 +90,13 @@ object MafiaText {
 
     fun shamanMessage(name: String, job : String) = "[$name 의 직업은 $job 입니다.]"
 
-    fun gameRemainingTime(state: String, total: Int, remain: Int) = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]"
+    fun gameRemainingTime(state: String, total: Int, remain: Int, players: List<Player>?)
+    = "[마피아 ($state) 단계 남은 시간 : $remain / $total 초]" +
+        if(players == null) { "" }
+        else {
+            FOLDING_TEXT + "\n" +
+                playerProgressToText(players = players, isJob = false)
+        }
 
     fun gameEndWaitTimeOut(num : Int) = "[시간 만료. 인원이 부족하여 게임을 시작할 수 없습니다. ($num 명) ]"
 

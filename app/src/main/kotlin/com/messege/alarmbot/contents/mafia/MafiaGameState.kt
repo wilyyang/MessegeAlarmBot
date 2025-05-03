@@ -1,5 +1,7 @@
 package com.messege.alarmbot.contents.mafia
 
+import kotlin.random.Random
+
 sealed class MafiaGameState{
     abstract val korName: String
 
@@ -37,31 +39,37 @@ sealed class MafiaGameState{
             val assignedPlayers : MutableList<Player.Assign> = mutableListOf()
 
             fun assignJob() {
-                val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Soldier, Job.Shaman).shuffled()
-                val hiddenJobs = listOf(Job.Fool, Job.Magician).shuffled()
-                players.shuffle()
-                players.getOrNull(0)?.let {
+                val seed = System.currentTimeMillis()
+                val baseRandom = Random(seed)
+                val memberRandom = Random(baseRandom.nextLong())
+                val citizenRandom = Random(baseRandom.nextLong())
+                val hiddenRandom = Random(baseRandom.nextLong())
+
+                val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Soldier, Job.Shaman).shuffled(citizenRandom)
+                val hiddenJobs = listOf(Job.Fool, Job.Magician).shuffled(hiddenRandom)
+                val shuffledPlayers = players.shuffled(memberRandom)
+                shuffledPlayers.getOrNull(0)?.let {
                     assignedPlayers.add(it.toMafia())
                 }
-                players.getOrNull(1)?.let {
+                shuffledPlayers.getOrNull(1)?.let {
                     assignedPlayers.add(it.toCitizen(citizenJobs[0]))
                 }
-                players.getOrNull(2)?.let {
+                shuffledPlayers.getOrNull(2)?.let {
                     assignedPlayers.add(it.toCitizen(citizenJobs[1]))
                 }
-                players.getOrNull(3)?.let {
+                shuffledPlayers.getOrNull(3)?.let {
                     assignedPlayers.add(it.toCitizen(citizenJobs[2]))
                 }
-                players.getOrNull(4)?.let {
+                shuffledPlayers.getOrNull(4)?.let {
                     assignedPlayers.add(it.toRandomHidden(hiddenJobs[0]))
                 }
-                players.getOrNull(5)?.let {
+                shuffledPlayers.getOrNull(5)?.let {
                     assignedPlayers.add(it.toCitizen(citizenJobs[3]))
                 }
-                players.getOrNull(6)?.let {
+                shuffledPlayers.getOrNull(6)?.let {
                     assignedPlayers.add(it.toMafia())
                 }
-                players.getOrNull(7)?.let {
+                shuffledPlayers.getOrNull(7)?.let {
                     assignedPlayers.add(it.toCitizen(citizenJobs[4]))
                 }
             }
