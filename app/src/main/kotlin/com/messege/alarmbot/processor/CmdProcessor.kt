@@ -215,7 +215,7 @@ class CmdProcessor(
         scope.launch {
             channelFlow.collect { command ->
                 handleCommand(command)
-                delay(500L)
+                delay(command.delayMilliSeconds)
             }
         }
     }

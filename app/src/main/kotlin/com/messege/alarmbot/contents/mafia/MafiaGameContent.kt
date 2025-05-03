@@ -53,6 +53,13 @@ data class MafiaPlayMetaData(
     val missions: List<String> = listOf()
 )
 
+data class RequestData(
+    val chatRoomKey: ChatRoomKey,
+    val userName: String,
+    val userKey: String,
+    val text: String
+)
+
 fun Player.isUser(userName: String, roomKey : ChatRoomKey) : Boolean {
     return this.name == userName || this.name == roomKey.roomName
 }
@@ -72,7 +79,15 @@ class MafiaGameContent(
     private val _alarmTimerFlow = MutableStateFlow<TimeWork>(TimeWork(0) {})
     private var agentUserRoomKey : ChatRoomKey? = null
 
+    private val requestChannel = Channel<RequestData>(Channel.UNLIMITED)
+
     init {
+        scope.launch {
+            for (request in requestChannel) {
+                handleRequest(request)
+            }
+        }
+
         scope.launch {
             _timerFlow.collect { timeWork ->
                 timer.start(timeWork)
@@ -147,7 +162,6 @@ class MafiaGameContent(
 
                             state.assignedPlayers.forEach { player ->
                                 metaData.allPlayers.add(player)
-                                delay(1000)
                                 commandChannel.send(
                                     IndividualRoomTextResponse(
                                         userKey = ChatRoomKey(
@@ -167,11 +181,11 @@ class MafiaGameContent(
                                             is Player.Assign.Magician -> ASSIGN_JOB_MAGICIAN
                                             is Player.Assign.Fool -> ASSIGN_JOB_FOOL
                                             is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
-                                        }
+                                        },
+                                        delayMilliSeconds = 2000L
                                     )
                                 )
                             }
-                            delay(1000)
                             commandChannel.send(Group2RoomTextResponse(text = "마피아 미션은 이중에 하나입니다\n" + metaData.missions.joinToString("\n")))
                         }
                         is MafiaGameState.Play.Progress -> {
@@ -188,24 +202,32 @@ class MafiaGameContent(
 
     override suspend fun request(message : Message) {
         if(message is Message.Talk){
-            request(
-                chatRoomKey = if(message.type.roomKey == ChatRoomType.GroupRoom2.roomKey){
-                    GAME_KEY
-                }else{
-                    ChatRoomKey(
-                        isGroupConversation = false,
-                        roomName = message.userName,
-                        roomKey = message.type.roomKey.toString()
-                    )
-                },
-                userName = message.userName,
-                userKey = message.userId.toString(),
-                text = message.text
+            val chatRoomKey = if (message.type.roomKey == ChatRoomType.GroupRoom2.roomKey) {
+                GAME_KEY
+            } else {
+                ChatRoomKey(
+                    isGroupConversation = false,
+                    roomName = message.userName,
+                    roomKey = message.type.roomKey.toString()
+                )
+            }
+
+            requestChannel.send(
+                RequestData(
+                    chatRoomKey = chatRoomKey,
+                    userName = message.userName,
+                    userKey = message.userId.toString(),
+                    text = message.text
+                )
             )
         }
     }
 
-    private suspend fun request(chatRoomKey: ChatRoomKey, userName: String, userKey : String, text : String) {
+    private suspend fun handleRequest(data: RequestData) {
+        val chatRoomKey = data.chatRoomKey
+        val userName = data.userName
+        val userKey = data.userKey
+        val text = data.text
         val localState = _stateFlow.value
 
         /**
@@ -430,7 +452,7 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.CitizenTime.VoteComplete -> {
-                delay(1000)
+                delay(2000)
                 _timerFlow.value = TimeWork(state.time){}
 
                 state.votedCount.let { counts ->
@@ -461,7 +483,7 @@ class MafiaGameContent(
                 }
             }
             is MafiaGameState.Play.Progress.CitizenTime.Determine -> {
-                delay(1000)
+                delay(2000)
                 _timerFlow.value = TimeWork(state.time) {}
 
                 val bodyguard = state.survivors.firstOrNull { it is Player.Assign.Bodyguard }
@@ -477,7 +499,7 @@ class MafiaGameContent(
                 state.survivors.removeIf { it.name == state.votedMan.name }
                 commandChannel.send(Group2RoomTextResponse(MafiaText.voteKillUser(state.votedMan.name)))
 
-                delay(1000)
+                delay(2000)
                 when(state.votedMan){
                     is Player.Assign.Fool -> {
                         commandChannel.send(Group2RoomTextResponse(MafiaText.winFool(state.votedMan.name, metaData.allPlayers)))
@@ -529,7 +551,7 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.MafiaTime.KillComplete -> {
-                delay(1000)
+                delay(2000)
                 _timerFlow.value = TimeWork(state.time){}
                 state.targetedCount.let { counts ->
                     val target = if(counts.isEmpty()){
@@ -560,7 +582,7 @@ class MafiaGameContent(
             }
 
             is MafiaGameState.Play.Progress.MafiaTime.Determine -> {
-                delay(1000)
+                delay(2000)
                 _timerFlow.value = TimeWork(state.time) {}
 
                 val doctor = state.survivors.firstOrNull { it is Player.Assign.Doctor }
@@ -575,7 +597,7 @@ class MafiaGameContent(
                 state.targetedMan.isSurvive = false
                 state.survivors.removeIf { it.name == state.targetedMan.name }
                 commandChannel.send(Group2RoomTextResponse(MafiaText.mafiaKillUser(state.targetedMan.name)))
-                delay(1000)
+                delay(2000)
 
                 if(state.targetedMan is Player.Assign.Soldier){
                     state.mafias.shuffled().getOrNull(0)?.let { soldierTarget ->
