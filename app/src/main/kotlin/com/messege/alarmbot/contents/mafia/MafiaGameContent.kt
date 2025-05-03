@@ -160,6 +160,7 @@ class MafiaGameContent(
                                 agentUserRoomKey = ChatRoomKey(isGroupConversation = false, roomName = agent.name, roomKey = agent.name)
                             }
 
+                            delay(2000L)
                             state.assignedPlayers.forEach { player ->
                                 metaData.allPlayers.add(player)
                                 commandChannel.send(
