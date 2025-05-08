@@ -14,6 +14,7 @@ import com.messege.alarmbot.processor.model.AdminRoomTextResponse
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
 import com.messege.alarmbot.processor.model.Group2RoomTextResponse
+import com.messege.alarmbot.processor.model.UpdateKakaoMembers
 import com.messege.alarmbot.util.format.toTimeFormatDate
 import kotlinx.coroutines.channels.Channel
 
@@ -45,6 +46,8 @@ class CommonContent(
                 commandChannel.send(Group1RoomTextResponse(rankHelp()))
             }else if(message.text == ".? 마피아"){
                 commandChannel.send(Group1RoomTextResponse(MAFIA_GAME_RULE))
+            }else if(message.text == ".유저"){
+                commandChannel.send(UpdateKakaoMembers)
             }else if(message.text.startsWith(".조회")){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
@@ -94,7 +97,7 @@ class CommonContent(
                             val giverName = memberDatabaseDao.getMemberName(sanction.giverId)
                             sanctionText += "$sanctionDate $giverName : ${sanction.sanctionCount} (${sanction.reason})\n"
                         }
-                        commandChannel.send(Group2RoomTextResponse(sanctionText))
+                        commandChannel.send(Group1RoomTextResponse(sanctionText))
                     }
                 }
             }else if((message.text.startsWith(SanctionType.Sanction.prefix) ||

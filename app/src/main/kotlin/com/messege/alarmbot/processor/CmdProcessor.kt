@@ -36,6 +36,7 @@ import com.messege.alarmbot.processor.model.LikeWeeklyRanking
 import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.processor.model.None
 import com.messege.alarmbot.processor.model.ResetMemberPoint
+import com.messege.alarmbot.processor.model.UpdateKakaoMembers
 import com.messege.alarmbot.processor.usecase.UseCaseParty
 import com.messege.alarmbot.processor.usecase.UseCasePoint
 import com.messege.alarmbot.util.log.Logger
@@ -306,6 +307,15 @@ class CmdProcessor(
 
                     groupRoom1OpenChatRoomAction?.let { action ->
                         sendActionText(applicationContext, action, responseText)
+                    }
+                }
+            }
+            is UpdateKakaoMembers -> {
+                scope.launch {
+                    val result = chatMembersObserver.walCheckpoint()
+                    val textResult = if(result) "성공" else "실패"
+                    groupRoom1OpenChatRoomAction?.let { action ->
+                        sendActionText(applicationContext, action, "유저 업데이트 $textResult")
                     }
                 }
             }

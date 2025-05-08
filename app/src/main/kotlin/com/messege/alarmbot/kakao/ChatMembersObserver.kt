@@ -7,6 +7,7 @@ import android.os.FileObserver
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.DECRYPT_MEMBER_KEY
 import com.messege.alarmbot.kakao.model.ChatMember
+import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -143,6 +145,18 @@ class ChatMembersObserver : CoroutineScope {
             privilege = getInt(columnIndex.privilege),
             enc = getInt(columnIndex.enc),
         )
+    }
+
+    suspend fun walCheckpoint(): Boolean = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            try {
+                database.execSQL("PRAGMA wal_checkpoint(FULL);")
+                true
+            } catch (e: Exception) {
+                Logger.e("[error] WAL checkpoint 실패: ${e.message}")
+                false
+            }
+        }
     }
 
     suspend fun getChatMember(userId: Long) : ChatMember? {
