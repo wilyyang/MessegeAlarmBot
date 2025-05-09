@@ -46,7 +46,7 @@ class CommonContent(
                 commandChannel.send(Group1RoomTextResponse(rankHelp()))
             }else if(message.text == ".? 마피아"){
                 commandChannel.send(Group1RoomTextResponse(MAFIA_GAME_RULE))
-            }else if(message.text == ".유저"){
+            }else if(message.text == ".업데이트"){
                 commandChannel.send(UpdateKakaoMembers)
             }else if(message.text.startsWith(".조회")){
                 val targetId = message.mentionIds.getOrNull(0)

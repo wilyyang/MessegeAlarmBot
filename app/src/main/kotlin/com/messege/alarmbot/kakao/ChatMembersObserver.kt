@@ -150,8 +150,18 @@ class ChatMembersObserver : CoroutineScope {
     suspend fun walCheckpoint(): Boolean = mutex.withLock {
         withContext(Dispatchers.IO) {
             try {
-                database.execSQL("PRAGMA wal_checkpoint(FULL);")
-                true
+                database.rawQuery("PRAGMA wal_checkpoint(FULL);", null).use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val totalPages = cursor.getInt(0)
+                        val checkPointedPages = cursor.getInt(1)
+                        val busyFlag = cursor.getInt(2)
+                        Logger.i("WAL checkpoint: total=$totalPages, done=$checkPointedPages, busy=$busyFlag")
+                        true
+                    } else {
+                        Logger.w("WAL checkpoint: 커서 이동 실패")
+                        false
+                    }
+                }
             } catch (e: Exception) {
                 Logger.e("[error] WAL checkpoint 실패: ${e.message}")
                 false
