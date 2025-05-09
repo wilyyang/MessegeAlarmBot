@@ -20,14 +20,14 @@ enum class Rank(open val rank : Int, open val korName: String, open val tier: In
     Boss(rank = 9, korName = "사장", tier = 3, resetPoints = 30, requirePoint = 900),
 
     Governor(rank = 10, korName = "도지사", tier = 4, resetPoints = 40, requirePoint = 1200),
-    Congressman(rank = 11, korName = "국회의원", tier = 4, resetPoints = 40, requirePoint = 1500),
-    SeoulMayor(rank = 12, korName = "서울시장", tier = 4, resetPoints = 40, requirePoint = 1800),
+    Congressman(rank = 11, korName = "국회의원", tier = 4, resetPoints = 45, requirePoint = 1500),
+    SeoulMayor(rank = 12, korName = "서울시장", tier = 4, resetPoints = 50, requirePoint = 0),
 
-    PrimeMinister(rank = 13, korName = "여당대표", tier = 5, resetPoints = 60, requirePoint = 0),
+    PrimeMinister(rank = 13, korName = "야당대표", tier = 5, resetPoints = 60, requirePoint = 0),
 
     Minister(rank = 14, korName = "장관", tier = 6, resetPoints = 50, requirePoint = 0, isAdmin = true),
     Engineer(rank = 15, korName = "과기부장관", tier = 6, resetPoints = 50, requirePoint = 0, isAdmin = true, isSuperAdmin = true),
-    President(rank = 16, korName = "대통령", tier = 6, resetPoints = 60, requirePoint = 0, isAdmin = true, isSuperAdmin = true);
+    President(rank = 16, korName = "방장", tier = 6, resetPoints = 60, requirePoint = 0, isAdmin = true, isSuperAdmin = true);
 
     companion object {
         fun getRankByPoint(point: Long): Rank {

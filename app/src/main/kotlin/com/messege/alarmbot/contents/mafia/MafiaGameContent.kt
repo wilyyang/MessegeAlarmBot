@@ -325,7 +325,7 @@ class MafiaGameContent(
 
                             commandChannel.send(
                                 IndividualRoomTextResponse(
-                                    userKey = chatRoomKey,
+                                    userKey = ChatRoomKey(isGroupConversation = false, chatUser.name, chatUser.name),
                                     text = MafiaText.doctorMessage(chatUser.name, text)
                                 )
                             )
@@ -344,7 +344,7 @@ class MafiaGameContent(
 
                             commandChannel.send(
                                 IndividualRoomTextResponse(
-                                    userKey = chatRoomKey,
+                                    userKey = ChatRoomKey(isGroupConversation = false, chatUser.name, chatUser.name),
                                     text = MafiaText.bodyguardMessage(chatUser.name, text)
                                 )
                             )

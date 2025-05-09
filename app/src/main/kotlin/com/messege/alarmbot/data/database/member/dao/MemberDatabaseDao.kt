@@ -125,6 +125,9 @@ interface MemberDatabaseDao {
     @Query("SELECT * FROM MemberData ORDER BY likes DESC LIMIT 10")
     suspend fun getTop10MembersByLikes(): List<MemberData>
 
+    @Query("SELECT * FROM MemberData ORDER BY likes DESC LIMIT 11")
+    suspend fun getTop11MembersByLikes(): List<MemberData>
+
     @Query("SELECT * FROM MemberData ORDER BY dislikes DESC LIMIT 10")
     suspend fun getTop10MembersByDislikes(): List<MemberData>
 
