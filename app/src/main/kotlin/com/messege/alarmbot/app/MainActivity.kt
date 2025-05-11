@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.messege.alarmbot.core.presentation.compose.theme.AlarmBotTheme
+import com.messege.alarmbot.util.log.Logger
 import dagger.hilt.android.AndroidEntryPoint
 
 const val ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners"
@@ -102,6 +103,18 @@ class MainActivity : ComponentActivity() {
 
             finish()
             return
+        }
+
+        /**
+         * 슈퍼 유저 권한
+         */
+        val cmd = arrayOf("su", "-c", "ls")
+        try {
+            val process = Runtime.getRuntime().exec(cmd)
+            val resultCode = process.waitFor()
+            Logger.d("[super] 권한 얻기 성공 : $resultCode")
+        } catch (e: Exception) {
+            Logger.e("[super] 권한 얻기 실패 ${e.message}")
         }
     }
 }
