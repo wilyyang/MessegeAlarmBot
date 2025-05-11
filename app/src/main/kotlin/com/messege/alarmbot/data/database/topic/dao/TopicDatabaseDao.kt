@@ -16,6 +16,9 @@ interface TopicDatabaseDao {
     @Query("SELECT * FROM TopicData WHERE idx = :idx")
     suspend fun getSelectTopic(idx: Long): TopicData?
 
+    @Query("SELECT * FROM TopicData WHERE idx BETWEEN :start AND :end")
+    suspend fun getSelectTopics(start: Long, end: Long): List<TopicData>
+
     @Query("DELETE FROM TopicData WHERE idx = :idx")
     suspend fun deleteTopic(idx: Long): Int
 

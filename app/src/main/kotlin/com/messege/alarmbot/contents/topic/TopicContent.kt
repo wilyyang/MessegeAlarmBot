@@ -15,6 +15,7 @@ import com.messege.alarmbot.util.format.toTimeFormatDate
 import com.messege.alarmbot.util.log.Logger
 import kotlinx.coroutines.channels.Channel
 
+const val TOPIC_BRIEF_MAX_LENGTH = 30
 class TopicContent(
     override val commandChannel: Channel<Command>,
     private val topicDatabaseDao: TopicDatabaseDao,
@@ -75,6 +76,37 @@ class TopicContent(
                             response + replyText
                         } ?: "등록된 주제가 없습니다."
                         commandChannel.send(Group1RoomTextResponse(text = recommendTopicText))
+                    }
+
+                    message.text.startsWith("$TOPIC_KEYWORD$TOPIC_RECOMMEND_LIST") -> {
+                        if(rank.tier < 0){
+                            commandChannel.send(Group1RoomTextResponse(text = "티어가 부족합니다. (현재 ${rank.tier} 티어 : ${rank.korName})"))
+                            return
+                        }
+
+                        val page = message.text.substringAfter(" ", missingDelimiterValue = "").toIntOrNull()
+                        if (page == null) {
+                            return
+                        } else {
+                            val (start, end) = if (page == 0) 1 to 9 else page * 10 to page * 10 + 9
+
+                            val topics = topicDatabaseDao.getSelectTopics(start.toLong(), end.toLong())
+                            val topicsTexts = if (topics.isEmpty()) {
+                                "등록된 주제가 없습니다."
+                            } else {
+                                "* 주제 목록입니다. ($start - $end)$FOLDING_TEXT\n\n" +
+                                    topics.joinToString("\n\n") { topic ->
+                                        val topicText = if (topic.topic.length <= TOPIC_BRIEF_MAX_LENGTH) {
+                                            topic.topic
+                                        } else {
+                                            topic.topic.take(TOPIC_BRIEF_MAX_LENGTH) + "..."
+                                        }
+
+                                        "(${topic.idx}) $topicText"
+                                    }
+                            }
+                            commandChannel.send(Group1RoomTextResponse(text = topicsTexts))
+                        }
                     }
 
                     message.text.startsWith("$TOPIC_KEYWORD$TOPIC_DELETE ") -> {
