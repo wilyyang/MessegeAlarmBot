@@ -14,6 +14,7 @@ import com.messege.alarmbot.processor.model.AdminRoomTextResponse
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
 import com.messege.alarmbot.processor.model.Group2RoomTextResponse
+import com.messege.alarmbot.processor.model.LikeWeeklyRanking
 import com.messege.alarmbot.processor.model.UpdateKakaoMembers
 import com.messege.alarmbot.util.format.toTimeFormatDate
 import kotlinx.coroutines.channels.Channel
@@ -52,11 +53,10 @@ class CommonContent(
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
                     val targetMember = memberDatabaseDao.getMember(targetId).getOrNull(0)
-                    val allNames = memberDatabaseDao.getNicknameDataAll(targetId).joinToString(",") { it.nickName }
                     if(targetMember != null){
                         val party = partyDatabaseDao.getParty(targetMember.partyId)
-                        var profileInfo = "닉네임 : ${targetMember.latestName} " +
-                            "${if(targetMember.isSuperAdmin)"[슈퍼관리자]" else if(targetMember.isAdmin) "[관리자]" else ""}\n\n" +
+                        val profileInfo = "닉네임 : ${targetMember.latestName} " +
+                            "${if(targetMember.isSuperAdmin)"[관리자]" else if(targetMember.isAdmin) "[관리자]" else ""}\n\n" +
 
                         "당 : ${party?.name ?: "없음"} ${if(targetMember.partyState == PartyMemberState.PartyLeader) "대표" else ""}\n" +
                         "직업 : ${Rank.getRankByName(targetMember.rank).korName}\n" +
@@ -66,23 +66,36 @@ class CommonContent(
                         "주간 좋아요 : ${targetMember.likesWeekly}\n" +
                         "주간 싫어요 : ${targetMember.dislikesWeekly}"
 
-                        if (isSuperAdmin) {
-                            profileInfo +=
-                                "\n\n톡 횟수 : ${targetMember.talkCount}\n" +
-                                    "입장 횟수 : ${targetMember.enterCount}\n" +
-                                    "강퇴 횟수 : ${targetMember.kickCount}\n" +
-                                    "제재 횟수 : ${targetMember.sanctionCount}\n" +
-                                    "톡 삭제 횟수 : ${targetMember.deleteTalkCount}\n" +
-                                    "1:1 톡 변경 횟수 : ${targetMember.chatProfileCount}\n\n" +
-                                    "닉네임 변경 이력 : $allNames"
-                        }
+                        commandChannel.send(Group1RoomTextResponse(profileInfo))
+                    }
+                }
+            }else if(message.text.startsWith("조회")){
+                val targetId = message.mentionIds.getOrNull(0)
+                if(isAdmin && targetId != null){
+                    val targetMember = memberDatabaseDao.getMember(targetId).getOrNull(0)
+                    val allNames = memberDatabaseDao.getNicknameDataAll(targetId).joinToString(",") { it.nickName }
+                    if(targetMember != null){
+                        val party = partyDatabaseDao.getParty(targetMember.partyId)
+                        val profileInfo = "닉네임 : ${targetMember.latestName} " +
+                            "${if(targetMember.isSuperAdmin)"[관리자]" else if(targetMember.isAdmin) "[관리자]" else ""}\n\n" +
 
+                            "당 : ${party?.name ?: "없음"} ${if(targetMember.partyState == PartyMemberState.PartyLeader) "대표" else ""}\n" +
+                            "직업 : ${Rank.getRankByName(targetMember.rank).korName}\n" +
+                            "포인트 : ${targetMember.giftPoints}\n" +
+                            "좋아요 : ${targetMember.likes}\n" +
+                            "싫어요 : ${targetMember.dislikes}\n" +
+                            "주간 좋아요 : ${targetMember.likesWeekly}\n" +
+                            "주간 싫어요 : ${targetMember.dislikesWeekly}\n" +
+                            "\n" +
+                            "톡 횟수 : ${targetMember.talkCount}\n" +
+                            "입장 횟수 : ${targetMember.enterCount}\n" +
+                            "강퇴 횟수 : ${targetMember.kickCount}\n" +
+                            "제재 횟수 : ${targetMember.sanctionCount}\n" +
+                            "톡 삭제 횟수 : ${targetMember.deleteTalkCount}\n" +
+                            "1:1 톡 변경 횟수 : ${targetMember.chatProfileCount}\n\n" +
+                            "닉네임 변경 이력 : $allNames"
 
-                        if(isSuperAdmin){
-                            commandChannel.send(AdminRoomTextResponse(profileInfo))
-                        }else{
-                            commandChannel.send(Group1RoomTextResponse(profileInfo))
-                        }
+                        commandChannel.send(AdminRoomTextResponse(profileInfo))
                     }
                 }
             } else if(message.text.startsWith(".제재내역") && isAdmin){

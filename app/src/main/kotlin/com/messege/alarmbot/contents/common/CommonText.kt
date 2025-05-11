@@ -45,8 +45,9 @@ fun rankHelp() = "\uD83D\uDCA1 직업\n" +
         "${FOLDING_TEXT}\n" +
         "- 필요 포인트가 오르면 직업도 올라가요!\n" +
         " * 필요 포인트 = 좋아요 - 싫어요\n" +
-        "- 서울시장은 가장 많은 좋아요를 받은 사람이에요\n" +
-        "- 야당대표는 부방 아닌 당대표 중 당원수 1위 당대표에요\n\n" +
+        "- 서울시장은 가장 많은 필요 포인트를 받은 사람이에요\n" +
+        "- 야당대표는 부방 아닌 당대표 중 당원수 1위 당대표에요\n" +
+        " * 서울시장과 야당대표는 매주 금요일 6시마다 선출됩니다.\n\n" +
     Rank.entries.sortedBy { it.rank }.joinToString("\n\n") {
         "[${it.tier}] " + (if(it.isSuperAdmin) "[방장]" else if(it.isAdmin) "[부방장]" else "") +
             " ${it.korName} : \n- 데일리 포인트 (${it.resetPoints})\n- 필요 포인트 (${it.requirePoint})"

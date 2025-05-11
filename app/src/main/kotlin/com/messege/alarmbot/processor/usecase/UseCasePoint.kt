@@ -79,4 +79,38 @@ class UseCasePoint(
         }
         return newRank
     }
+
+    suspend fun updatePrimeMinister() : MemberData? {
+        return withContext(dispatcher) {
+            // 1. 야당대표 리셋
+            memberDatabaseDao.getMembersByRank(Rank.PrimeMinister.name).forEach { member ->
+                val newRank = Rank.getRankByPoint(member.likes - member.dislikes)
+                memberDatabaseDao.updateMemberRank(member.userId, newRank.name, newRank.resetPoints)
+            }
+
+            // 2. 야당대표 선출
+            val primeMinister = memberDatabaseDao.getTop11MembersByPartyPoint().firstOrNull { Rank.getRankByName(it.rank).tier < 5 }
+            if(primeMinister != null){
+                memberDatabaseDao.updateMemberRank(primeMinister.userId, Rank.PrimeMinister.name, Rank.PrimeMinister.resetPoints)
+            }
+            primeMinister
+        }
+    }
+
+    suspend fun updateSeoulMayor() : MemberData? {
+        return withContext(dispatcher) {
+            // 1. 서울시장 리셋
+            memberDatabaseDao.getMembersByRank(Rank.SeoulMayor.name).forEach { member ->
+                val newRank = Rank.getRankByPoint(member.likes - member.dislikes)
+                memberDatabaseDao.updateMemberRank(member.userId, newRank.name, newRank.resetPoints)
+            }
+
+            // 2. 서울시장 선출
+            val seoulMayor = memberDatabaseDao.getTop11MembersByRequirePoint().firstOrNull { Rank.getRankByName(it.rank).tier < 5 }
+            if(seoulMayor != null){
+                memberDatabaseDao.updateMemberRank(seoulMayor.userId, Rank.SeoulMayor.name, Rank.SeoulMayor.resetPoints)
+            }
+            seoulMayor
+        }
+    }
 }

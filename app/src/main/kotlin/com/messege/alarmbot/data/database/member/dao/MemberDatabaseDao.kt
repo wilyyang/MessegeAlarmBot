@@ -125,9 +125,6 @@ interface MemberDatabaseDao {
     @Query("SELECT * FROM MemberData ORDER BY likes DESC LIMIT 10")
     suspend fun getTop10MembersByLikes(): List<MemberData>
 
-    @Query("SELECT * FROM MemberData ORDER BY likes DESC LIMIT 11")
-    suspend fun getTop11MembersByLikes(): List<MemberData>
-
     @Query("SELECT * FROM MemberData ORDER BY dislikes DESC LIMIT 10")
     suspend fun getTop10MembersByDislikes(): List<MemberData>
 
@@ -136,6 +133,9 @@ interface MemberDatabaseDao {
 
     @Query("SELECT * FROM MemberData ORDER BY dislikesWeekly DESC LIMIT 10")
     suspend fun getTop10MembersByDislikesWeekly(): List<MemberData>
+
+    @Query("SELECT * FROM MemberData ORDER BY (likes - dislikes) DESC LIMIT 11")
+    suspend fun getTop11MembersByRequirePoint(): List<MemberData>
 
     // Rank Data
     @Query("UPDATE MemberData SET giftPoints = resetPoints + partyResetPoints")
@@ -146,6 +146,9 @@ interface MemberDatabaseDao {
 
     @Query("UPDATE MemberData SET rank = :rank, resetPoints = :resetPoints WHERE userId = :userId")
     suspend fun updateMemberRank(userId: Long, rank: String, resetPoints: Long)
+
+    @Query("SELECT * FROM MemberData WHERE rank = :rank")
+    suspend fun getMembersByRank(rank: String): List<MemberData>
 
     // Party Query
     @Query("SELECT * FROM MemberData WHERE partyId = :partyId AND partyState = 'PartyMember' ORDER BY joinTime ASC")
@@ -173,6 +176,9 @@ interface MemberDatabaseDao {
 
     @Query("UPDATE MemberData SET partyId = 0, partyState = 'None', joinTime = -1, partyResetPoints = 0 WHERE partyId = :partyId")
     suspend fun resetPartyMemberByDissolution(partyId: Long)
+
+    @Query("SELECT * FROM MemberData ORDER BY partyResetPoints DESC LIMIT 11")
+    suspend fun getTop11MembersByPartyPoint(): List<MemberData>
 
     // Only Reset
     @Query("UPDATE MemberData SET likes = 0, dislikes = 0, likesWeekly = 0, dislikesWeekly = 0")

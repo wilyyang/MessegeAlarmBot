@@ -13,13 +13,7 @@ import com.messege.alarmbot.contents.party.PartyContent
 import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
-import com.messege.alarmbot.core.common.ChatRoomKey
-import com.messege.alarmbot.core.common.ChatRoomType
-import com.messege.alarmbot.core.common.PartyMemberState
-import com.messege.alarmbot.core.common.Rank
-import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
-import com.messege.alarmbot.core.common.TEMP_PROFILE_TYPE
-import com.messege.alarmbot.core.common.inNotTalkType
+import com.messege.alarmbot.core.common.*
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
 import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
@@ -286,9 +280,21 @@ class CmdProcessor(
 
             is LikeWeeklyRanking -> {
                 scope.launch {
-                    val (likesWeekly, dislikesWeekly) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
+                    val primeMinister = useCasePoint.updatePrimeMinister()
+                    val seoulMayor = useCasePoint.updateSeoulMayor()
 
-                    var responseText = "* 한주간 랭킹 입니다! *\n\n"
+                    var responseText = ""
+                    primeMinister?.let {
+                        responseText += "* 새로운 야당대표는 ${primeMinister.latestName}님 입니다!\n" +
+                            "\n"
+                    }
+                    seoulMayor?.let {
+                        responseText += "* 새로운 서울시장은 ${seoulMayor.latestName}님 입니다!\n" +
+                            "\n"
+                    }
+
+                    val (likesWeekly, dislikesWeekly) = useCasePoint.getTop10MembersByLikesAndDislikesWeekly()
+                    responseText += "* 한주간 랭킹 입니다! * $FOLDING_TEXT\n\n"
                     responseText += "[주간 좋아요! 랭킹]\n"
                     responseText += likesWeekly.mapIndexed { index, it ->
                         if(it.likesWeekly > 0){
