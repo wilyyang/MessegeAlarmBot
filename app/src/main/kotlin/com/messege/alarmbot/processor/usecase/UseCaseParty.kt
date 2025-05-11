@@ -16,6 +16,9 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+const val PARTY_BASE_POINT = 5L
+const val PARTY_LEADER_POINT = 5L
+
 sealed class PartyCreateResult {
     data object AlreadyPartyMember : PartyCreateResult()
     data object AlreadyPartyNameExist : PartyCreateResult()
@@ -72,7 +75,7 @@ class UseCaseParty(
                         PartyData(
                             foundingTime = time,
                             name = partyName,
-                            partyPoints = 6L,
+                            partyPoints = PARTY_BASE_POINT + 1,
                             leaderId = member.userId,
                             partyState = PartyState.Active,
                             memberCount = 1,
@@ -80,7 +83,7 @@ class UseCaseParty(
                         )
                     )
 
-                    memberDatabaseDao.updatePartyStateLeader(member.userId, partyId, 11L)
+                    memberDatabaseDao.updatePartyStateLeader(member.userId, partyId, PARTY_BASE_POINT + PARTY_LEADER_POINT + 1)
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
@@ -268,7 +271,7 @@ class UseCaseParty(
                     memberDatabaseDao.updatePartyStateLeader(
                         target.userId,
                         party.idx,
-                        5 + party.partyPoints
+                        PARTY_LEADER_POINT + party.partyPoints
                     )
 
                     partyDatabaseDao.insertPartyLog(
@@ -359,7 +362,7 @@ class UseCaseParty(
                 ) {
 
                     val newMemberCount = party.memberCount + 1
-                    val newPartyPoints = 5L + newMemberCount
+                    val newPartyPoints = PARTY_BASE_POINT + newMemberCount
                     partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
                     partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
                     memberDatabaseDao.updatePartyStateMember(
@@ -369,6 +372,11 @@ class UseCaseParty(
                         newPartyPoints
                     )
                     memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateLeader(
+                        userId = party.leaderId,
+                        partyId = party.idx,
+                        partyResetPoints = PARTY_LEADER_POINT + newPartyPoints
+                    )
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
@@ -430,11 +438,16 @@ class UseCaseParty(
 
                 if (party != null) {
                     val newMemberCount = party.memberCount - 1
-                    val newPartyPoints = 5L + newMemberCount
+                    val newPartyPoints = PARTY_BASE_POINT + newMemberCount
                     partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
                     partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
                     memberDatabaseDao.updatePartyStateNone(member.userId)
                     memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateLeader(
+                        userId = party.leaderId,
+                        partyId = party.idx,
+                        partyResetPoints = PARTY_LEADER_POINT + newPartyPoints
+                    )
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(
@@ -468,11 +481,16 @@ class UseCaseParty(
                     target.partyState == PartyMemberState.PartyMember && target.partyId == party.idx
                 ) {
                     val newMemberCount = party.memberCount - 1
-                    val newPartyPoints = 5L + newMemberCount
+                    val newPartyPoints = PARTY_BASE_POINT + newMemberCount
                     partyDatabaseDao.updatePartyMemberCount(party.idx, newMemberCount)
                     partyDatabaseDao.updatePartyPoints(party.idx, newPartyPoints)
                     memberDatabaseDao.updatePartyStateNone(target.userId)
                     memberDatabaseDao.updatePartyMemberPoints(party.idx, newPartyPoints)
+                    memberDatabaseDao.updatePartyStateLeader(
+                        userId = party.leaderId,
+                        partyId = party.idx,
+                        partyResetPoints = PARTY_LEADER_POINT + newPartyPoints
+                    )
 
                     partyDatabaseDao.insertPartyLog(
                         PartyLog(

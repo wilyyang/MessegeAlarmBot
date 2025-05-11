@@ -177,7 +177,7 @@ interface MemberDatabaseDao {
     @Query("UPDATE MemberData SET partyId = 0, partyState = 'None', joinTime = -1, partyResetPoints = 0 WHERE partyId = :partyId")
     suspend fun resetPartyMemberByDissolution(partyId: Long)
 
-    @Query("SELECT * FROM MemberData ORDER BY partyResetPoints DESC LIMIT 11")
+    @Query("SELECT * FROM MemberData WHERE partyState == 'PartyLeader' ORDER BY partyResetPoints DESC LIMIT 11")
     suspend fun getTop11MembersByPartyPoint(): List<MemberData>
 
     // Only Reset
