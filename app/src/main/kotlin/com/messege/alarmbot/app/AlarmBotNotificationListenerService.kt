@@ -24,11 +24,13 @@ import com.messege.alarmbot.core.common.ChatRoomKey
 import com.messege.alarmbot.processor.CmdProcessor
 import com.messege.alarmbot.processor.CmdProcessorEntryPoint
 import com.messege.alarmbot.processor.model.LikeWeeklyRanking
+import com.messege.alarmbot.processor.model.MacroKakaoTalkRoomNews
 import com.messege.alarmbot.processor.model.ResetMemberPoint
 import com.messege.alarmbot.util.format.toTimeFormat
 import com.messege.alarmbot.util.log.Logger
 import com.messege.alarmbot.work.member.MemberLikeWeeklyRankingWorker
 import com.messege.alarmbot.work.member.MemberPointResetWorker
+import com.messege.alarmbot.work.news.DailyNewsWorker
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,9 +58,16 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private val newsReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            cmdProcessor.sendCommand(MacroKakaoTalkRoomNews)
+        }
+    }
+
     companion object {
         const val ACTION_RESET_POINTS = "com.messege.alarmbot.RESET_POINTS"
         const val ACTION_LIKE_WEEKLY_RANKING = "com.messege.alarmbot.LIKE_WEEKLY_RANKING"
+        const val ACTION_DAILY_NEWS = "com.messege.alarmbot.DAILY_NEWS"
     }
 
     override fun onCreate() {
@@ -87,16 +96,20 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
         registerReceiver(resetReceiver, resetFilter, RECEIVER_NOT_EXPORTED)
         val rankingFilter = IntentFilter(ACTION_LIKE_WEEKLY_RANKING)
         registerReceiver(rankingReceiver, rankingFilter, RECEIVER_NOT_EXPORTED)
+        val newsFilter = IntentFilter(ACTION_DAILY_NEWS)
+        registerReceiver(newsReceiver, newsFilter, RECEIVER_NOT_EXPORTED)
 
         // Worker 실행
         scheduleMemberPointResetWork()
         scheduleMemberLikeWeeklyRankingWork()
+        scheduleDailyNewsWork()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(resetReceiver)
         unregisterReceiver(rankingReceiver)
+        unregisterReceiver(newsReceiver)
         stopForeground(Service.STOP_FOREGROUND_REMOVE)
     }
 
@@ -202,6 +215,34 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "MemberLikeWeeklyRankingWorker",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            workRequest
+        )
+    }
+
+    private fun scheduleDailyNewsWork() {
+        val now = Calendar.getInstance()
+        val nextRun = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 19)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            if (before(now)) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        val initialMinuteDelay = (nextRun.timeInMillis - now.timeInMillis) / 1000 / 60 + 1
+
+        Logger.e("[time.news] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
+
+        val workRequest = PeriodicWorkRequestBuilder<DailyNewsWorker>(12, TimeUnit.HOURS)
+            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "DailyNewsWorker",
             ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )

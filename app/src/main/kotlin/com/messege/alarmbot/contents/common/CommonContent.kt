@@ -1,7 +1,6 @@
 package com.messege.alarmbot.contents.common
 
 import com.messege.alarmbot.contents.BaseContent
-import com.messege.alarmbot.processor.model.Message
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
@@ -10,12 +9,7 @@ import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.data.database.member.model.SanctionData
 import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
-import com.messege.alarmbot.processor.model.AdminRoomTextResponse
-import com.messege.alarmbot.processor.model.Command
-import com.messege.alarmbot.processor.model.Group1RoomTextResponse
-import com.messege.alarmbot.processor.model.Group2RoomTextResponse
-import com.messege.alarmbot.processor.model.LikeWeeklyRanking
-import com.messege.alarmbot.processor.model.UpdateKakaoMembers
+import com.messege.alarmbot.processor.model.*
 import com.messege.alarmbot.util.format.toTimeFormatDate
 import kotlinx.coroutines.channels.Channel
 
@@ -49,6 +43,8 @@ class CommonContent(
                 commandChannel.send(Group1RoomTextResponse(MAFIA_GAME_RULE))
             }else if(message.text == ".업데이트"){
                 commandChannel.send(UpdateKakaoMembers)
+            }else if(message.text == ".테스트"){
+                // commandChannel.send(MacroKakaoTalkRoomNews)
             }else if(message.text.startsWith(".조회")){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){

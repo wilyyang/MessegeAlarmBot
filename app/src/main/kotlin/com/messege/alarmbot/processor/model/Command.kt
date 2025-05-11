@@ -14,3 +14,4 @@ data class IndividualRoomTextResponse(val userKey: ChatRoomKey, val text: String
 data object ResetMemberPoint : Command(DELAY_DEFAULT)
 data object LikeWeeklyRanking : Command(DELAY_DEFAULT)
 data object UpdateKakaoMembers : Command(DELAY_DEFAULT)
+data object MacroKakaoTalkRoomNews : Command(DELAY_DEFAULT)

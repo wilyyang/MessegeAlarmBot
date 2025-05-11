@@ -21,16 +21,7 @@ import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.kakao.ChatMembersObserver
 import com.messege.alarmbot.kakao.model.ChatMember
-import com.messege.alarmbot.processor.model.AdminRoomTextResponse
-import com.messege.alarmbot.processor.model.Command
-import com.messege.alarmbot.processor.model.Group1RoomTextResponse
-import com.messege.alarmbot.processor.model.Group2RoomTextResponse
-import com.messege.alarmbot.processor.model.IndividualRoomTextResponse
-import com.messege.alarmbot.processor.model.LikeWeeklyRanking
-import com.messege.alarmbot.processor.model.Message
-import com.messege.alarmbot.processor.model.None
-import com.messege.alarmbot.processor.model.ResetMemberPoint
-import com.messege.alarmbot.processor.model.UpdateKakaoMembers
+import com.messege.alarmbot.processor.model.*
 import com.messege.alarmbot.processor.usecase.UseCaseParty
 import com.messege.alarmbot.processor.usecase.UseCasePoint
 import com.messege.alarmbot.util.log.Logger
@@ -323,6 +314,19 @@ class CmdProcessor(
                     groupRoom1OpenChatRoomAction?.let { action ->
                         sendActionText(applicationContext, action, "유저 업데이트 $textResult")
                     }
+                }
+            }
+            is MacroKakaoTalkRoomNews -> {
+                val shPath = "/storage/emulated/0/Documents/ChatBot/news_macro.sh"
+                val cmd = arrayOf("su", "-c", "sh \"$shPath\"")
+
+                try {
+                    val process = Runtime.getRuntime().exec(cmd)
+                    val resultCode = process.waitFor()
+
+                    Logger.d("[macro] 스크립트 종료 코드: $resultCode")
+                } catch (e: Exception) {
+                    Logger.e("[macro] 스크립트 실행 실패 ${e.message}")
                 }
             }
             else -> {}
