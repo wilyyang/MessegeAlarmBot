@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import com.messege.alarmbot.contents.*
+import com.messege.alarmbot.contents.bot.BotContent
 import com.messege.alarmbot.contents.common.CommonContent
 import com.messege.alarmbot.contents.party.PartyContent
 import com.messege.alarmbot.contents.point.PointContent
@@ -63,6 +64,10 @@ class CmdProcessor(
 
     private var contents: Array<BaseContent> = arrayOf(
         commonContent,
+        BotContent(
+            commandChannel = commandChannel,
+            memberDatabaseDao = memberDatabaseDao
+        ),
         PointContent(
             commandChannel = commandChannel,
             memberDatabaseDao = memberDatabaseDao,

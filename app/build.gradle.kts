@@ -77,4 +77,5 @@ dependencies {
     kapt(libs.room.compiler)
 
     implementation(libs.work.runtime)
+    implementation(libs.generativeai)
 }
