@@ -30,7 +30,7 @@ class BotContent(
                     val question = message.text.substring(Constants.BOT_START_PREFIX.length).trim()
                     if (question.isBlank()) return
 
-                    val response = handleBotQuestion(question, user.latestName)
+                    val response = handleBotQuestion("#${user.latestName}# $question")
                     if (response != null) {
                         memberDatabaseDao.updateMemberGiftPoints(user.userId, user.giftPoints - REQUEST_POINT)
                         commandChannel.send(Group1RoomTextResponse(response))
@@ -42,15 +42,10 @@ class BotContent(
         }
     }
 
-    private suspend fun handleBotQuestion(question : String, latestName : String) : String? {
-        val userPrompt = content {
-            role = ROLE_USER
-            text("질문자의 이름은 $latestName 이야. 물어보면 이름을 말해주고, 그렇지 않으면 언급할 필요 없어")
-        }
-
+    private suspend fun handleBotQuestion(question : String) : String? {
         try {
             val chat = generativeModel.startChat(
-                history = listOf(systemPrompt, userPrompt) + historyCache
+                history = listOf(systemPrompt) + historyCache
             )
 
             val response = chat.sendMessage(question)
