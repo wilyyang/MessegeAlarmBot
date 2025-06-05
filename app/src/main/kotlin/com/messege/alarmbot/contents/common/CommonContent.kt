@@ -1,7 +1,9 @@
 package com.messege.alarmbot.contents.common
 
 import com.messege.alarmbot.contents.BaseContent
+import com.messege.alarmbot.contents.mafia.arrayOfMafiaMissions
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
@@ -41,6 +43,14 @@ class CommonContent(
                 commandChannel.send(Group1RoomTextResponse(rankHelp()))
             }else if(message.text == ".? 마피아"){
                 commandChannel.send(Group1RoomTextResponse(MAFIA_GAME_RULE))
+            }else if(message.text == ".미션"){
+                commandChannel.send(
+                    Group1RoomTextResponse(
+                        text = "\uD83C\uDFB2 마피아 미션\n" + "${FOLDING_TEXT}\n" + arrayOfMafiaMissions.joinToString(
+                            "\n"
+                        )
+                    )
+                )
             }else if(message.text == ".업데이트"){
                 commandChannel.send(UpdateKakaoMembers)
             }else if(message.text == ".테스트"){
@@ -167,6 +177,18 @@ class CommonContent(
                         commandChannel.send(Group1RoomTextResponse("${target.latestName}님이 부방에서 해제되었습니다."))
                     }
                 }
+            }
+        } else if(message.type == ChatRoomType.GroupRoom2 && message is Message.Talk) {
+            if(message.text == ".? 마피아"){
+                commandChannel.send(Group2RoomTextResponse(MAFIA_GAME_RULE))
+            }else if(message.text == ".미션"){
+                commandChannel.send(
+                    Group2RoomTextResponse(
+                        text = "\uD83C\uDFB2 마피아 미션\n" + "${FOLDING_TEXT}\n" + arrayOfMafiaMissions.joinToString(
+                            "\n"
+                        )
+                    )
+                )
             }
         }
     }

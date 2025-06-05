@@ -241,20 +241,6 @@ class MafiaGameContent(
         val localState = _stateFlow.value
 
         /**
-         * 미션 모음
-         */
-        if (chatRoomKey == GAME_KEY && text == "$hostKeyword$mission") {
-            commandChannel.send(
-                makeGroupCommand(
-                    text = "\uD83C\uDFB2 마피아 미션\n" + "${FOLDING_TEXT}\n" + arrayOfMafiaMissions.joinToString(
-                        "\n"
-                    )
-                )
-            )
-            return
-        }
-
-        /**
          * 게임 시작
          */
         if(text == hostKeyword + contentsName) {
