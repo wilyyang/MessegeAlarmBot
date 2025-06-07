@@ -10,6 +10,7 @@ import com.messege.alarmbot.contents.bot.Constants.MESSAGE_TEXT_LIMIT
 import com.messege.alarmbot.contents.bot.Constants.REQUEST_POINT
 import com.messege.alarmbot.contents.bot.Constants.REQUEST_SUMMARY_POINT
 import com.messege.alarmbot.core.common.ChatRoomType
+import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
@@ -47,7 +48,7 @@ class BotContent(
                         val response = handleBotSummaryQuestion("#${user.latestName}# ${message.text}")
                         if (response != null) {
                             memberDatabaseDao.updateMemberGiftPoints(user.userId, user.giftPoints - REQUEST_SUMMARY_POINT)
-                            commandChannel.send(Group1RoomTextResponse("[요약]\n$response"))
+                            commandChannel.send(Group1RoomTextResponse("[요약]${FOLDING_TEXT}\n$response"))
                         }
                     } else {
                         commandChannel.send(Group1RoomTextResponse("요약하려면 $REQUEST_SUMMARY_POINT 포인트가 필요합니다. (현재 포인트 : ${user.giftPoints})"))

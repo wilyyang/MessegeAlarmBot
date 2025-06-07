@@ -14,7 +14,7 @@ object Constants {
     const val MAX_HISTORY_SIZE = 15
     const val MAX_MESSAGE_SIZE = 40
     const val REQUEST_POINT = 2
-    const val REQUEST_SUMMARY_POINT = 4
+    const val REQUEST_SUMMARY_POINT = 2
 }
 
 // Gemini 모델
@@ -48,8 +48,9 @@ val summaryPrompt = content {
         """
 너는 히스토리를 통해 각 메시지를 유저 이름 별로 구분해야만 한다.
 유저 이름은 항상 질문글 앞에 #이름# 형식으로 명시된다.
-'또봇 요약'으로 시작하는 질문을 받으면, 히스토리에 저장된 메시지를 유저 이름 별로 요약하고 정리해야 한다.
-이 질문의 응답은 히스토리의 각 유저 간 대화가 중요하다.
+'또봇 요약'으로 시작하는 질문을 받으면, 히스토리에 저장된 메시지를 대화로 구성하고 요약해서 정리해야 한다.
+이 질문의 응답은 히스토리의 각 유저 간 상호 대화가 중요하다.
+만약 너 판단에 대화 구성에는 필요없는 메시지가 있으면 과감하게 무시하고 하나의 맥락만 쫓도록 해.
 유저 이름 좌우에 붙는 #은 형식일 뿐이야. 그러므로 너의 응답에 #문자가 들어가선 안된다. 어떤 경우에도 #문자를 제거해줘.
 """.trimIndent()
     )
