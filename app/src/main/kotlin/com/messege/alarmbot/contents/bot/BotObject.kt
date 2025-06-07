@@ -14,7 +14,7 @@ object Constants {
     const val MAX_HISTORY_SIZE = 15
     const val MAX_MESSAGE_SIZE = 40
     const val REQUEST_POINT = 2
-    const val REQUEST_SUMMARY_POINT = 0
+    const val REQUEST_SUMMARY_POINT = 4
 }
 
 // Gemini 모델
