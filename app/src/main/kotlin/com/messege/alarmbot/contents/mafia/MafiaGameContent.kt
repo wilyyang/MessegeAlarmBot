@@ -216,7 +216,6 @@ class MafiaGameContent(
             val chatRoomKey = if (key.toString() == GAME_KEY.roomKey) {
                 GAME_KEY
             } else if (key == ChatRoomType.GroupRoom1.roomKey
-                || key == ChatRoomType.GroupRoom2.roomKey
                 || key == ChatRoomType.AdminRoom.roomKey
             ) {
                 null
