@@ -64,6 +64,7 @@ object MafiaText {
     fun winCitizenWithSoldier(name : String, players: List<Player>) = "[죽은 $name 님에 의해 마피아가 모두 죽어 시민이 승리합니다!]\n${playerProgressToText(players, true)}"
 
     fun winMafia(name : String, players: List<Player>) = "[죽은 $name 님은 시민입니다. 시민 수가 적어 마피아가 이겼습니다!]\n${playerProgressToText(players, true)}"
+    fun winMagic(players: List<Player>) = "[마술사는 마피아가 되었습니다. 시민 수가 적어 마피아가 이겼습니다!]\n${playerProgressToText(players, true)}"
 
     fun mafiaVoted(name : String, players: List<Player>) = "[죽은 $name 님은 마피아입니다.]\n${playerProgressToText(players)}"
 

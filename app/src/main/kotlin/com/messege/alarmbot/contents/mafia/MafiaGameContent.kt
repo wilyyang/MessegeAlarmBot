@@ -212,24 +212,32 @@ class MafiaGameContent(
 
     override suspend fun request(message : Message) {
         if(message is Message.Talk){
-            val chatRoomKey = if (message.type.roomKey.toString() == GAME_KEY.roomKey) {
+            val key = message.type.roomKey
+            val chatRoomKey = if (key.toString() == GAME_KEY.roomKey) {
                 GAME_KEY
+            } else if (key == ChatRoomType.GroupRoom1.roomKey
+                || key == ChatRoomType.GroupRoom2.roomKey
+                || key == ChatRoomType.AdminRoom.roomKey
+            ) {
+                null
             } else {
                 ChatRoomKey(
                     isGroupConversation = false,
                     roomName = message.userName,
-                    roomKey = message.type.roomKey.toString()
+                    roomKey = key.toString()
                 )
             }
 
-            requestChannel.send(
-                RequestData(
-                    chatRoomKey = chatRoomKey,
-                    userName = message.userName,
-                    userKey = message.userId.toString(),
-                    text = message.text
+            if(chatRoomKey != null){
+                requestChannel.send(
+                    RequestData(
+                        chatRoomKey = chatRoomKey,
+                        userName = message.userName,
+                        userKey = message.userId.toString(),
+                        text = message.text
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -246,14 +254,12 @@ class MafiaGameContent(
         if(text == hostKeyword + contentsName) {
             if(localState is MafiaGameState.Play){
                 val command = when (chatRoomKey.roomKey) {
-                    ChatRoomType.GroupRoom1.roomKey.toString() -> Group1RoomTextResponse(MafiaText.GAME_ALREADY_START)
                     ChatRoomType.GroupRoom2.roomKey.toString() -> Group2RoomTextResponse(MafiaText.GAME_ALREADY_START)
                     else -> None
                 }
                 commandChannel.send(command)
             }else{
                 val key = when (chatRoomKey.roomKey) {
-                    ChatRoomType.GroupRoom1.roomKey.toString() -> ChatRoomType.GroupRoom1.roomKey.toString()
                     ChatRoomType.GroupRoom2.roomKey.toString() -> ChatRoomType.GroupRoom2.roomKey.toString()
                     else -> ""
                 }
@@ -683,8 +689,6 @@ class MafiaGameContent(
                         }
 
                         val targetUser = state.survivors.firstOrNull { it.name == target && currentUser.name != target}
-                        metaData.allPlayers.removeIf { currentUser.name == it.name }
-                        state.survivors.removeIf { currentUser.name == it.name }
 
                         when(targetUser){
                             is Player.Assign.Mafia -> {
@@ -692,23 +696,34 @@ class MafiaGameContent(
                                 state.survivors.removeIf { targetUser.name == it.name }
 
                                 val newJob = currentUser.toMafia()
+                                metaData.allPlayers.removeIf { currentUser.name == it.name }
                                 metaData.allPlayers.add(newJob)
+                                state.survivors.removeIf { currentUser.name == it.name }
                                 state.survivors.add(newJob)
 
                                 commandChannel.send(makeGroupCommand(MafiaText.magicianKillMafia(targetUser.name)))
+
+                                val mafiaCount = state.survivors.count { it is Player.Assign.Mafia }
+                                val citizenCount = state.survivors.count { it !is Player.Assign.Mafia }
+
+                                if(mafiaCount >= citizenCount){
+                                    commandChannel.send(makeGroupCommand(MafiaText.winMagic(metaData.allPlayers)))
+                                    _stateFlow.value = MafiaGameState.End()
+                                }
                             }
                             is Player.Assign -> {
-                                metaData.allPlayers.removeIf { targetUser.name == it.name }
-                                state.survivors.removeIf { targetUser.name == it.name }
-
                                 val targetInit = Player.None(targetUser.name, targetUser.key)
                                 targetInit.isCheck = true
                                 val targetNewJob = targetInit.toCitizen()
+                                metaData.allPlayers.removeIf { targetUser.name == it.name }
                                 metaData.allPlayers.add(targetNewJob)
+                                state.survivors.removeIf { targetUser.name == it.name }
                                 state.survivors.add(targetNewJob)
 
                                 val newJob = currentUser.toCitizen(targetUser.job)
+                                metaData.allPlayers.removeIf { currentUser.name == it.name }
                                 metaData.allPlayers.add(newJob)
+                                state.survivors.removeIf { currentUser.name == it.name }
                                 state.survivors.add(newJob)
 
                                 if (targetUser is Player.Assign.Agent) {
@@ -725,18 +740,17 @@ class MafiaGameContent(
                                         text = MAGICIAN_GET_YOUR_JOB
                                     )
                                 )
+
+                                delay(1000)
+
+                                commandChannel.send(
+                                    IndividualRoomTextResponse(
+                                        userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
+                                        text = MafiaText.magicianHaveJob(targetUser.job.korName)
+                                    )
+                                )
                             }
                             else -> {}
-                        }
-
-                        delay(1000)
-                        if(targetUser is Player.Assign){
-                            commandChannel.send(
-                                IndividualRoomTextResponse(
-                                    userKey = ChatRoomKey(isGroupConversation = false, currentUser.name, currentUser.name),
-                                    text = MafiaText.magicianHaveJob(targetUser.job.korName)
-                                )
-                            )
                         }
                     }
                 }
