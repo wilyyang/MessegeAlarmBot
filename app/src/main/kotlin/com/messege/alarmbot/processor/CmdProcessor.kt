@@ -364,7 +364,7 @@ class CmdProcessor(
                 createAt = System.currentTimeMillis(),
                 profileType = talkMember.type,
                 latestName = talkMember.nickName,
-                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME,
+                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME || talkMember.userId == SUPER_ADMIN_ME_2,
                 isAdmin = false,
                 chatProfileCount = if(isTalkAvailable) 1 else 0,
                 talkCount = 0,
@@ -378,7 +378,7 @@ class CmdProcessor(
                 dislikesWeekly = 0,
                 giftPoints = 10,
                 resetPoints = 10,
-                rank = if (talkMember.userId == SUPER_ADMIN_ME) {
+                rank = if (talkMember.userId == SUPER_ADMIN_ME  || talkMember.userId == SUPER_ADMIN_ME_2) {
                     Rank.President.name
                 } else {
                     Rank.Unemployed.name

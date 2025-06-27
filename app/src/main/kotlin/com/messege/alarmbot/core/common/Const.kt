@@ -1,6 +1,7 @@
 package com.messege.alarmbot.core.common
 
 const val SUPER_ADMIN_ME = 4854550234324234448
+const val SUPER_ADMIN_ME_2 = 6657925453211497576
 const val TEMP_PROFILE_TYPE = -1
 const val NOT_TALK_PROFILE_TYPE_1 = 1
 const val NOT_TALK_PROFILE_TYPE_2 = 2

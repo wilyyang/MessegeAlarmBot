@@ -84,7 +84,7 @@ class ChatMembersObserver : CoroutineScope {
             return@channelFlow
         }
 
-        val initMembers = getGroupMembers(ChatRoomType.GroupRoom1)
+        val initMembers = getGroupMembers()
         send(initMembers)
 
         val eventChannel = Channel<Unit>(Channel.CONFLATED)
@@ -104,7 +104,7 @@ class ChatMembersObserver : CoroutineScope {
                 delay(300)
 
                 mutex.withLock {
-                    val members = getGroupMembers(ChatRoomType.GroupRoom1)
+                    val members = getGroupMembers()
                     send(members)
                 }
             }
@@ -116,10 +116,10 @@ class ChatMembersObserver : CoroutineScope {
         }
     }
 
-    private fun getGroupMembers(roomType : ChatRoomType): List<ChatMember> {
+    private fun getGroupMembers(): List<ChatMember> {
         val members = mutableListOf<ChatMember>()
         database.rawQuery(
-            "SELECT * FROM open_chat_member WHERE involved_chat_id = ${roomType.roomKey}",
+            "SELECT * FROM open_chat_member WHERE involved_chat_id = ${ChatRoomType.GroupRoom1.roomKey} OR involved_chat_id = ${ChatRoomType.GroupRoom2.roomKey}",
             null
         ).use { cursor ->
 

@@ -23,13 +23,17 @@ class CommonContent(
     override val contentsName: String = "기본"
 
     override suspend fun request(message : Message) {
+        val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
+        val isSuperAdmin = user?.isSuperAdmin ?: false
+        val isAdmin = isSuperAdmin || user?.isAdmin ?: false
+        val rank = if(user != null) Rank.getRankByName(user.rank) else Rank.Unemployed
         if(message.type == ChatRoomType.GroupRoom1 && message is Message.Talk) {
-            val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
-            val isSuperAdmin = user?.isSuperAdmin ?: false
-            val isAdmin = isSuperAdmin || user?.isAdmin ?: false
-            val rank = if(user != null) Rank.getRankByName(user.rank) else Rank.Unemployed
-
-            if(message.text == ".?"){
+            if(message.text.startsWith("!")){
+                if(message.text.length > 2 && user?.latestName != null){
+                    val result = "[생각방 ${user.latestName}] ${message.text.substring(1)}"
+                    commandChannel.send(Group2RoomTextResponse(result))
+                }
+            }else if(message.text == ".?"){
                 commandChannel.send(Group1RoomTextResponse(COMMAND_HELP))
             }else if(message.text == ".? 관리자"){
                 if(user != null && user.userId == SUPER_ADMIN_ME && rank != Rank.President){
@@ -179,7 +183,12 @@ class CommonContent(
                 }
             }
         } else if(message.type == ChatRoomType.GroupRoom2 && message is Message.Talk) {
-            if(message.text == ".? 마피아"){
+            if(message.text.startsWith("!")){
+                if(message.text.length > 2 && user?.latestName != null){
+                    val result = "[대화방 ${user.latestName}] ${message.text.substring(1)}"
+                    commandChannel.send(Group1RoomTextResponse(result))
+                }
+            }else if(message.text == ".? 마피아"){
                 commandChannel.send(Group2RoomTextResponse(MAFIA_GAME_RULE))
             }else if(message.text == ".미션"){
                 commandChannel.send(
