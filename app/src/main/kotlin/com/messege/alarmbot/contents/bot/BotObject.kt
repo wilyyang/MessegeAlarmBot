@@ -4,7 +4,7 @@ import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 
 object Constants {
-    const val apiKey = "AIzaSyCWhHWdZdXP3DaeUJioTEvn_p9K1K3ztvE"
+    const val apiKey = "AIzaSyAUUSA1T3EAcSONZSkWRaR6cbAyXUOjmUs"
     const val BOT_START_PREFIX = "또봇"
     const val BOT_SUMMARY_START_PREFIX = "또봇 요약"
     const val BOT_ID = 421448547L
