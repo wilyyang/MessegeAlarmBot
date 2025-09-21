@@ -58,7 +58,7 @@ class CommonContent(
             }else if(message.text == ".업데이트"){
                 commandChannel.send(UpdateKakaoMembers)
             }else if(message.text == ".테스트"){
-                // commandChannel.send(MacroKakaoTalkRoomNews)
+                commandChannel.send(MacroKakaoTalkRoomNews)
             }else if(message.text.startsWith(".조회")){
                 val targetId = message.mentionIds.getOrNull(0)
                 if(targetId != null){
