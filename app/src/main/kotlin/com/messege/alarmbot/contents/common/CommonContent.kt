@@ -30,7 +30,7 @@ class CommonContent(
         if(message.type == ChatRoomType.GroupRoom1 && message is Message.Talk) {
             if(message.text.startsWith("!")){
                 if(message.text.length > 2 && user?.latestName != null){
-                    val result = "[생각방 ${user.latestName}] ${message.text.substring(1)}"
+                    val result = "[메인방 ${user.latestName}] ${message.text.substring(1)}"
                     commandChannel.send(Group2RoomTextResponse(result))
                 }
             }else if(message.text == ".?"){
@@ -185,7 +185,7 @@ class CommonContent(
         } else if(message.type == ChatRoomType.GroupRoom2 && message is Message.Talk) {
             if(message.text.startsWith("!")){
                 if(message.text.length > 2 && user?.latestName != null){
-                    val result = "[대화방 ${user.latestName}] ${message.text.substring(1)}"
+                    val result = "[서브방 ${user.latestName}] ${message.text.substring(1)}"
                     commandChannel.send(Group1RoomTextResponse(result))
                 }
             }else if(message.text == ".? 마피아"){
