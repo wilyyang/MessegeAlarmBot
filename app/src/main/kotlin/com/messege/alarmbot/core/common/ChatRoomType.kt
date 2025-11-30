@@ -1,7 +1,7 @@
 package com.messege.alarmbot.core.common
 
-private const val GROUP_1_KEY = 18465187979116240L
-private const val GROUP_2_KEY = 18466521015977453L
+private const val GROUP_1_KEY = 18468576377660476L
+private const val GROUP_2_KEY = 18468576377660476L
 private const val ADMIN_KEY = 18466914340070794L
 
 sealed class ChatRoomType(open val roomKey : Long) {

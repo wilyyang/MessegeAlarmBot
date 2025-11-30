@@ -38,15 +38,23 @@ sealed class MafiaGameState{
             override val time = players.size * 10
             val assignedPlayers : MutableList<Player.Assign> = mutableListOf()
 
-            fun assignJob() {
+            fun assignJob(isBeginner : Boolean) {
                 val seed = System.currentTimeMillis()
                 val baseRandom = Random(seed)
                 val memberRandom = Random(baseRandom.nextLong())
                 val citizenRandom = Random(baseRandom.nextLong())
                 val hiddenRandom = Random(baseRandom.nextLong())
 
-                val citizenJobs = listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Soldier, Job.Shaman).shuffled(citizenRandom)
-                val hiddenJobs = listOf(Job.Fool, Job.Magician).shuffled(hiddenRandom)
+                val citizenJobs = if(isBeginner){
+                    listOf(Job.Citizen, Job.Citizen, Job.Citizen, Job.Doctor, Job.Bodyguard, Job.Police, Job.Citizen, Job.Citizen).shuffled(citizenRandom)
+                }else{
+                    listOf(Job.Citizen, Job.Politician, Job.Agent, Job.Doctor, Job.Bodyguard, Job.Police, Job.Soldier, Job.Shaman).shuffled(citizenRandom)
+                }
+                val hiddenJobs = if(isBeginner){
+                    listOf(Job.Citizen, Job.Citizen)
+                }else{
+                    listOf(Job.Fool, Job.Magician).shuffled(hiddenRandom)
+                }
                 val shuffledPlayers = players.shuffled(memberRandom)
                 shuffledPlayers.getOrNull(0)?.let {
                     assignedPlayers.add(it.toMafia())

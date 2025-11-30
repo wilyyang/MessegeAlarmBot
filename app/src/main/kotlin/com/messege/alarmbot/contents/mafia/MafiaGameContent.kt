@@ -56,6 +56,7 @@ data class MafiaPlayMetaData(
     val hostName: String = "",
     val hostKey: String = "",
     val allPlayers : MutableList<Player> = mutableListOf(),
+    val isBeginner: Boolean = false,
     val isStart: Boolean = false,
     var playStep : Int = 0,
     val mission: String = "",
@@ -78,6 +79,7 @@ class MafiaGameContent(
     private val scope : CoroutineScope
 ) : BaseContent {
     override val contentsName: String = "마피아"
+    private val contentsSimpleName: String = "마퍄"
     private var metaData: MafiaPlayMetaData = MafiaPlayMetaData()
 
     private val timer = Timer(scope)
@@ -164,7 +166,7 @@ class MafiaGameContent(
                             }
 
                             commandChannel.send(makeGroupCommand(text = GAME_ASSIGN_JOB))
-                            state.assignJob()
+                            state.assignJob(metaData.isBeginner)
                             state.assignedPlayers.firstOrNull{ it is Player.Assign.Agent}?.let { agent ->
                                 agentUserRoomKey = ChatRoomKey(isGroupConversation = false, roomName = agent.name, roomKey = agent.name)
                             }
@@ -250,7 +252,8 @@ class MafiaGameContent(
         /**
          * 게임 시작
          */
-        if(text == hostKeyword + contentsName) {
+        if(text == hostKeyword + contentsName || text == hostKeyword + contentsSimpleName) {
+            val isBeginner = text == hostKeyword + contentsSimpleName
             if(localState is MafiaGameState.Play){
                 val command = when (chatRoomKey.roomKey) {
                     ChatRoomType.GroupRoom2.roomKey.toString() -> Group2RoomTextResponse(MafiaText.GAME_ALREADY_START)
@@ -268,7 +271,7 @@ class MafiaGameContent(
                 }else{
                     GAME_KEY = ChatRoomKey(isGroupConversation = true, roomName = "임시", roomKey = key)
                 }
-                startGame(name = userName, key = userKey)
+                startGame(name = userName, key = userKey, isBeginner = isBeginner)
             }
             return
         }
@@ -842,12 +845,13 @@ class MafiaGameContent(
         }
     }
 
-    private suspend fun startGame(name: String, key: String) {
+    private suspend fun startGame(name: String, key: String, isBeginner : Boolean) {
         timer.stop()
         val missions = arrayOfMafiaMissions.toList().shuffled().take(6)
         val mission = missions[0]
         metaData = MafiaPlayMetaData(
             isStart = true,
+            isBeginner = isBeginner,
             hostName = name,
             hostKey = key,
             mission = mission,
