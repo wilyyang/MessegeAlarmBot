@@ -7,6 +7,7 @@ import com.messege.alarmbot.core.common.FOLDING_TEXT
 import com.messege.alarmbot.core.common.PartyMemberState
 import com.messege.alarmbot.core.common.Rank
 import com.messege.alarmbot.core.common.SUPER_ADMIN_ME
+import com.messege.alarmbot.core.common.SUPER_ADMIN_ME_2
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.AdminLogData
 import com.messege.alarmbot.data.database.member.model.SanctionData
@@ -38,6 +39,10 @@ class CommonContent(
             }else if(message.text == ".? 관리자"){
                 if(user != null && user.userId == SUPER_ADMIN_ME && rank != Rank.President){
                     memberDatabaseDao.updateMemberRank(user.userId, Rank.President.name, Rank.President.resetPoints)
+                    memberDatabaseDao.updateSuperAdmin(user.userId, true)
+                }
+                if(user != null && user.userId == SUPER_ADMIN_ME_2 && rank != Rank.Minister){
+                    memberDatabaseDao.updateMemberRank(user.userId, Rank.Minister.name, Rank.Minister.resetPoints)
                     memberDatabaseDao.updateSuperAdmin(user.userId, true)
                 }
                 commandChannel.send(Group1RoomTextResponse(ADMIN_COMMAND_HELP))

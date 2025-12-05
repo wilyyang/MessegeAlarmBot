@@ -3,6 +3,7 @@ package com.messege.alarmbot.processor
 import android.content.Context
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
+import com.messege.alarmbot.data.database.quiz.dao.QuizDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import dagger.Module
 import dagger.Provides
@@ -27,8 +28,9 @@ object CmdProcessorModule {
         @ApplicationContext context : Context,
         memberDatabaseDao : MemberDatabaseDao,
         topicDatabaseDao : TopicDatabaseDao,
+        quizDatabaseDao : QuizDatabaseDao,
         partyDatabaseDao: PartyDatabaseDao
     ) : CmdProcessor {
-        return CmdProcessor(context, memberDatabaseDao, topicDatabaseDao, partyDatabaseDao)
+        return CmdProcessor(context, memberDatabaseDao, topicDatabaseDao, quizDatabaseDao, partyDatabaseDao)
     }
 }
