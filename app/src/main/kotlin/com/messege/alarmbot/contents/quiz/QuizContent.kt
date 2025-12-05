@@ -1,7 +1,6 @@
 package com.messege.alarmbot.contents.quiz
 
 import com.messege.alarmbot.contents.BaseContent
-import com.messege.alarmbot.contents.bot.Constants.REQUEST_POINT
 import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.quiz.dao.QuizDatabaseDao
@@ -33,10 +32,13 @@ class QuizContent(
                             val updateTime = System.currentTimeMillis()
                             val cleaned = message.text.removePrefix(".퀴즈추가").trim()
 
-                            val (quiz, answer) = cleaned.split(":", limit = 2)
-                                .map { it.trim() }
-                                .let {
-                                    it.getOrNull(0).orEmpty() to it.getOrNull(1).orEmpty()
+                            val lastColonIndex = cleaned.lastIndexOf(':')
+                            val (quiz, answer) =
+                                if (lastColonIndex != -1) {
+                                    cleaned.substring(0, lastColonIndex).trim() to
+                                        cleaned.substring(lastColonIndex + 1).trim()
+                                } else {
+                                    cleaned to ""   // 콜론이 없는 경우
                                 }
 
                             if (quiz.isEmpty() || answer.isEmpty()) {
@@ -54,18 +56,18 @@ class QuizContent(
                             }
                         }
 
-                        message.text.startsWith("퀴즈 ") -> {
+                        message.text.startsWith(".퀴즈 ") -> {
                             val number = message.text.substringAfter(" ", "").toIntOrNull()?.toLong()
                             val quiz = number?.let { quizDatabaseDao.getSelectQuiz(it) }
 
                             val quizResultText = quiz?.let {
                                 val latestName = memberDatabaseDao.getMember(it.userKey).getOrNull(0)?.latestName?:"-"
-                                "- 질문글 : ${it.quiz}\n- 정답 : ${it.answer}\n\n⏱${it.updateTime.toTimeFormatDate()} - $latestName"
+                                "${it.quiz}\n- 정답 : ${it.answer}\n\n⏱ ${it.updateTime.toTimeFormatDate()} - $latestName"
                             } ?: "등록된 퀴즈가 없습니다."
                             commandChannel.send(Group1RoomTextResponse(text = quizResultText))
                         }
 
-                        message.text.startsWith("퀴즈삭제 ") -> {
+                        message.text.startsWith(".퀴즈삭제 ") -> {
                             val number = message.text.substringAfter(" ", "").toIntOrNull()?.toLong()
                             val quiz = number?.let { quizDatabaseDao.getSelectQuiz(it) }
                             val quizDeleteText = if(quiz != null){
@@ -77,17 +79,15 @@ class QuizContent(
                             commandChannel.send(Group1RoomTextResponse(text = quizDeleteText))
                         }
                     }
-                }else{
-                    if(isQuiz){
-                        currentQuiz?.let { quiz ->
-                            if(message.text.trim() == quiz.answer.trim()){
-                                memberDatabaseDao.updateMemberGiftPoints(user.userId, user.giftPoints + 1)
-                                resetQuiz()
-                                val quizText = "${quiz.quiz}\n\n ${user.latestName}님 정답입니다. (포인트 추가 + 1)"
-                                commandChannel.send(Group1RoomTextResponse(text = quizText))
-                            }else{
-                                commandChannel.send(Group1RoomTextResponse(text = "틀렸습니다."))
-                            }
+                }
+
+                if(isQuiz){
+                    currentQuiz?.let { quiz ->
+                        if(message.text.trim() == quiz.answer.trim()){
+                            memberDatabaseDao.updateMemberGiftPoints(user.userId, user.giftPoints + 1)
+                            resetQuiz()
+                            val quizText = "${quiz.quiz}\n\n${user.latestName}님 정답입니다. (포인트 추가 + 1)"
+                            commandChannel.send(Group1RoomTextResponse(text = quizText))
                         }
                     }
                 }
