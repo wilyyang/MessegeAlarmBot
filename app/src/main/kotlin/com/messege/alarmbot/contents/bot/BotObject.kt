@@ -10,8 +10,7 @@ object Constants {
     const val BOT_ID = 421448547L
     const val CHAT_BOT_ID = 8201629100799150694L
     const val REQUEST_TEXT_LIMIT = 1000
-    const val MESSAGE_TEXT_LIMIT = 1000
-    const val MAX_HISTORY_SIZE = 15
+    const val MESSAGE_TEXT_LIMIT = 500
     const val MAX_MESSAGE_SIZE = 40
     const val REQUEST_POINT = 2
     const val REQUEST_SUMMARY_POINT = 2

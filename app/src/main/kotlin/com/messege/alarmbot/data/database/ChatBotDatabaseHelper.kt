@@ -12,6 +12,8 @@ import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
 import com.messege.alarmbot.data.database.party.model.PartyData
 import com.messege.alarmbot.data.database.party.model.PartyLog
 import com.messege.alarmbot.data.database.party.model.PartyRule
+import com.messege.alarmbot.data.database.quiz.dao.QuizDatabaseDao
+import com.messege.alarmbot.data.database.quiz.model.QuizData
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.data.database.topic.model.TopicData
 import com.messege.alarmbot.data.database.topic.model.TopicReplyData
@@ -37,6 +39,8 @@ import java.io.File
         TopicData::class,
         TopicReplyData::class,
 
+        QuizData::class,
+
         PartyData::class,
         PartyRule::class,
         PartyLog::class,
@@ -45,6 +49,7 @@ import java.io.File
 abstract class ChatBotDatabaseHelper : RoomDatabase() {
     abstract fun memberDatabaseDao() : MemberDatabaseDao
     abstract fun topicDatabaseDao() : TopicDatabaseDao
+    abstract fun quizDatabaseDao() : QuizDatabaseDao
     abstract fun partyDatabaseDao() : PartyDatabaseDao
 
 

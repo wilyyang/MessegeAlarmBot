@@ -1,6 +1,6 @@
 package com.messege.alarmbot.core.common
 
-private const val GROUP_1_KEY = 18468576377660476L
+private const val GROUP_1_KEY = 18468976891174357L
 private const val GROUP_2_KEY = 18468576377660476L
 private const val ADMIN_KEY = 18466914340070794L
 

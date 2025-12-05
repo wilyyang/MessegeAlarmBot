@@ -14,10 +14,12 @@ import com.messege.alarmbot.contents.party.PartyContent
 import com.messege.alarmbot.contents.point.PointContent
 import com.messege.alarmbot.contents.topic.TopicContent
 import com.messege.alarmbot.contents.mafia.MafiaGameContent
+import com.messege.alarmbot.contents.quiz.QuizContent
 import com.messege.alarmbot.core.common.*
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.member.model.*
 import com.messege.alarmbot.data.database.party.dao.PartyDatabaseDao
+import com.messege.alarmbot.data.database.quiz.dao.QuizDatabaseDao
 import com.messege.alarmbot.data.database.topic.dao.TopicDatabaseDao
 import com.messege.alarmbot.kakao.ChatLogsObserver
 import com.messege.alarmbot.kakao.ChatMembersObserver
@@ -40,6 +42,7 @@ class CmdProcessor(
     private val applicationContext: Context,
     private val memberDatabaseDao: MemberDatabaseDao,
     private val topicDatabaseDao: TopicDatabaseDao,
+    private val quizDatabaseDao: QuizDatabaseDao,
     private val partyDatabaseDao: PartyDatabaseDao
 ) {
     private var groupRoom1OpenChatRoomAction : Notification.Action? = null
@@ -62,8 +65,15 @@ class CmdProcessor(
         partyDatabaseDao = partyDatabaseDao
     )
 
+    private val quizContent = QuizContent(
+        commandChannel = commandChannel,
+        quizDatabaseDao = quizDatabaseDao,
+        memberDatabaseDao = memberDatabaseDao
+    )
+
     private var contents: Array<BaseContent> = arrayOf(
         commonContent,
+        quizContent,
         BotContent(
             commandChannel = commandChannel,
             memberDatabaseDao = memberDatabaseDao
@@ -332,6 +342,16 @@ class CmdProcessor(
                     Logger.d("[macro] 스크립트 종료 코드: $resultCode")
                 } catch (e: Exception) {
                     Logger.e("[macro] 스크립트 실행 실패 ${e.message}")
+                }
+            }
+            is QuizStart -> {
+                scope.launch {
+                    quizContent.sendQuizStart()
+                }
+            }
+            is QuizEnd -> {
+                scope.launch {
+                    quizContent.sendQuizEnd()
                 }
             }
             else -> {}
