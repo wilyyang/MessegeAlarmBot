@@ -5,6 +5,7 @@ import com.messege.alarmbot.core.common.ChatRoomType
 import com.messege.alarmbot.data.database.member.dao.MemberDatabaseDao
 import com.messege.alarmbot.data.database.quiz.dao.QuizDatabaseDao
 import com.messege.alarmbot.data.database.quiz.model.QuizData
+import com.messege.alarmbot.processor.model.AdminRoomTextResponse
 import com.messege.alarmbot.processor.model.Command
 import com.messege.alarmbot.processor.model.Group1RoomTextResponse
 import com.messege.alarmbot.processor.model.Message
@@ -22,65 +23,8 @@ class QuizContent(
 
     override suspend fun request(message : Message) {
         val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
-        val isAdmin = user?.isSuperAdmin ?: false || user?.isAdmin ?: false
-
         if(message.type == ChatRoomType.GroupRoom1) {
             if(message is Message.Talk && user != null){
-                if(isAdmin) {
-                    when {
-                        message.text.startsWith(".퀴즈추가 ") -> {
-                            val updateTime = System.currentTimeMillis()
-                            val cleaned = message.text.removePrefix(".퀴즈추가").trim()
-
-                            val lastColonIndex = cleaned.lastIndexOf(':')
-                            val (quiz, answer) =
-                                if (lastColonIndex != -1) {
-                                    cleaned.substring(0, lastColonIndex).trim() to
-                                        cleaned.substring(lastColonIndex + 1).trim()
-                                } else {
-                                    cleaned to ""   // 콜론이 없는 경우
-                                }
-
-                            if (quiz.isEmpty() || answer.isEmpty()) {
-                                commandChannel.send(Group1RoomTextResponse(text = "퀴즈 추가에 실패했습니다."))
-                            } else {
-                                val key = quizDatabaseDao.insertQuiz(
-                                    QuizData(
-                                        updateTime = updateTime,
-                                        userKey = message.userId,
-                                        quiz = quiz,
-                                        answer = answer
-                                    )
-                                )
-                                commandChannel.send(Group1RoomTextResponse(text = "퀴즈가 추가되었습니다. (key = $key)"))
-                            }
-                        }
-
-                        message.text.startsWith(".퀴즈 ") -> {
-                            val number = message.text.substringAfter(" ", "").toIntOrNull()?.toLong()
-                            val quiz = number?.let { quizDatabaseDao.getSelectQuiz(it) }
-
-                            val quizResultText = quiz?.let {
-                                val latestName = memberDatabaseDao.getMember(it.userKey).getOrNull(0)?.latestName?:"-"
-                                "${it.quiz}\n- 정답 : ${it.answer}\n\n⏱ ${it.updateTime.toTimeFormatDate()} - $latestName"
-                            } ?: "등록된 퀴즈가 없습니다."
-                            commandChannel.send(Group1RoomTextResponse(text = quizResultText))
-                        }
-
-                        message.text.startsWith(".퀴즈삭제 ") -> {
-                            val number = message.text.substringAfter(" ", "").toIntOrNull()?.toLong()
-                            val quiz = number?.let { quizDatabaseDao.getSelectQuiz(it) }
-                            val quizDeleteText = if(quiz != null){
-                                quizDatabaseDao.deleteQuiz(number)
-                                "퀴즈가 삭제되었습니다. (key = $number)"
-                            }else{
-                                "등록된 퀴즈가 없습니다."
-                            }
-                            commandChannel.send(Group1RoomTextResponse(text = quizDeleteText))
-                        }
-                    }
-                }
-
                 if(isQuiz){
                     currentQuiz?.let { quiz ->
                         if(message.text.trim() == quiz.answer.trim()){
@@ -92,8 +36,68 @@ class QuizContent(
                     }
                 }
             }
+        }else if(message.type == ChatRoomType.AdminRoom){
+            if(message is Message.Talk) {
+                when {
+                    message.text.startsWith(".퀴즈추가 ") -> addQuiz(message)
+                    message.text.startsWith(".퀴즈 ") -> showQuiz(message)
+                    message.text.startsWith(".퀴즈삭제 ") -> deleteQuiz(message)
+                }
+            }
         }
     }
+
+    private suspend fun addQuiz(message : Message.Talk){
+        val updateTime = System.currentTimeMillis()
+        val cleaned = message.text.removePrefix(".퀴즈추가").trim()
+
+        val lastColonIndex = cleaned.lastIndexOf(':')
+        val (quiz, answer) =
+            if (lastColonIndex != -1) {
+                cleaned.substring(0, lastColonIndex).trim() to
+                    cleaned.substring(lastColonIndex + 1).trim()
+            } else {
+                cleaned to ""   // 콜론이 없는 경우
+            }
+
+        if (quiz.isEmpty() || answer.isEmpty()) {
+            commandChannel.send(AdminRoomTextResponse(text = "퀴즈 추가에 실패했습니다."))
+        } else {
+            val key = quizDatabaseDao.insertQuiz(
+                QuizData(
+                    updateTime = updateTime,
+                    userKey = message.userId,
+                    quiz = quiz,
+                    answer = answer
+                )
+            )
+            commandChannel.send(AdminRoomTextResponse(text = "퀴즈가 추가되었습니다. (key = $key)"))
+        }
+    }
+
+    private suspend fun showQuiz(message : Message.Talk){
+        val number = message.text.substringAfter(" ", "").toIntOrNull()?.toLong()
+        val quiz = number?.let { quizDatabaseDao.getSelectQuiz(it) }
+
+        val quizResultText = quiz?.let {
+            val latestName = memberDatabaseDao.getMember(it.userKey).getOrNull(0)?.latestName?:"-"
+            "${it.quiz}\n- 정답 : ${it.answer}\n\n⏱ ${it.updateTime.toTimeFormatDate()} - $latestName"
+        } ?: "등록된 퀴즈가 없습니다."
+        commandChannel.send(AdminRoomTextResponse(text = quizResultText))
+    }
+
+    private suspend fun deleteQuiz(message : Message.Talk){
+        val number = message.text.substringAfter(" ", "").toIntOrNull()?.toLong()
+        val quiz = number?.let { quizDatabaseDao.getSelectQuiz(it) }
+        val quizDeleteText = if(quiz != null){
+            quizDatabaseDao.deleteQuiz(number)
+            "퀴즈가 삭제되었습니다. (key = $number)"
+        }else{
+            "등록된 퀴즈가 없습니다."
+        }
+        commandChannel.send(AdminRoomTextResponse(text = quizDeleteText))
+    }
+
 
     suspend fun sendQuizStart(){
         currentQuiz = quizDatabaseDao.getRandomQuiz()

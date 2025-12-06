@@ -78,21 +78,25 @@ class CmdProcessor(
             commandChannel = commandChannel,
             memberDatabaseDao = memberDatabaseDao
         ),
+        /* 일시 중단
         PointContent(
             commandChannel = commandChannel,
             memberDatabaseDao = memberDatabaseDao,
             useCasePoint = useCasePoint
         ),
+         */
         TopicContent(
             commandChannel = commandChannel,
             topicDatabaseDao = topicDatabaseDao,
             memberDatabaseDao = memberDatabaseDao
         ),
+        /* 일시 중단
         PartyContent(
             commandChannel = commandChannel,
             memberDatabaseDao = memberDatabaseDao,
             useCaseParty = useCaseParty
         ),
+         */
         MafiaGameContent(
             commandChannel = commandChannel,
             scope = scope
@@ -284,6 +288,7 @@ class CmdProcessor(
                 }
             }
 
+            /* [일시 중단]
             is LikeWeeklyRanking -> {
                 scope.launch {
                     val primeMinister = useCasePoint.updatePrimeMinister()
@@ -322,6 +327,7 @@ class CmdProcessor(
                     }
                 }
             }
+             */
             is UpdateKakaoMembers -> {
                 scope.launch {
                     val result = chatMembersObserver.walCheckpoint()
