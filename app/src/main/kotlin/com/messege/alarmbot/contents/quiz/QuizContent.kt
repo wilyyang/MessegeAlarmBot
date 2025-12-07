@@ -104,7 +104,9 @@ class QuizContent(
         currentQuiz?.let { quiz ->
             isQuiz = true
 
-            val circles = "○".repeat(quiz.answer.length)
+            val circles = quiz.answer.map { ch ->
+                if (ch == ' ') ' ' else '○'
+            }.joinToString("")
             val quizText = "${quiz.quiz}\n\n힌트 : $circles"
             commandChannel.send(Group1RoomTextResponse(text = quizText))
         }
