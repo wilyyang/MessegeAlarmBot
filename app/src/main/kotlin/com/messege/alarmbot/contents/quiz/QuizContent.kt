@@ -67,6 +67,8 @@ class QuizContent(
                 QuizData(
                     updateTime = updateTime,
                     userKey = message.userId,
+                    category = "일반",
+                    difficulty = 1,
                     quiz = quiz,
                     answer = answer
                 )
@@ -115,7 +117,7 @@ class QuizContent(
     suspend fun sendQuizEnd() {
         if(isQuiz){
             currentQuiz?.let { quiz ->
-                val quizText = "${quiz.quiz}\n\n${"퀴즈를 맞춘 사람이 없습니다."}"
+                val quizText = "퀴즈를 맞춘 사람이 없습니다."
                 commandChannel.send(Group1RoomTextResponse(text = quizText))
 
                 resetQuiz()

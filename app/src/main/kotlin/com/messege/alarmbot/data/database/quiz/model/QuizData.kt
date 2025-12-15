@@ -9,6 +9,8 @@ import androidx.room.PrimaryKey
 data class QuizData(
     val updateTime: Long,
     val userKey: Long,
+    val category: String,
+    val difficulty: Int,
     val quiz: String,
     val answer: String
 ) {
