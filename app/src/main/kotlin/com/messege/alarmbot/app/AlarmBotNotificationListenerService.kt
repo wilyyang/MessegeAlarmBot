@@ -15,10 +15,8 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.text.SpannableString
 import androidx.core.app.NotificationCompat
-import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.messege.alarmbot.core.common.KAKAO_PACKAGE_NAME
 import com.messege.alarmbot.core.common.REPLY_ACTION_INDEX
@@ -55,18 +53,21 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     private val resetReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             cmdProcessor.sendCommand(ResetMemberPoint)
+            scheduleMemberPointResetWork()
         }
     }
 
     private val rankingReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             cmdProcessor.sendCommand(LikeWeeklyRanking)
+            scheduleMemberLikeWeeklyRankingWork()
         }
     }
 
     private val newsReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             cmdProcessor.sendCommand(MacroKakaoTalkRoomNews)
+            scheduleDailyNewsWork()
         }
     }
 
@@ -194,92 +195,55 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
      * Worker 실행 함수
      */
     private fun scheduleMemberPointResetWork() {
-        val now = Calendar.getInstance()
-        val nextRun = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 6)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
+        val delayMs = calcDelayToNext6AM()
 
-            if (before(now)) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-        }
+        Logger.e("[time.point.reset] delay=${delayMs / 1000 / 60}m")
 
-        val initialMinuteDelay = (nextRun.timeInMillis - now.timeInMillis) / 1000 / 60 + 1
-
-        Logger.e("[time.reset] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
-
-        val workRequest = PeriodicWorkRequestBuilder<MemberPointResetWorker>(24, TimeUnit.HOURS)
-            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)
+        val request = OneTimeWorkRequestBuilder<MemberPointResetWorker>()
+            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
             .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        WorkManager.getInstance(this).enqueueUniqueWork(
             "MemberPointResetWorker",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            workRequest
+            ExistingWorkPolicy.REPLACE,
+            request
         )
     }
 
     private fun scheduleMemberLikeWeeklyRankingWork() {
-        val now = Calendar.getInstance()
-        val nextRun = Calendar.getInstance().apply {
-            set(Calendar.DAY_OF_WEEK, Calendar.FRIDAY)
-            set(Calendar.HOUR_OF_DAY, 20)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
+        val delayMs = calcDelayToNextFriday8PM()
 
-            if (before(now)) {
-                add(Calendar.WEEK_OF_YEAR, 1)
-            }
-        }
+        Logger.e("[time.weekly.ranking] delay=${delayMs / 1000 / 60}m")
 
-        val initialMinuteDelay = (nextRun.timeInMillis - now.timeInMillis) / 1000 / 60 + 1
-
-        Logger.e("[time.rank] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
-
-        val workRequest = PeriodicWorkRequestBuilder<MemberLikeWeeklyRankingWorker>(7, TimeUnit.DAYS)
-            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)
+        val request = OneTimeWorkRequestBuilder<MemberLikeWeeklyRankingWorker>()
+            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
             .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        WorkManager.getInstance(this).enqueueUniqueWork(
             "MemberLikeWeeklyRankingWorker",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            workRequest
+            ExistingWorkPolicy.REPLACE,
+            request
         )
     }
 
     private fun scheduleDailyNewsWork() {
-        val now = Calendar.getInstance()
-        val nextRun = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 19)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
+        val delayMs = calcDelayToNext7PM()
 
-            if (before(now)) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-        }
+        Logger.e("[time.daily.news] delay=${delayMs / 1000 / 60}m")
 
-        val initialMinuteDelay = (nextRun.timeInMillis - now.timeInMillis) / 1000 / 60 + 1
-
-        Logger.e("[time.news] $initialMinuteDelay m ${nextRun.timeInMillis.toTimeFormat()} ${now.timeInMillis.toTimeFormat()}")
-
-        val workRequest = PeriodicWorkRequestBuilder<DailyNewsWorker>(12, TimeUnit.HOURS)
-            .setInitialDelay(initialMinuteDelay, TimeUnit.MINUTES)
+        val request = OneTimeWorkRequestBuilder<DailyNewsWorker>()
+            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
             .build()
 
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        WorkManager.getInstance(this).enqueueUniqueWork(
             "DailyNewsWorker",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            workRequest
+            ExistingWorkPolicy.REPLACE,
+            request
         )
     }
 
     private fun scheduleQuizStart() {
-        val delayMs = calcDelayToNextSlot(listOf(5, 25, 45))
+        val delayMs = calcDelayToNextSlot(listOf(5, 15, 25, 35, 45, 55))
 
         Logger.e("[time.quiz.start] delay=${delayMs / 1000 / 60}m")
 
@@ -295,7 +259,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     }
 
     private fun scheduleQuizEnd() {
-        val delayMs = calcDelayToNextSlot(listOf(15, 35, 55))
+        val delayMs = calcDelayToNextSlot(listOf(0, 10, 20, 30, 40, 50))
 
         Logger.e("[time.quiz.end] delay=${delayMs / 1000 / 60}m")
 
@@ -308,6 +272,55 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
             ExistingWorkPolicy.REPLACE,
             request
         )
+    }
+
+    private fun calcDelayToNext6AM(): Long {
+        val now = Calendar.getInstance()
+        val next6am = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 6)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            if (before(now)) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        return next6am.timeInMillis - now.timeInMillis
+    }
+
+    private fun calcDelayToNextFriday8PM(): Long {
+        val now = Calendar.getInstance()
+        val nextFri8pm = Calendar.getInstance().apply {
+            set(Calendar.DAY_OF_WEEK, Calendar.FRIDAY)
+            set(Calendar.HOUR_OF_DAY, 20)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            if (before(now)) {
+                add(Calendar.WEEK_OF_YEAR, 1)
+            }
+        }
+
+        return nextFri8pm.timeInMillis - now.timeInMillis
+    }
+
+    private fun calcDelayToNext7PM(): Long {
+        val now = Calendar.getInstance()
+        val next7pm = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 19)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+
+            if (before(now)) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        return next7pm.timeInMillis - now.timeInMillis
     }
 
     private fun calcDelayToNextSlot(minuteSlots: List<Int>): Long {
