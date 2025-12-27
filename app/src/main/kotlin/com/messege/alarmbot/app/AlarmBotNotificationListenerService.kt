@@ -243,7 +243,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     }
 
     private fun scheduleQuizStart() {
-        val delayMs = calcDelayToNextSlot(listOf(5, 15, 25, 35, 45, 55))
+        val delayMs = calcDelayToNextSlot(listOf(5, 25, 45))
 
         Logger.e("[time.quiz.start] delay=${delayMs / 1000 / 60}m")
 
@@ -259,7 +259,7 @@ class AlarmBotNotificationListenerService : NotificationListenerService() {
     }
 
     private fun scheduleQuizEnd() {
-        val delayMs = calcDelayToNextSlot(listOf(0, 10, 20, 30, 40, 50))
+        val delayMs = calcDelayToNextSlot(listOf(15, 35, 55))
 
         Logger.e("[time.quiz.end] delay=${delayMs / 1000 / 60}m")
 

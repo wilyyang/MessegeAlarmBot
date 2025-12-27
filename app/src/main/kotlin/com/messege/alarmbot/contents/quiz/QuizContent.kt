@@ -20,10 +20,11 @@ class QuizContent(
     override val contentsName: String = "퀴즈"
     private var isQuiz = false
     private var currentQuiz : QuizData? = null
+    private var isActive = true
 
     override suspend fun request(message : Message) {
         val user = memberDatabaseDao.getMember(message.userId).getOrNull(0)
-        if(message.type == ChatRoomType.GroupRoom1) {
+        if(message.type == ChatRoomType.GroupRoom1 && isActive) {
             if(message is Message.Talk && user != null){
                 if(isQuiz){
                     currentQuiz?.let { quiz ->
@@ -42,6 +43,8 @@ class QuizContent(
                     message.text.startsWith(".퀴즈추가 ") -> addQuiz(message)
                     message.text.startsWith(".퀴즈 ") -> showQuiz(message)
                     message.text.startsWith(".퀴즈삭제 ") -> deleteQuiz(message)
+                    message.text.startsWith(".퀴즈 중지") -> isActive = false
+                    message.text.startsWith(".퀴즈 재개") -> isActive = true
                 }
             }
         }
@@ -102,6 +105,8 @@ class QuizContent(
 
 
     suspend fun sendQuizStart(){
+        if(!isActive) return
+
         currentQuiz = quizDatabaseDao.getRandomQuiz()
         currentQuiz?.let { quiz ->
             isQuiz = true
@@ -109,13 +114,13 @@ class QuizContent(
             val circles = quiz.answer.map { ch ->
                 if (ch == ' ') ' ' else '○'
             }.joinToString("")
-            val quizText = "${quiz.quiz}\n\n힌트 : $circles"
+            val quizText = "[퀴즈]\n${quiz.quiz}\n\n힌트 : $circles"
             commandChannel.send(Group1RoomTextResponse(text = quizText))
         }
     }
 
     suspend fun sendQuizEnd() {
-        if(isQuiz){
+        if(isQuiz && isActive){
             currentQuiz?.let { quiz ->
                 val quizText = "퀴즈를 맞춘 사람이 없습니다."
                 commandChannel.send(Group1RoomTextResponse(text = quizText))
