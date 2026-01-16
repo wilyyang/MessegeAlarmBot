@@ -38,13 +38,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AlarmBotTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Column(modifier = Modifier.align(Alignment.Center)){
-                        Text(text = "Message Alarm Bot", style = MaterialTheme.typography.titleLarge)
-
-                        Spacer(modifier = Modifier.height(30.dp))
-                    }
-                }
+                BotConfigScreen()
             }
         }
 

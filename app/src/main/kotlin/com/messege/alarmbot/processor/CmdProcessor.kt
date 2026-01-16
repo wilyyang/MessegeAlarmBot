@@ -7,6 +7,8 @@ import android.app.RemoteInput
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import com.messege.alarmbot.app.SUPER_ADMIN_ME_APPLIED
+import com.messege.alarmbot.app.lastMessages
 import com.messege.alarmbot.contents.*
 import com.messege.alarmbot.contents.bot.BotContent
 import com.messege.alarmbot.contents.common.CommonContent
@@ -202,6 +204,9 @@ class CmdProcessor(
                         }
                     }
                     is Message.Talk -> {
+                        lastMessages.add(0, "[${message.type.roomKey}][${message.userId}] ${message.userName}")
+                        if (lastMessages.size > 4) lastMessages.removeAt(4)
+
                         Logger.d("[message.talk][${message.type.roomKey}][${message.userId}] ${message.userName} ${message.text}")
                         memberDatabaseDao.incrementTalkCount(message.userId)
                         contents.forEach { content ->
@@ -383,7 +388,7 @@ class CmdProcessor(
                 createAt = System.currentTimeMillis(),
                 profileType = talkMember.type,
                 latestName = talkMember.nickName,
-                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME || talkMember.userId == SUPER_ADMIN_ME_2,
+                isSuperAdmin = talkMember.userId == SUPER_ADMIN_ME_APPLIED,
                 isAdmin = false,
                 chatProfileCount = if(isTalkAvailable) 1 else 0,
                 talkCount = 0,
@@ -397,7 +402,7 @@ class CmdProcessor(
                 dislikesWeekly = 0,
                 giftPoints = 10,
                 resetPoints = 10,
-                rank = if (talkMember.userId == SUPER_ADMIN_ME  || talkMember.userId == SUPER_ADMIN_ME_2) {
+                rank = if (talkMember.userId == SUPER_ADMIN_ME_APPLIED) {
                     Rank.President.name
                 } else {
                     Rank.Unemployed.name
