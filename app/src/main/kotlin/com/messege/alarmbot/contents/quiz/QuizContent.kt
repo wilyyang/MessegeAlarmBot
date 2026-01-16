@@ -43,8 +43,14 @@ class QuizContent(
                     message.text.startsWith(".퀴즈추가 ") -> addQuiz(message)
                     message.text.startsWith(".퀴즈 ") -> showQuiz(message)
                     message.text.startsWith(".퀴즈삭제 ") -> deleteQuiz(message)
-                    message.text.startsWith(".퀴즈 중지") -> isActive = false
-                    message.text.startsWith(".퀴즈 재개") -> isActive = true
+                    message.text == ".퀴즈중지" -> {
+                        isActive = false
+                        commandChannel.send(AdminRoomTextResponse(text = "퀴즈가 중지됩니다."))
+                    }
+                    message.text == ".퀴즈재개" -> {
+                        isActive = true
+                        commandChannel.send(AdminRoomTextResponse(text = "퀴즈가 재개됩니다."))
+                    }
                 }
             }
         }
