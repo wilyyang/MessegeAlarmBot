@@ -194,7 +194,34 @@ class MafiaGameContent(
                                             is Player.Assign.Fool -> ASSIGN_JOB_FOOL
                                             is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
                                         },
-                                        delayMilliSeconds = 2000L
+                                        delayMilliSeconds = 1000L
+                                    )
+                                )
+                            }
+
+                            delay(1000L)
+                            state.assignedPlayers.forEach { player ->
+                                commandChannel.send(
+                                    IndividualRoomTextResponse(
+                                        userKey = ChatRoomKey(
+                                            isGroupConversation = false,
+                                            player.name,
+                                            player.name
+                                        ),
+                                        text = "[재확인]" + when(player){
+                                            is Player.Assign.Citizen -> ASSIGN_JOB_CITIZEN
+                                            is Player.Assign.Politician -> ASSIGN_JOB_POLITICIAN
+                                            is Player.Assign.Agent -> ASSIGN_JOB_AGENT
+                                            is Player.Assign.Soldier -> ASSIGN_JOB_SOLDIER
+                                            is Player.Assign.Police -> ASSIGN_JOB_POLICE
+                                            is Player.Assign.Shaman -> ASSIGN_JOB_SHAMAN
+                                            is Player.Assign.Doctor -> ASSIGN_JOB_DOCTOR
+                                            is Player.Assign.Bodyguard -> ASSIGN_JOB_BODYGUARD
+                                            is Player.Assign.Magician -> ASSIGN_JOB_MAGICIAN
+                                            is Player.Assign.Fool -> ASSIGN_JOB_FOOL
+                                            is Player.Assign.Mafia -> ASSIGN_JOB_MAFIA + "\n- 미션을 꼭 수행 해주세요!\n- 미션 : ${metaData.mission}"
+                                        },
+                                        delayMilliSeconds = 1000L
                                     )
                                 )
                             }

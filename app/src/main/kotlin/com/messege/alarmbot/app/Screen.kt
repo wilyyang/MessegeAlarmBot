@@ -13,10 +13,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.saveable.rememberSaveable
 
-private const val DEFAULT_GROUP_1_KEY = 18470291424463783L
-private const val DEFAULT_GROUP_2_KEY = 18470291424463783L
-private const val DEFAULT_ADMIN_KEY   = 18470647988050317L
-private const val DEFAULT_SUPER_ADMIN_ME = 6155898534804297193L
+private const val DEFAULT_GROUP_1_KEY = 18477268527204660L
+private const val DEFAULT_GROUP_2_KEY = 18477268527204660L
+private const val DEFAULT_ADMIN_KEY   = 18477268527204660L
+private const val DEFAULT_SUPER_ADMIN_ME = 4771170166709982055L
 
 // =========================
 // 2) 전역 "적용된 값" (토글 ON이면 여기 값이 바뀜)

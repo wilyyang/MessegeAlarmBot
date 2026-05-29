@@ -228,17 +228,20 @@ class CmdProcessor(
 
     fun deliverNotification(chatRoomKey: ChatRoomKey, user: Person, action : Notification.Action, text : String){
         var isCheckedRoom = false
-        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.GroupRoom1.roomKey){
+        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.GroupRoom1.roomKey
+            && action.title == "답장"){
             isCheckedRoom = true
             groupRoom1OpenChatRoomAction = action
         }
 
-        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.GroupRoom2.roomKey){
+        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.GroupRoom2.roomKey
+            && action.title == "답장"){
             isCheckedRoom = true
             groupRoom2OpenChatRoomAction = action
         }
 
-        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.AdminRoom.roomKey){
+        if(chatRoomKey.roomKey.toLongOrNull() == ChatRoomType.AdminRoom.roomKey
+            && action.title == "답장"){
             isCheckedRoom = true
             adminOpenChatRoomAction = action
         }
